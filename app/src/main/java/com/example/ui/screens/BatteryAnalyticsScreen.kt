@@ -140,8 +140,8 @@ fun BatteryAnalyticsScreen(
             if (activeDevice == null || summary == null) {
                 Column(
                     modifier = Modifier
-                        .fillMaxSize()
                         .widthIn(max = 520.dp)
+                        .fillMaxSize()
                         .padding(32.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
@@ -199,8 +199,8 @@ fun BatteryAnalyticsScreen(
 
             LazyColumn(
                 modifier = Modifier
-                    .fillMaxSize()
                     .widthIn(max = 640.dp)
+                    .fillMaxSize()
                     .navigationBarsPadding(),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)

@@ -52,6 +52,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import com.example.ui.components.ConfirmRemovalDialog
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -81,22 +83,31 @@ fun ProfileEditorScreen(
     onDelete: (Long) -> Unit,
     onNavigateBack: () -> Unit,
 ) {
-    var existingProfile by remember { mutableStateOf<DeviceProfileEntity?>(null) }
-    var name by remember { mutableStateOf("") }
-    var selectedModel by remember { mutableStateOf(PodModel.AIRPODS_PRO_2) }
-    var linkedAddress by remember { mutableStateOf<String?>(null) }
-    var linkedName by remember { mutableStateOf<String?>(null) }
-    var minRssi by remember { mutableFloatStateOf(-85f) }
-    var irkHex by remember { mutableStateOf("") }
-    var autoPause by remember { mutableStateOf(true) }
-    var autoResume by remember { mutableStateOf(false) }
-    var onePodMode by remember { mutableStateOf(false) }
+    var existingProfile by remember(editingProfileId) { mutableStateOf<DeviceProfileEntity?>(null) }
+    var name by rememberSaveable(editingProfileId) { mutableStateOf("") }
+    var selectedModel by rememberSaveable(editingProfileId) { mutableStateOf(PodModel.AIRPODS_PRO_2) }
+    var linkedAddress by rememberSaveable(editingProfileId) { mutableStateOf<String?>(null) }
+    var linkedName by rememberSaveable(editingProfileId) { mutableStateOf<String?>(null) }
+    var minRssi by rememberSaveable(editingProfileId) { mutableFloatStateOf(-85f) }
+    var irkHex by rememberSaveable(editingProfileId) { mutableStateOf("") }
+    var autoPause by rememberSaveable(editingProfileId) { mutableStateOf(true) }
+    var autoResume by rememberSaveable(editingProfileId) { mutableStateOf(false) }
+    var onePodMode by rememberSaveable(editingProfileId) { mutableStateOf(false) }
+    var draftLoaded by rememberSaveable(editingProfileId) { mutableStateOf(false) }
+    var confirmDelete by rememberSaveable(editingProfileId) { mutableStateOf(false) }
+    if (confirmDelete && editingProfileId != null) {
+        ConfirmRemovalDialog(stringResource(R.string.confirm_delete_title),
+            stringResource(R.string.confirm_delete_message, existingProfile?.name.orEmpty()), stringResource(R.string.action_delete),
+            onDismiss = { confirmDelete = false }, onConfirm = { confirmDelete = false; onDelete(editingProfileId) })
+    }
 
     LaunchedEffect(editingProfileId) {
         if (editingProfileId != null && editingProfileId > 0L) {
             val loaded = onLoadProfile(editingProfileId)
             if (loaded != null) {
                 existingProfile = loaded
+                if (draftLoaded) return@LaunchedEffect
+                draftLoaded = true
                 name = loaded.name
                 selectedModel = loaded.model
                 linkedAddress = loaded.linkedBluetoothAddress
@@ -152,7 +163,7 @@ fun ProfileEditorScreen(
                 actions = {
                     if (editingProfileId != null && editingProfileId > 0L) {
                         IconButton(
-                            onClick = { onDelete(editingProfileId) },
+                            onClick = { confirmDelete = true },
                             modifier = Modifier.testTag("editor_delete_button")
                         ) {
                             Icon(
@@ -217,10 +228,10 @@ fun ProfileEditorScreen(
                                 )
                             )
                         },
-                        enabled = isIrkValid,
+                        enabled = isIrkValid && (editingProfileId == null || existingProfile != null),
                         modifier = Modifier
-                            .fillMaxWidth()
                             .widthIn(max = 608.dp)
+                            .fillMaxWidth()
                             .height(52.dp)
                             .testTag("save_profile_button"),
                         shape = RoundedCornerShape(16.dp)
@@ -248,8 +259,8 @@ fun ProfileEditorScreen(
         ) {
             LazyColumn(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .widthIn(max = 640.dp),
+                    .widthIn(max = 640.dp)
+                    .fillMaxSize(),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
@@ -343,6 +354,31 @@ fun ProfileEditorScreen(
                                             maxLines = 2,
                                             overflow = TextOverflow.Ellipsis
                                         )
+                                        if (model.supportsAdaptive || model.supportsAnc) {
+                                            Surface(
+                                                shape = RoundedCornerShape(50),
+                                                color = if (isSelected) {
+                                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
+                                                } else {
+                                                    MaterialTheme.colorScheme.surfaceContainerHigh
+                                                }
+                                            ) {
+                                                Text(
+                                                    text = if (model.supportsAdaptive) {
+                                                        stringResource(R.string.label_adaptive_supported)
+                                                    } else {
+                                                        stringResource(R.string.label_anc_supported)
+                                                    },
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = if (isSelected) {
+                                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                                    } else {
+                                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                                    },
+                                                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp)
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }

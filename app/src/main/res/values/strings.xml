@@ -99,7 +99,7 @@
     <string name="action_delete">Delete</string>
     <string name="action_cancel">Cancel</string>
     <string name="confirm_delete_title">Delete profile?</string>
-    <string name="confirm_delete_message">CAPod will stop matching %1$s until you add it again.</string>
+    <string name="confirm_delete_message">This removes %1$s and its saved battery history.</string>
 
     <!-- Connection Popup -->
     <string name="popup_dismiss">Dismiss</string>
@@ -130,7 +130,7 @@
 
     <string name="settings_section_about">About CAPod</string>
     <string name="settings_protocol_info">Apple Continuity BLE (0x004C) &amp; AAP Companion</string>
-    <string name="settings_version">Version 1.0</string>
+    <string name="settings_version">Version %1$s</string>
 
     <!-- Home Screen Widget & Quick Settings -->
     <string name="widget_label">CAPod Battery</string>
@@ -267,4 +267,35 @@
     <string name="ear_detection_gatt_ready">GATT Service ready · %1$s</string>
     <string name="ear_detection_gatt_idle">Applies automatically and syncs via BLE GATT when connected</string>
     <string name="action_sync_gatt">Sync GATT</string>
+    <string name="empty_profiles_title">Add your first device</string>
+    <string name="confirm_history_device">Delete all saved battery readings for %1$s?</string>
+    <string name="privacy_title">Privacy policy</string>
+    <string name="privacy_body">CAPod uses nearby Bluetooth signals to display battery levels, identify paired devices and apply your selected controls. Android 11 and earlier require location permission for Bluetooth scanning. CAPod stores profiles, optional identity keys, settings and battery history on your device. Android may include app data in system backups according to your backup settings. Battery samples older than seven days are removed when new samples are saved. You can clear history in Settings, remove a profile in Devices, or erase all local data in Android app settings. For privacy inquiries, use the developer contact on the CAPod store listing.</string>
+
+    <!-- Audio & Microphone Controls (Device Detail) -->
+    <string name="detail_audio_controls">Audio &amp; Microphone</string>
+    <string name="detail_mic_mode">Microphone</string>
+    <string name="mic_mode_auto">Automatic</string>
+    <string name="mic_mode_left">Always Left</string>
+    <string name="mic_mode_right">Always Right</string>
+    <string name="detail_anc_one_pod">Noise Cancellation with one AirPod</string>
+    <string name="detail_anc_one_pod_desc">Allow ANC to activate while wearing only a single earbud</string>
+    <string name="detail_conversation_awareness">Conversation Awareness</string>
+    <string name="detail_conversation_awareness_desc">Automatically lower media volume when you start speaking</string>
+    <string name="detail_personalized_volume">Personalized Volume</string>
+    <string name="detail_personalized_volume_desc">Adjust media loudness based on your environment and habits</string>
+    <string name="detail_adaptive_audio_level">Adaptive Audio balance</string>
+    <string name="detail_adaptive_audio_more_noise">More awareness</string>
+    <string name="detail_adaptive_audio_less_noise">More quiet</string>
+
+    <!-- Polish & Play Readiness Feedback -->
+    <string name="notif_permission_denied_snackbar">Enable Notifications in Android App Settings to receive live alerts.</string>
+    <string name="widget_pin_requested_snackbar">Choose a spot on your home screen to add the CAPod battery widget.</string>
+    <string name="widget_pin_unavailable_snackbar">Long-press your home screen and add CAPod Battery from Widgets.</string>
+    <string name="overview_add_profile_chip">Add</string>
+    <string name="status_live_ble">Live</string>
+    <string name="status_standby">Standby</string>
+    <string name="label_anc_supported">ANC</string>
+    <string name="label_adaptive_supported">Adaptive</string>
+    <string name="label_privacy_subtitle">On-device data handling &amp; permissions</string>
 </resources>

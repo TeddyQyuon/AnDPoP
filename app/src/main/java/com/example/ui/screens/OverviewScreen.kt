@@ -29,9 +29,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.BluetoothSearching
 import androidx.compose.material.icons.outlined.DevicesOther
@@ -48,6 +45,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -75,11 +73,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.example.R
 import com.example.data.DeviceProfileEntity
@@ -93,6 +88,9 @@ import com.example.ui.components.DeviceModelIcon
 import com.example.ui.components.MatchedDeviceCard
 import com.example.ui.components.RenameDeviceDialog
 import com.example.ui.components.UnmatchedDevicesCard
+import com.example.ui.theme.BatteryLowRed
+import com.example.ui.theme.BatteryMidAmber
+import com.example.ui.theme.CapodMint
 import com.example.viewmodel.CAPodUiState
 import com.example.viewmodel.MatchedDeviceState
 
@@ -132,29 +130,71 @@ fun OverviewScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = buildAnnotatedString {
-                                withStyle(
-                                    SpanStyle(
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onBackground
-                                    )
-                                ) {
-                                    append("CAPod")
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.app_name),
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    fontWeight = FontWeight.Bold
+                                )
+                            )
+                            val (statusRes, dotColor) = when (uiState.hardwareState) {
+                                BluetoothHardwareState.PERMISSION_REQUIRED ->
+                                    R.string.overview_chip_perm_needed to BatteryMidAmber
+                                BluetoothHardwareState.BLUETOOTH_DISABLED ->
+                                    R.string.overview_chip_bt_off to BatteryLowRed
+                                BluetoothHardwareState.UNAVAILABLE ->
+                                    R.string.bt_unavailable_title to MaterialTheme.colorScheme.outline
+                                BluetoothHardwareState.READY -> if (uiState.isScanning) {
+                                    R.string.overview_chip_scanning to CapodMint
+                                } else {
+                                    R.string.overview_chip_paused to BatteryMidAmber
                                 }
-                            },
-                            style = MaterialTheme.typography.titleLarge
-                        )
-                        if (uiState.isScanning) {
-                            LivePulseDot()
+                            }
+                            Surface(
+                                shape = RoundedCornerShape(50),
+                                color = dotColor.copy(alpha = 0.14f),
+                                border = BorderStroke(1.dp, dotColor.copy(alpha = 0.28f))
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(5.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(6.dp)
+                                            .clip(CircleShape)
+                                            .background(dotColor)
+                                    )
+                                    Text(
+                                        text = stringResource(statusRes),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        maxLines = 1
+                                    )
+                                }
+                            }
                         }
                     }
                 },
                 actions = {
+                    if (uiState.matchedDevices.isNotEmpty()) {
+                        IconButton(
+                            onClick = onAddProfile,
+                            modifier = Modifier.testTag("top_add_profile_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Add,
+                                contentDescription = stringResource(R.string.cd_add_profile),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+
                     IconButton(
                         onClick = {
                             when (uiState.hardwareState) {
@@ -182,36 +222,7 @@ fun OverviewScreen(
                             }
                         )
                     }
-                    IconButton(
-                        onClick = onOpenDiscovery,
-                        modifier = Modifier.testTag("top_discover_ble_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Radar,
-                            contentDescription = stringResource(R.string.cd_discover_ble),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    IconButton(
-                        onClick = onOpenAnalytics,
-                        modifier = Modifier.testTag("top_analytics_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Insights,
-                            contentDescription = stringResource(R.string.cd_open_analytics),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    IconButton(
-                        onClick = onOpenDevices,
-                        modifier = Modifier.testTag("top_devices_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.DevicesOther,
-                            contentDescription = stringResource(R.string.cd_manage_devices),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+
                     IconButton(
                         onClick = onOpenSettings,
                         modifier = Modifier.testTag("top_settings_button")
@@ -224,10 +235,58 @@ fun OverviewScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
+                    containerColor = Color.Transparent,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow
                 )
             )
+        },
+        bottomBar = {
+            Surface(
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 2.dp
+            ) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f)
+                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .navigationBarsPadding(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .widthIn(max = 640.dp)
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            OverviewShortcut(
+                                label = R.string.overview_quick_profiles,
+                                icon = Icons.Outlined.DevicesOther,
+                                tag = "top_devices_button",
+                                onClick = onOpenDevices,
+                                modifier = Modifier.weight(1f)
+                            )
+                            OverviewShortcut(
+                                label = R.string.overview_quick_discover,
+                                icon = Icons.Rounded.Radar,
+                                tag = "top_discover_ble_button",
+                                onClick = onOpenDiscovery,
+                                modifier = Modifier.weight(1f)
+                            )
+                            OverviewShortcut(
+                                label = R.string.overview_quick_trends,
+                                icon = Icons.Rounded.Insights,
+                                tag = "top_analytics_button",
+                                onClick = onOpenAnalytics,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                }
+            }
         }
     ) { innerPadding ->
         val primaryGlow = MaterialTheme.colorScheme.primary.copy(alpha = 0.085f)
@@ -260,21 +319,12 @@ fun OverviewScreen(
         ) {
             LazyColumn(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .widthIn(max = 640.dp),
-                contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 84.dp),
+                    .widthIn(max = 640.dp)
+                    .fillMaxSize(),
+                contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                item(key = "companion_status_strip") {
-                    CompanionStatusStrip(
-                        hardwareState = uiState.hardwareState,
-                        isScanning = uiState.isScanning,
-                        profileCount = uiState.matchedDevices.size,
-                        onOpenDiscovery = onOpenDiscovery,
-                        onOpenAnalytics = onOpenAnalytics,
-                        onOpenDevices = onOpenDevices,
-                    )
-                }
+
 
                 // Hardware & permission status banner
                 when (uiState.hardwareState) {
@@ -402,179 +452,19 @@ fun OverviewScreen(
 }
 
 @Composable
-private fun CompanionStatusStrip(
-    hardwareState: BluetoothHardwareState,
-    isScanning: Boolean,
-    profileCount: Int,
-    onOpenDiscovery: () -> Unit,
-    onOpenAnalytics: () -> Unit,
-    onOpenDevices: () -> Unit,
+private fun OverviewShortcut(
+    label: Int,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    tag: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    val statusText = when {
-        hardwareState == BluetoothHardwareState.PERMISSION_REQUIRED ->
-            stringResource(R.string.overview_chip_perm_needed)
-        hardwareState == BluetoothHardwareState.BLUETOOTH_DISABLED ||
-            hardwareState == BluetoothHardwareState.UNAVAILABLE ->
-            stringResource(R.string.overview_chip_bt_off)
-        isScanning -> stringResource(R.string.overview_chip_scanning)
-        else -> stringResource(R.string.overview_chip_paused)
-    }
-    val statusContainer = when {
-        isScanning && hardwareState == BluetoothHardwareState.READY ->
-            MaterialTheme.colorScheme.secondaryContainer
-        hardwareState == BluetoothHardwareState.READY ->
-            MaterialTheme.colorScheme.surfaceContainerHigh
-        else -> MaterialTheme.colorScheme.primaryContainer
-    }
-    val statusContent = when {
-        isScanning && hardwareState == BluetoothHardwareState.READY ->
-            MaterialTheme.colorScheme.onSecondaryContainer
-        hardwareState == BluetoothHardwareState.READY ->
-            MaterialTheme.colorScheme.onSurfaceVariant
-        else -> MaterialTheme.colorScheme.onPrimaryContainer
-    }
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Surface(
-            shape = RoundedCornerShape(14.dp),
-            color = statusContainer,
-            modifier = Modifier.heightIn(min = 38.dp)
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .clip(CircleShape)
-                        .background(statusContent)
-                )
-                Text(
-                    text = statusText,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = statusContent,
-                    maxLines = 1
-                )
-            }
-        }
-
-        if (profileCount > 0) {
-            Surface(
-                onClick = onOpenDevices,
-                shape = RoundedCornerShape(14.dp),
-                color = MaterialTheme.colorScheme.surface,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                modifier = Modifier
-                    .heightIn(min = 48.dp)
-                    .testTag("overview_quick_profiles_chip")
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.DevicesOther,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Text(
-                        text = stringResource(R.string.overview_chip_devices_count, profileCount),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1
-                    )
-                }
-            }
-        }
-
-        Surface(
-            onClick = onOpenDiscovery,
-            shape = RoundedCornerShape(14.dp),
-            color = MaterialTheme.colorScheme.surface,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-            modifier = Modifier
-                .heightIn(min = 48.dp)
-                .testTag("overview_quick_discover_chip")
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Radar,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(16.dp)
-                )
-                Text(
-                    text = stringResource(R.string.overview_quick_discover),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1
-                )
-            }
-        }
-
-        Surface(
-            onClick = onOpenAnalytics,
-            shape = RoundedCornerShape(14.dp),
-            color = MaterialTheme.colorScheme.surface,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-            modifier = Modifier
-                .heightIn(min = 48.dp)
-                .testTag("overview_quick_trends_chip")
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Insights,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(16.dp)
-                )
-                Text(
-                    text = stringResource(R.string.overview_quick_trends),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1
-                )
-            }
+    TextButton(onClick = onClick, modifier = modifier.testTag(tag)) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Icon(icon, contentDescription = null, modifier = Modifier.size(22.dp))
+            Text(stringResource(label), style = MaterialTheme.typography.labelMedium)
         }
     }
-}
-
-@Composable
-private fun LivePulseDot() {
-    val transition = rememberInfiniteTransition(label = "live_pulse")
-    val alpha by transition.animateFloat(
-        initialValue = 0.35f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(900, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulse_alpha"
-    )
-    Box(
-        modifier = Modifier
-            .size(8.dp)
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.secondary.copy(alpha = alpha))
-    )
 }
 
 @Composable
@@ -802,7 +692,7 @@ private fun ScanningEmptyStateCard(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = stringResource(R.string.status_scanning_title),
+                text = stringResource(if (isScanning) R.string.status_scanning_title else R.string.empty_profiles_title),
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center

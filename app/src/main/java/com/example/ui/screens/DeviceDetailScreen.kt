@@ -35,12 +35,16 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
+import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.Memory
+import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.Radar
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Stop
@@ -58,17 +62,24 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Slider
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -87,6 +98,7 @@ import com.example.data.DeviceProfileEntity
 import com.example.model.FirmwareCheckState
 import com.example.model.FirmwareEvaluation
 import com.example.model.ListeningMode
+import com.example.model.MicrophoneMode
 import com.example.model.PodFormFactor
 import com.example.ui.components.AncControlBar
 import com.example.ui.components.BatteryHistoryChart
@@ -100,6 +112,7 @@ import com.example.ui.theme.CapodMint
 import com.example.viewmodel.MatchedDeviceState
 import java.text.DateFormat
 import java.util.Date
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -114,6 +127,11 @@ fun DeviceDetailScreen(
     onResetDeviceName: (DeviceProfileEntity) -> Unit,
     onOpenAnalytics: (Long) -> Unit,
     onSelectListeningMode: (ListeningMode) -> Unit,
+    onSelectMicrophoneMode: (MicrophoneMode) -> Unit,
+    onSetConversationalAwareness: (Boolean) -> Unit,
+    onSetPersonalizedVolume: (Boolean) -> Unit,
+    onSetAllowAncOnePod: (Boolean) -> Unit,
+    onSetAdaptiveNoiseLevel: (Int) -> Unit,
     onCheckFirmware: (DeviceProfileEntity) -> Unit,
     onPlayChime: (ChimeChannel) -> Unit,
     onStopChime: () -> Unit,
@@ -156,7 +174,13 @@ fun DeviceDetailScreen(
     val profile = deviceState.profile
     val model = profile.model
     val snapshot = deviceState.liveSnapshot
-    var showRenameDialog by remember { mutableStateOf(false) }
+    var showRenameDialog by rememberSaveable(profile.id) { mutableStateOf(false) }
+    var confirmClear by rememberSaveable(profile.id) { mutableStateOf(false) }
+    if (confirmClear) {
+        com.example.ui.components.ConfirmRemovalDialog(stringResource(R.string.settings_clear_history),
+            stringResource(R.string.confirm_history_device, deviceState.displayName), stringResource(R.string.action_clear),
+            onDismiss = { confirmClear = false }, onConfirm = { confirmClear = false; onClearHistory(profile.id) })
+    }
 
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -243,9 +267,10 @@ fun DeviceDetailScreen(
         ) {
             LazyColumn(
                 modifier = Modifier
-                    .fillMaxSize()
                     .widthIn(max = 640.dp)
-                    .navigationBarsPadding(),
+                    .fillMaxSize()
+                    .navigationBarsPadding()
+                    .testTag("detail_lazy_column"),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
@@ -323,6 +348,20 @@ fun DeviceDetailScreen(
                     )
                 }
 
+                // Audio & Microphone AAP Controls Card (for Dual-Pod / Adaptive devices)
+                if (model.formFactor == PodFormFactor.DUAL_POD || model.supportsAdaptive) {
+                    item(key = "audio_controls") {
+                        AudioAndMicControlsCard(
+                            profile = profile,
+                            onSelectMicrophoneMode = onSelectMicrophoneMode,
+                            onSetAllowAncOnePod = onSetAllowAncOnePod,
+                            onSetConversationalAwareness = onSetConversationalAwareness,
+                            onSetPersonalizedVolume = onSetPersonalizedVolume,
+                            onSetAdaptiveNoiseLevel = onSetAdaptiveNoiseLevel,
+                        )
+                    }
+                }
+
                 // Find My Pods Proximity Radar & Stereo Locating Chime Card
                 item(key = "find_pods") {
                     FindMyPodsCard(
@@ -371,7 +410,7 @@ fun DeviceDetailScreen(
                                     }
                                     if (batteryHistory.isNotEmpty()) {
                                         TextButton(
-                                            onClick = { onClearHistory(profile.id) },
+                                            onClick = { confirmClear = true },
                                             modifier = Modifier.testTag("clear_history_button")
                                         ) {
                                             Text(stringResource(R.string.action_clear))
@@ -954,6 +993,218 @@ private fun FirmwareStatusCard(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun AudioAndMicControlsCard(
+    profile: DeviceProfileEntity,
+    onSelectMicrophoneMode: (MicrophoneMode) -> Unit,
+    onSetAllowAncOnePod: (Boolean) -> Unit,
+    onSetConversationalAwareness: (Boolean) -> Unit,
+    onSetPersonalizedVolume: (Boolean) -> Unit,
+    onSetAdaptiveNoiseLevel: (Int) -> Unit,
+) {
+    val model = profile.model
+    var sliderLevel by remember(profile.id, profile.adaptiveNoiseLevel) {
+        mutableFloatStateOf(profile.adaptiveNoiseLevel.toFloat())
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("audio_controls_card"),
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.GraphicEq,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+                Text(
+                    text = stringResource(R.string.detail_audio_controls),
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            if (model.formFactor == PodFormFactor.DUAL_POD) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Mic,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = stringResource(R.string.detail_mic_mode),
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    val micOptions = listOf(
+                        MicrophoneMode.AUTOMATIC to stringResource(R.string.mic_mode_auto),
+                        MicrophoneMode.ALWAYS_LEFT to stringResource(R.string.mic_mode_left),
+                        MicrophoneMode.ALWAYS_RIGHT to stringResource(R.string.mic_mode_right),
+                    )
+                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                        micOptions.forEachIndexed { index, (mode, label) ->
+                            SegmentedButton(
+                                selected = profile.microphoneMode == mode,
+                                onClick = { onSelectMicrophoneMode(mode) },
+                                shape = SegmentedButtonDefaults.itemShape(
+                                    index = index,
+                                    count = micOptions.size
+                                ),
+                                modifier = Modifier.testTag("mic_mode_${mode.id}")
+                            ) {
+                                Text(label, maxLines = 1)
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (model.supportsAnc && model.formFactor == PodFormFactor.DUAL_POD) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                AudioControlSwitchRow(
+                    title = stringResource(R.string.detail_anc_one_pod),
+                    subtitle = stringResource(R.string.detail_anc_one_pod_desc),
+                    checked = profile.allowAncOnePodEnabled,
+                    onCheckedChange = onSetAllowAncOnePod,
+                    tag = "anc_one_pod_switch"
+                )
+            }
+
+            if (model.supportsAdaptive) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                AudioControlSwitchRow(
+                    title = stringResource(R.string.detail_conversation_awareness),
+                    subtitle = stringResource(R.string.detail_conversation_awareness_desc),
+                    checked = profile.conversationalAwarenessEnabled,
+                    onCheckedChange = onSetConversationalAwareness,
+                    tag = "conversation_awareness_switch"
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                AudioControlSwitchRow(
+                    title = stringResource(R.string.detail_personalized_volume),
+                    subtitle = stringResource(R.string.detail_personalized_volume_desc),
+                    checked = profile.personalizedVolumeEnabled,
+                    onCheckedChange = onSetPersonalizedVolume,
+                    tag = "personalized_volume_switch"
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.AutoAwesome,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(
+                                text = stringResource(R.string.detail_adaptive_audio_level),
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                        Text(
+                            text = "${sliderLevel.roundToInt()}%",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Slider(
+                        value = sliderLevel,
+                        onValueChange = { sliderLevel = it },
+                        onValueChangeFinished = {
+                            onSetAdaptiveNoiseLevel(sliderLevel.roundToInt())
+                        },
+                        valueRange = 0f..100f,
+                        modifier = Modifier.testTag("adaptive_audio_slider")
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = stringResource(R.string.detail_adaptive_audio_more_noise),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = stringResource(R.string.detail_adaptive_audio_less_noise),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AudioControlSwitchRow(
+    title: String,
+    subtitle: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    tag: String,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .clickable { onCheckedChange(!checked) }
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            modifier = Modifier.testTag(tag)
+        )
     }
 }
 

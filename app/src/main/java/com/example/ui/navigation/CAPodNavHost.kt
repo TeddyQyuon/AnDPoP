@@ -1,5 +1,10 @@
 package com.example.ui.navigation
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -7,7 +12,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -16,6 +23,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.model.AnalyticsTimeRange
 import com.example.model.BluetoothHardwareState
+import com.example.service.AncQuickSettingsTile
 import com.example.ui.screens.BatteryAnalyticsScreen
 import com.example.ui.screens.BleDiscoveryScreen
 import com.example.ui.screens.DeviceDetailScreen
@@ -24,8 +32,6 @@ import com.example.ui.screens.OverviewScreen
 import com.example.ui.screens.ProfileEditorScreen
 import com.example.ui.screens.SettingsScreen
 import com.example.ui.screens.UnmatchedDetailScreen
-import androidx.compose.ui.platform.LocalContext
-import com.example.service.AncQuickSettingsTile
 import com.example.viewmodel.CAPodUiState
 import com.example.viewmodel.CAPodViewModel
 
@@ -62,6 +68,20 @@ fun CAPodNavHost(
     NavHost(
         navController = navController,
         startDestination = CAPodRoutes.OVERVIEW,
+        enterTransition = {
+            fadeIn(animationSpec = tween(220)) +
+                slideInHorizontally(animationSpec = tween(240), initialOffsetX = { it / 12 })
+        },
+        exitTransition = {
+            fadeOut(animationSpec = tween(180))
+        },
+        popEnterTransition = {
+            fadeIn(animationSpec = tween(200))
+        },
+        popExitTransition = {
+            fadeOut(animationSpec = tween(180)) +
+                slideOutHorizontally(animationSpec = tween(220), targetOffsetX = { it / 12 })
+        },
     ) {
         composable(CAPodRoutes.OVERVIEW) {
             val context = LocalContext.current
@@ -147,10 +167,10 @@ fun CAPodNavHost(
             )
         ) { backStackEntry ->
             val initialProfileId = backStackEntry.arguments?.getLong("profileId") ?: 0L
-            var selectedProfileId by remember(initialProfileId) {
+            var selectedProfileId by rememberSaveable(initialProfileId) {
                 mutableStateOf(initialProfileId.takeIf { it > 0L })
             }
-            var selectedRange by remember { mutableStateOf(AnalyticsTimeRange.SIX_HOURS) }
+            var selectedRange by rememberSaveable { mutableStateOf(AnalyticsTimeRange.SIX_HOURS) }
 
             val effectiveProfileId = selectedProfileId
                 ?: uiState.matchedDevices.firstOrNull()?.profile?.id
@@ -176,8 +196,10 @@ fun CAPodNavHost(
         composable(CAPodRoutes.DEVICES) {
             DevicesScreen(
                 uiState = uiState,
+                snackbarHostState = snackbarHostState,
                 onNavigateBack = { navController.popBackStack() },
                 onOpenDiscovery = { navController.navigate(CAPodRoutes.BLE_DISCOVERY) },
+                onOpenDeviceDetail = { id -> navController.navigate(CAPodRoutes.deviceDetail(id)) },
                 onAddProfile = { navController.navigate(CAPodRoutes.profileEditor(0L)) },
                 onEditProfile = { id -> navController.navigate(CAPodRoutes.profileEditor(id)) },
                 onDeleteProfile = { id -> viewModel.deleteProfile(id) },
@@ -223,6 +245,31 @@ fun CAPodNavHost(
                         viewModel.selectListeningMode(deviceState.profile, mode)
                     }
                 },
+                onSelectMicrophoneMode = { mode ->
+                    if (deviceState != null) {
+                        viewModel.setMicrophoneMode(deviceState.profile, mode)
+                    }
+                },
+                onSetConversationalAwareness = { enabled ->
+                    if (deviceState != null) {
+                        viewModel.setConversationalAwareness(deviceState.profile, enabled)
+                    }
+                },
+                onSetPersonalizedVolume = { enabled ->
+                    if (deviceState != null) {
+                        viewModel.setPersonalizedVolume(deviceState.profile, enabled)
+                    }
+                },
+                onSetAllowAncOnePod = { enabled ->
+                    if (deviceState != null) {
+                        viewModel.setAllowAncOnePod(deviceState.profile, enabled)
+                    }
+                },
+                onSetAdaptiveNoiseLevel = { level ->
+                    if (deviceState != null) {
+                        viewModel.setAdaptiveNoiseLevel(deviceState.profile, level)
+                    }
+                },
                 onCheckFirmware = { profile ->
                     viewModel.checkFirmwareForProfile(profile, isAutomatic = false)
                 },
@@ -253,7 +300,14 @@ fun CAPodNavHost(
                 },
                 onDelete = { id ->
                     viewModel.deleteProfile(id) {
-                        navController.popBackStack()
+                        val poppedDetail = navController.previousBackStackEntry
+                            ?.destination
+                            ?.route == CAPodRoutes.DEVICE_DETAIL
+                        if (poppedDetail) {
+                            navController.popBackStack(CAPodRoutes.OVERVIEW, inclusive = false)
+                        } else {
+                            navController.popBackStack()
+                        }
                     }
                 },
                 onNavigateBack = { navController.popBackStack() }
@@ -263,6 +317,7 @@ fun CAPodNavHost(
         composable(CAPodRoutes.UNMATCHED) {
             UnmatchedDetailScreen(
                 unmatchedDevices = uiState.unmatchedDevices,
+                snackbarHostState = snackbarHostState,
                 onQuickAddProfile = { snapshot ->
                     viewModel.quickAddFromUnmatchedSnapshot(snapshot)
                 },
@@ -294,6 +349,8 @@ fun CAPodNavHost(
                 onSetShowPopup = viewModel::setShowConnectionPopup,
                 onSetBatteryNotification = viewModel::setBatteryNotificationEnabled,
                 onSetFirmwareAlerts = viewModel::setFirmwareAlertsEnabled,
+                onNotificationPermissionDenied = viewModel::notifyNotificationPermissionDenied,
+                onWidgetPinResult = viewModel::notifyWidgetPinResult,
                 onClearAllBatteryHistory = viewModel::clearAllBatteryHistory,
                 onNavigateBack = { navController.popBackStack() }
             )

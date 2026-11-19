@@ -20,7 +20,7 @@ import androidx.core.view.WindowCompat
 
 private val CapodDarkColorScheme = darkColorScheme(
     primary = CapodBlueBright,
-    onPrimary = Color.White,
+    onPrimary = Color(0xFF091B3A),
     primaryContainer = Color(0xFF1B3A75),
     onPrimaryContainer = Color(0xFFD8E6FF),
     secondary = CapodMint,

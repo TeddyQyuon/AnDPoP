@@ -7,10 +7,12 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ApplicationProvider
@@ -142,18 +144,47 @@ class MainActivityLaunchTest {
                 false
             }
         }
-        composeRule.onNodeWithTag("firmware_status_card").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithTag("detail_lazy_column")
+            .performScrollToNode(hasTestTag("firmware_status_card"))
+        composeRule.onNodeWithTag("firmware_status_card").assertIsDisplayed()
         composeRule.onNodeWithTag("check_firmware_button").performScrollTo().performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("detail_lazy_column")
+            .performScrollToNode(hasTestTag("audio_controls_card"))
+        composeRule.onNodeWithTag("audio_controls_card").assertIsDisplayed()
+        composeRule.onNodeWithTag("mic_mode_left").performScrollTo().performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("anc_one_pod_switch").performScrollTo().performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("conversation_awareness_switch").performScrollTo().performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("personalized_volume_switch").performScrollTo().performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("detail_back_button").performClick()
         composeRule.waitForIdle()
 
-        // 7. Open Battery Trends Analytics with an active profile
+        // 8. Open Battery Trends Analytics with an active profile
         composeRule.onNodeWithTag("top_analytics_button").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("analytics_range_6h").assertIsDisplayed()
         composeRule.onNodeWithTag("analytics_back_button").performClick()
         composeRule.waitForIdle()
+
+        // 9. Verify Devices card opens detail -> edit -> delete returns cleanly to Overview
+        composeRule.onNodeWithTag("top_devices_button").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("saved_profile_card_1").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("detail_edit_button").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("editor_delete_button").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("confirm_removal_button").performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000L) {
+            runCatching {
+                composeRule.onNodeWithTag("empty_add_profile_button").performScrollTo().assertIsDisplayed()
+            }.isSuccess
+        }
     }
 
     @Test

@@ -1,12 +1,15 @@
 package com.example.ui.screens
 
 import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,17 +31,20 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.BluetoothSearching
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.BluetoothConnected
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Hearing
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material.icons.rounded.PrivacyTip
 import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material.icons.rounded.SystemUpdate
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material.icons.rounded.Widgets
+import androidx.core.content.ContextCompat
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -62,6 +68,11 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import com.example.ui.components.ConfirmRemovalDialog
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -98,19 +109,52 @@ fun SettingsScreen(
     onSetShowPopup: (Boolean) -> Unit,
     onSetBatteryNotification: (Boolean) -> Unit,
     onSetFirmwareAlerts: (Boolean) -> Unit,
+    onNotificationPermissionDenied: () -> Unit,
+    onWidgetPinResult: (Boolean) -> Unit,
     onClearAllBatteryHistory: () -> Unit,
     onNavigateBack: () -> Unit,
 ) {
+    var confirmClear by rememberSaveable { mutableStateOf(false) }
+    var showPrivacy by rememberSaveable { mutableStateOf(false) }
+    if (confirmClear) {
+        ConfirmRemovalDialog(stringResource(R.string.settings_clear_history),
+            stringResource(R.string.settings_clear_history_desc), stringResource(R.string.action_clear),
+            onDismiss = { confirmClear = false }, onConfirm = { confirmClear = false; onClearAllBatteryHistory() })
+    }
+    if (showPrivacy) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showPrivacy = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Rounded.PrivacyTip,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
+            title = { Text(stringResource(R.string.privacy_title)) },
+            text = { Text(stringResource(R.string.privacy_body), modifier = Modifier.verticalScroll(rememberScrollState())) },
+            confirmButton = { TextButton(onClick = { showPrivacy = false }) { Text(stringResource(android.R.string.ok)) } }
+        )
+    }
     val context = LocalContext.current
+    val hasNotifPermission: () -> Boolean = {
+        Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+    }
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted ->
         onSetBatteryNotification(granted)
+        if (!granted) onNotificationPermissionDenied()
     }
     val firmwareNotifPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted ->
         onSetFirmwareAlerts(granted)
+        if (!granted) onNotificationPermissionDenied()
     }
 
     Scaffold(
@@ -164,8 +208,8 @@ fun SettingsScreen(
         ) {
             LazyColumn(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .widthIn(max = 640.dp),
+                    .widthIn(max = 640.dp)
+                    .fillMaxSize(),
                 contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 36.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
@@ -217,7 +261,7 @@ fun SettingsScreen(
                             subtitle = stringResource(R.string.settings_notification_enabled_desc),
                             checked = settings.batteryNotificationEnabled,
                             onCheckedChange = { wantEnable ->
-                                if (wantEnable && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                if (wantEnable && !hasNotifPermission() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                                     notificationPermissionLauncher.launch(
                                         Manifest.permission.POST_NOTIFICATIONS
                                     )
@@ -239,7 +283,7 @@ fun SettingsScreen(
                             subtitle = stringResource(R.string.settings_firmware_alerts_desc),
                             checked = settings.firmwareAlertsEnabled,
                             onCheckedChange = { wantEnable ->
-                                if (wantEnable && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                if (wantEnable && !hasNotifPermission() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                                     firmwareNotifPermissionLauncher.launch(
                                         Manifest.permission.POST_NOTIFICATIONS
                                     )
@@ -376,7 +420,10 @@ fun SettingsScreen(
                                     )
                                 }
                                 FilledTonalButton(
-                                    onClick = { CAPodBatteryWidgetProvider.requestPinWidget(context) },
+                                    onClick = {
+                                        val requested = CAPodBatteryWidgetProvider.requestPinWidget(context)
+                                        onWidgetPinResult(requested)
+                                    },
                                     modifier = Modifier
                                         .heightIn(min = 48.dp)
                                         .testTag("pin_widget_button"),
@@ -409,7 +456,7 @@ fun SettingsScreen(
                                 )
                             }
                             OutlinedButton(
-                                onClick = onClearAllBatteryHistory,
+                                onClick = { confirmClear = true },
                                 modifier = Modifier
                                     .heightIn(min = 48.dp)
                                     .testTag("clear_all_history_button"),
@@ -427,25 +474,87 @@ fun SettingsScreen(
                         sectionTitle = stringResource(R.string.settings_section_about),
                         sectionIcon = Icons.Rounded.Info,
                     ) {
-                        Text(
-                            text = stringResource(R.string.app_name),
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold
-                            ),
-                            color = MaterialTheme.colorScheme.onSurface
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = stringResource(R.string.app_name),
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.Bold
+                                    ),
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = stringResource(R.string.settings_protocol_info),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Surface(
+                                shape = RoundedCornerShape(50),
+                                color = MaterialTheme.colorScheme.surfaceContainerHigh
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.settings_version, com.example.BuildConfig.VERSION_NAME),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
+
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 12.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant
                         )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = stringResource(R.string.settings_protocol_info),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = stringResource(R.string.settings_version),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 48.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable { showPrivacy = true }
+                                .padding(vertical = 4.dp)
+                                .testTag("settings_privacy_policy_row"),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.PrivacyTip,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(19.dp)
+                                )
+                            }
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = stringResource(R.string.privacy_title),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = stringResource(R.string.label_privacy_subtitle),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
             }

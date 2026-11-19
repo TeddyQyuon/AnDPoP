@@ -12,6 +12,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,7 +29,6 @@ import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.BluetoothConnected
-import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Hearing
 import androidx.compose.material.icons.rounded.Lock
@@ -62,12 +63,14 @@ import com.example.model.BlePodSnapshot
 import com.example.model.ListeningMode
 import com.example.model.PodFormFactor
 import com.example.ui.theme.BatteryMidAmber
+import com.example.ui.theme.CapodMint
 import com.example.viewmodel.MatchedDeviceState
 
 /**
  * Primary CAPod Device Card displaying live battery gauges, charging badges, case bar,
  * status telemetry icons, and ANC mode controls for a saved device profile.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun MatchedDeviceCard(
     state: MatchedDeviceState,
@@ -124,35 +127,55 @@ fun MatchedDeviceCard(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    color = if (isActiveConnection) {
-                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.72f)
-                    } else {
-                        MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.7f)
-                    },
-                    border = BorderStroke(
-                        width = 1.dp,
+                Box(modifier = Modifier.size(52.dp)) {
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
                         color = if (isActiveConnection) {
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.72f)
                         } else {
-                            MaterialTheme.colorScheme.outlineVariant
-                        }
-                    ),
-                    modifier = Modifier.size(50.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        DeviceModelIcon(
-                            model = model,
-                            tint = if (isActiveConnection) {
-                                MaterialTheme.colorScheme.onPrimaryContainer
+                            MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.7f)
+                        },
+                        border = BorderStroke(
+                            width = 1.dp,
+                            color = if (isActiveConnection) {
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.22f)
                             } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.78f)
-                            },
-                            ventTint = MaterialTheme.colorScheme.surfaceContainer,
-                            iconSize = 30.dp
-                        )
+                                MaterialTheme.colorScheme.outlineVariant
+                            }
+                        ),
+                        modifier = Modifier.size(50.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            DeviceModelIcon(
+                                model = model,
+                                tint = if (isActiveConnection) {
+                                    MaterialTheme.colorScheme.onPrimaryContainer
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.78f)
+                                },
+                                ventTint = MaterialTheme.colorScheme.surfaceContainer,
+                                iconSize = 30.dp
+                            )
+                        }
                     }
+
+                    // Crisp status dot anchored to the device badge
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .size(13.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surface)
+                            .padding(2.dp)
+                            .clip(CircleShape)
+                            .background(
+                                when {
+                                    state.isLive -> CapodMint
+                                    state.isBluetoothConnected -> MaterialTheme.colorScheme.primary
+                                    else -> MaterialTheme.colorScheme.outline
+                                }
+                            )
+                    )
                 }
 
                 Spacer(modifier = Modifier.width(12.dp))
@@ -182,9 +205,9 @@ fun MatchedDeviceCard(
 
                     Spacer(modifier = Modifier.height(3.dp))
 
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
                         Text(
                             text = model.displayName,
@@ -194,10 +217,25 @@ fun MatchedDeviceCard(
                             overflow = TextOverflow.Ellipsis
                         )
 
+                        if (state.isLive) {
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.78f)
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.status_live_ble),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    maxLines = 1,
+                                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+
                         if (state.isBluetoothConnected) {
                             Surface(
                                 shape = RoundedCornerShape(6.dp),
-                                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.75f)
+                                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.78f)
                             ) {
                                 Row(
                                     modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp),

@@ -32,6 +32,7 @@ import com.example.model.DiscoveredBleDevice
 import com.example.model.FirmwareCatalog
 import com.example.model.FirmwareEvaluation
 import com.example.model.ListeningMode
+import com.example.model.MicrophoneMode
 import com.example.model.PodFormFactor
 import com.example.model.PodModel
 import com.example.model.ThemeMode
@@ -50,6 +51,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -206,8 +208,6 @@ class CAPodViewModel(application: Application) : AndroidViewModel(application) {
             checkingFirmwareId = flags.checkingFirmwareId,
         )
 
-        handleTelemetrySideEffects(matched, core.settings)
-
         val popupDevice = flags.popupProfileId?.let { targetId ->
             matched.firstOrNull { it.profile.id == targetId && it.isLive }
         }
@@ -232,7 +232,7 @@ class CAPodViewModel(application: Application) : AndroidViewModel(application) {
         )
     }.stateIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
+        started = SharingStarted.Eagerly,
         initialValue = CAPodUiState()
     )
 
@@ -259,6 +259,17 @@ class CAPodViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         bleScanner.registerLifecycleReceivers()
+
+        // Process telemetry side effects (widget, QS tiles, battery logging, ear detection, popups)
+        // outside the state combine transform so unrelated UI flag flips never trigger redundant IPC.
+        viewModelScope.launch {
+            uiState
+                .map { Triple(it.matchedDevices, it.settings, it.ancQuickTileProfileId) }
+                .distinctUntilChanged()
+                .collect { (matched, settings, _) ->
+                    handleTelemetrySideEffects(matched, settings)
+                }
+        }
 
         // Forward real Android Bluetooth bond state updates to snackbar feedback
         viewModelScope.launch {
@@ -406,9 +417,20 @@ class CAPodViewModel(application: Application) : AndroidViewModel(application) {
     fun deleteProfile(profileId: Long, onDeleted: () -> Unit = {}) {
         viewModelScope.launch {
             profileRepository.deleteById(profileId)
+            deviceNameRepository.clearCustomName(bluetoothAddress = null, profileId = profileId)
             previousInEarState.remove(profileId)
             previousLidOpenState.remove(profileId)
+            lastLoggedBatteryKey.remove(profileId)
+            lastLoggedTimestamp.remove(profileId)
             autoCheckedFirmwareProfileIds.remove(profileId)
+            if (popupProfileId.value == profileId) {
+                popupProfileId.value = null
+            }
+            if (ancQuickTileProfileId.value == profileId) {
+                ancQuickTileProfileId.value = 0L
+                AncQuickSettingsTile.setTargetProfileId(getApplication(), 0L)
+                AncQuickSettingsTile.requestRefresh(getApplication())
+            }
             onDeleted()
             _snackbarEvents.tryEmit("Device profile removed")
         }
@@ -500,6 +522,94 @@ class CAPodViewModel(application: Application) : AndroidViewModel(application) {
                 _snackbarEvents.tryEmit(err.message ?: "Saved mode preference; connect pods to apply.")
             }
         }
+    }
+
+    fun setMicrophoneMode(profile: DeviceProfileEntity, mode: MicrophoneMode) {
+        viewModelScope.launch {
+            profileRepository.updateMicrophoneMode(profile.id, mode.id)
+            val result = controlClient.sendMicrophoneMode(profile.linkedBluetoothAddress, mode)
+            result.onSuccess {
+                val label = when (mode) {
+                    MicrophoneMode.AUTOMATIC -> "Automatic"
+                    MicrophoneMode.ALWAYS_LEFT -> "Always Left"
+                    MicrophoneMode.ALWAYS_RIGHT -> "Always Right"
+                }
+                _snackbarEvents.tryEmit("Microphone set to $label")
+            }.onFailure { err ->
+                _snackbarEvents.tryEmit(err.message ?: "Saved microphone preference")
+            }
+        }
+    }
+
+    fun setConversationalAwareness(profile: DeviceProfileEntity, enabled: Boolean) {
+        viewModelScope.launch {
+            profileRepository.updateConversationalAwareness(profile.id, enabled)
+            val result = controlClient.sendConversationalAwareness(profile.linkedBluetoothAddress, enabled)
+            result.onSuccess {
+                _snackbarEvents.tryEmit(
+                    "Conversation Awareness ${if (enabled) "enabled" else "disabled"}"
+                )
+            }.onFailure { err ->
+                _snackbarEvents.tryEmit(err.message ?: "Saved Conversation Awareness preference")
+            }
+        }
+    }
+
+    fun setPersonalizedVolume(profile: DeviceProfileEntity, enabled: Boolean) {
+        viewModelScope.launch {
+            profileRepository.updatePersonalizedVolume(profile.id, enabled)
+            val result = controlClient.sendPersonalizedVolume(profile.linkedBluetoothAddress, enabled)
+            result.onSuccess {
+                _snackbarEvents.tryEmit(
+                    "Personalized Volume ${if (enabled) "enabled" else "disabled"}"
+                )
+            }.onFailure { err ->
+                _snackbarEvents.tryEmit(err.message ?: "Saved Personalized Volume preference")
+            }
+        }
+    }
+
+    fun setAllowAncOnePod(profile: DeviceProfileEntity, enabled: Boolean) {
+        viewModelScope.launch {
+            profileRepository.updateAllowAncOnePod(profile.id, enabled)
+            val result = controlClient.sendAllowAncWithOnePod(profile.linkedBluetoothAddress, enabled)
+            result.onSuccess {
+                _snackbarEvents.tryEmit(
+                    "One-Pod Noise Cancellation ${if (enabled) "enabled" else "disabled"}"
+                )
+            }.onFailure { err ->
+                _snackbarEvents.tryEmit(err.message ?: "Saved One-Pod ANC preference")
+            }
+        }
+    }
+
+    fun setAdaptiveNoiseLevel(profile: DeviceProfileEntity, levelPercent: Int) {
+        val clamped = levelPercent.coerceIn(0, 100)
+        viewModelScope.launch {
+            profileRepository.updateAdaptiveNoiseLevel(profile.id, clamped)
+            val result = controlClient.sendAdaptiveNoiseLevel(profile.linkedBluetoothAddress, clamped)
+            result.onSuccess {
+                _snackbarEvents.tryEmit("Adaptive Audio level updated ($clamped%)")
+            }.onFailure { err ->
+                _snackbarEvents.tryEmit(err.message ?: "Saved Adaptive Audio level ($clamped%)")
+            }
+        }
+    }
+
+    fun notifyNotificationPermissionDenied() {
+        _snackbarEvents.tryEmit(
+            getApplication<Application>().getString(com.example.R.string.notif_permission_denied_snackbar)
+        )
+    }
+
+    fun notifyWidgetPinResult(requested: Boolean) {
+        val appContext = getApplication<Application>()
+        val msg = if (requested) {
+            appContext.getString(com.example.R.string.widget_pin_requested_snackbar)
+        } else {
+            appContext.getString(com.example.R.string.widget_pin_unavailable_snackbar)
+        }
+        _snackbarEvents.tryEmit(msg)
     }
 
     // Settings updates
@@ -797,9 +907,12 @@ class CAPodViewModel(application: Application) : AndroidViewModel(application) {
         checkingFirmwareId: Long?,
     ): Pair<List<MatchedDeviceState>, List<BlePodSnapshot>> {
         val remaining = snapshots.sortedByDescending { it.rssi }.toMutableList()
-        val matchedStates = mutableListOf<MatchedDeviceState>()
+        val matches = mutableMapOf<Long, MatchedDeviceState>()
+        fun hasIdentity(profile: DeviceProfileEntity) =
+            !profile.identityResolvingKeyHex.isNullOrBlank() || !profile.linkedBluetoothAddress.isNullOrBlank()
 
-        for (profile in profiles) {
+        // Reserve identity matches before considering profiles configured for proximity matching.
+        for (profile in profiles.sortedByDescending(::hasIdentity)) {
             val bonded = profile.linkedBluetoothAddress?.let { addr ->
                 bondedDevices.firstOrNull { it.address.equals(addr, ignoreCase = true) }
             }
@@ -814,7 +927,7 @@ class CAPodViewModel(application: Application) : AndroidViewModel(application) {
                 -1
             }
 
-            var irkVerified = matchedIndex >= 0
+            val irkVerified = matchedIndex >= 0
 
             // 2. Direct MAC address match (for non-randomized BLE devices)
             if (matchedIndex < 0 && !profile.linkedBluetoothAddress.isNullOrBlank()) {
@@ -824,10 +937,15 @@ class CAPodViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
 
-            // 3. Model code match above min RSSI threshold
-            if (matchedIndex < 0) {
-                matchedIndex = remaining.indexOfFirst { snap ->
-                    snap.rssi >= profile.minRssiDbm && isCompatibleModel(profile.model, snap.model)
+            if (matchedIndex < 0 && !hasIdentity(profile)) {
+                val competingProfile = profiles.any {
+                    it.id != profile.id && !hasIdentity(it) && isCompatibleModel(it.model, profile.model)
+                }
+                if (!competingProfile) {
+                    matchedIndex = remaining.indices.singleOrNull { index ->
+                        val candidate = remaining[index]
+                        candidate.rssi >= profile.minRssiDbm && isCompatibleModel(profile.model, candidate.model)
+                    } ?: -1
                 }
             }
 
@@ -842,19 +960,17 @@ class CAPodViewModel(application: Application) : AndroidViewModel(application) {
                 bluetoothAddress = profile.linkedBluetoothAddress,
             )
 
-            matchedStates.add(
-                MatchedDeviceState(
-                    profile = profile,
-                    liveSnapshot = claimedSnapshot,
-                    bondedDevice = bonded,
-                    customName = resolvedCustomName,
-                    isUpdatingAnc = updatingAncId == profile.id,
-                    isCheckingFirmware = checkingFirmwareId == profile.id,
-                )
+            matches[profile.id] = MatchedDeviceState(
+                profile = profile,
+                liveSnapshot = claimedSnapshot,
+                bondedDevice = bonded,
+                customName = resolvedCustomName,
+                isUpdatingAnc = updatingAncId == profile.id,
+                isCheckingFirmware = checkingFirmwareId == profile.id,
             )
         }
 
-        return matchedStates to remaining
+        return profiles.map { matches.getValue(it.id) } to remaining
     }
 
     private fun isCompatibleModel(profileModel: PodModel, detectedModel: PodModel): Boolean {
@@ -932,7 +1048,9 @@ class CAPodViewModel(application: Application) : AndroidViewModel(application) {
             }
 
             val wasInEar = previousInEarState[profile.id]
-            if (settings.automaticEarDetectionEnabled && wasInEar != null && wasInEar != currentlyInEar) {
+            val knownDevice = snapshot.isIrkVerified ||
+                snapshot.address.equals(profile.linkedBluetoothAddress, ignoreCase = true)
+            if (knownDevice && settings.automaticEarDetectionEnabled && wasInEar != null && wasInEar != currentlyInEar) {
                 if (!currentlyInEar && profile.autoPauseEnabled) {
                     controlClient.dispatchMediaPause()
                 } else if (currentlyInEar && profile.autoResumeEnabled) {
@@ -942,10 +1060,10 @@ class CAPodViewModel(application: Application) : AndroidViewModel(application) {
             previousInEarState[profile.id] = currentlyInEar
         }
 
-        if (!updatedWidget && matched.isNotEmpty()) {
+        if (!updatedWidget) {
             CAPodBatteryWidgetProvider.updateFromSnapshot(
                 appContext,
-                matched.first().displayName,
+                matched.firstOrNull()?.displayName ?: appContext.getString(com.example.R.string.app_name),
                 null
             )
             CAPodQuickSettingsTile.requestRefresh(appContext)

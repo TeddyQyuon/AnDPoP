@@ -115,7 +115,7 @@ class MainActivity : ComponentActivity() {
             val navController = rememberNavController()
             val snackbarHostState = remember { SnackbarHostState() }
 
-            var hasAttemptedStartupPrompt by rememberSaveable { mutableStateOf(false) }
+
             var hasPromptedUserManually by rememberSaveable { mutableStateOf(false) }
             var pendingEnableBluetooth by rememberSaveable { mutableStateOf(false) }
             var permissionDialogState by remember {
@@ -190,19 +190,6 @@ class MainActivity : ComponentActivity() {
                 permissionLauncher.launch(missing)
             }
 
-            // Proactively request Bluetooth scan/connect permissions once on first launch
-            // when Bluetooth hardware is present so the scanning UI works immediately.
-            LaunchedEffect(uiState.hardwareState) {
-                if (uiState.hardwareState == BluetoothHardwareState.PERMISSION_REQUIRED &&
-                    !hasAttemptedStartupPrompt
-                ) {
-                    hasAttemptedStartupPrompt = true
-                    val missing = missingBluetoothPermissions()
-                    if (missing.isNotEmpty() && !shouldShowBluetoothRationale(missing)) {
-                        permissionLauncher.launch(missing)
-                    }
-                }
-            }
 
             // Refresh Bluetooth hardware state and resume scanning when returning from Settings or background
             val lifecycleOwner = LocalLifecycleOwner.current

@@ -42,6 +42,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -65,6 +67,7 @@ import com.example.data.DeviceProfileEntity
 import com.example.model.BondedBluetoothDevice
 import com.example.ui.components.DeviceModelIcon
 import com.example.ui.components.RenameDeviceDialog
+import com.example.ui.theme.CapodMint
 import com.example.viewmodel.CAPodUiState
 import com.example.viewmodel.MatchedDeviceState
 
@@ -72,8 +75,10 @@ import com.example.viewmodel.MatchedDeviceState
 @Composable
 fun DevicesScreen(
     uiState: CAPodUiState,
+    snackbarHostState: SnackbarHostState,
     onNavigateBack: () -> Unit,
     onOpenDiscovery: () -> Unit,
+    onOpenDeviceDetail: (Long) -> Unit,
     onAddProfile: () -> Unit,
     onEditProfile: (Long) -> Unit,
     onDeleteProfile: (Long) -> Unit,
@@ -83,7 +88,7 @@ fun DevicesScreen(
     onResetBondedDeviceName: (String, String) -> Unit,
     onQuickAddBonded: (BondedBluetoothDevice) -> Unit,
 ) {
-    var pendingDeleteProfile by remember { mutableStateOf<DeviceProfileEntity?>(null) }
+    var pendingDeleteMatched by remember { mutableStateOf<MatchedDeviceState?>(null) }
     var renamingMatched by remember { mutableStateOf<MatchedDeviceState?>(null) }
     var renamingBonded by remember { mutableStateOf<BondedBluetoothDevice?>(null) }
 
@@ -98,6 +103,7 @@ fun DevicesScreen(
         modifier = Modifier.fillMaxSize(),
         contentWindowInsets = WindowInsets.safeDrawing,
         containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -160,8 +166,8 @@ fun DevicesScreen(
         ) {
             LazyColumn(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .widthIn(max = 640.dp),
+                    .widthIn(max = 640.dp)
+                    .fillMaxSize(),
                 contentPadding = PaddingValues(
                     start = 16.dp,
                     end = 16.dp,
@@ -215,6 +221,7 @@ fun DevicesScreen(
                     ) { matched ->
                         val profile = matched.profile
                         Card(
+                            onClick = { onOpenDeviceDetail(profile.id) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .testTag("saved_profile_card_${profile.id}"),
@@ -222,106 +229,144 @@ fun DevicesScreen(
                             colors = CardDefaults.cardColors(
                                 containerColor = MaterialTheme.colorScheme.surface
                             ),
-                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                            border = BorderStroke(
+                                1.dp,
+                                if (matched.isLive || matched.isBluetoothConnected) {
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.28f)
+                                } else {
+                                    MaterialTheme.colorScheme.outlineVariant
+                                }
+                            )
                         ) {
-                            Row(
+                            Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 14.dp, vertical = 14.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                                    .padding(horizontal = 14.dp, vertical = 14.dp)
                             ) {
-                                Surface(
-                                    shape = RoundedCornerShape(14.dp),
-                                    color = MaterialTheme.colorScheme.surfaceContainerLow,
-                                    modifier = Modifier.size(48.dp)
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Box(contentAlignment = Alignment.Center) {
-                                        DeviceModelIcon(
-                                            model = profile.model,
-                                            tint = MaterialTheme.colorScheme.onSurface,
-                                            ventTint = MaterialTheme.colorScheme.surfaceContainer,
-                                            iconSize = 28.dp
-                                        )
+                                    Box(modifier = Modifier.size(50.dp)) {
+                                        Surface(
+                                            shape = RoundedCornerShape(14.dp),
+                                            color = MaterialTheme.colorScheme.surfaceContainerLow,
+                                            modifier = Modifier.size(48.dp)
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                DeviceModelIcon(
+                                                    model = profile.model,
+                                                    tint = MaterialTheme.colorScheme.onSurface,
+                                                    ventTint = MaterialTheme.colorScheme.surfaceContainer,
+                                                    iconSize = 28.dp
+                                                )
+                                            }
+                                        }
+                                        if (matched.isLive || matched.isBluetoothConnected) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .align(Alignment.BottomEnd)
+                                                    .size(12.dp)
+                                                    .clip(CircleShape)
+                                                    .background(MaterialTheme.colorScheme.surface)
+                                                    .padding(2.dp)
+                                                    .clip(CircleShape)
+                                                    .background(
+                                                        if (matched.isLive) CapodMint
+                                                        else MaterialTheme.colorScheme.primary
+                                                    )
+                                            )
+                                        }
                                     }
-                                }
 
-                                Spacer(modifier = Modifier.width(12.dp))
+                                    Spacer(modifier = Modifier.width(12.dp))
 
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = matched.displayName,
-                                        style = MaterialTheme.typography.titleMedium.copy(
-                                            fontWeight = FontWeight.Bold
-                                        ),
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                    Text(
-                                        text = profile.model.displayName,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Row(
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
+                                    Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = "Min ${profile.minRssiDbm} dBm",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            text = matched.displayName,
+                                            style = MaterialTheme.typography.titleMedium.copy(
+                                                fontWeight = FontWeight.Bold
+                                            ),
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
                                         )
-                                        if (!profile.linkedBluetoothAddress.isNullOrBlank()) {
-                                            Icon(
-                                                imageVector = Icons.Rounded.Bluetooth,
-                                                contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.primary,
-                                                modifier = Modifier.size(13.dp)
+                                        Text(
+                                            text = profile.model.displayName,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = "Min ${profile.minRssiDbm} dBm",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
-                                        }
-                                        if (!profile.identityResolvingKeyHex.isNullOrBlank()) {
-                                            Icon(
-                                                imageVector = Icons.Rounded.Lock,
-                                                contentDescription = stringResource(R.string.cd_encrypted),
-                                                tint = MaterialTheme.colorScheme.secondary,
-                                                modifier = Modifier.size(13.dp)
-                                            )
+                                            if (!profile.linkedBluetoothAddress.isNullOrBlank()) {
+                                                Icon(
+                                                    imageVector = Icons.Rounded.Bluetooth,
+                                                    contentDescription = null,
+                                                    tint = MaterialTheme.colorScheme.primary,
+                                                    modifier = Modifier.size(13.dp)
+                                                )
+                                            }
+                                            if (!profile.identityResolvingKeyHex.isNullOrBlank()) {
+                                                Icon(
+                                                    imageVector = Icons.Rounded.Lock,
+                                                    contentDescription = stringResource(R.string.cd_encrypted),
+                                                    tint = MaterialTheme.colorScheme.secondary,
+                                                    modifier = Modifier.size(13.dp)
+                                                )
+                                            }
                                         }
                                     }
                                 }
 
-                                IconButton(
-                                    onClick = { renamingMatched = matched },
-                                    modifier = Modifier.testTag("devices_rename_${profile.id}")
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Edit,
-                                        contentDescription = stringResource(R.string.cd_rename_device),
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
+                                Spacer(modifier = Modifier.height(8.dp))
 
-                                IconButton(
-                                    onClick = { onEditProfile(profile.id) },
-                                    modifier = Modifier.testTag("devices_edit_${profile.id}")
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.End,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Tune,
-                                        contentDescription = stringResource(R.string.cd_edit_profile),
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
+                                    IconButton(
+                                        onClick = { renamingMatched = matched },
+                                        modifier = Modifier.testTag("devices_rename_${profile.id}")
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Edit,
+                                            contentDescription = stringResource(R.string.cd_rename_device),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
 
-                                IconButton(
-                                    onClick = { pendingDeleteProfile = profile },
-                                    modifier = Modifier.testTag("devices_delete_${profile.id}")
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Outlined.DeleteOutline,
-                                        contentDescription = stringResource(R.string.cd_delete_profile),
-                                        tint = MaterialTheme.colorScheme.error
-                                    )
+                                    IconButton(
+                                        onClick = { onEditProfile(profile.id) },
+                                        modifier = Modifier.testTag("devices_edit_${profile.id}")
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Tune,
+                                            contentDescription = stringResource(R.string.cd_edit_profile),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+
+                                    IconButton(
+                                        onClick = { pendingDeleteMatched = matched },
+                                        modifier = Modifier.testTag("devices_delete_${profile.id}")
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Outlined.DeleteOutline,
+                                            contentDescription = stringResource(R.string.cd_delete_profile),
+                                            tint = MaterialTheme.colorScheme.error
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -425,17 +470,17 @@ fun DevicesScreen(
         }
     }
 
-    val toDelete = pendingDeleteProfile
+    val toDelete = pendingDeleteMatched
     if (toDelete != null) {
         AlertDialog(
-            onDismissRequest = { pendingDeleteProfile = null },
+            onDismissRequest = { pendingDeleteMatched = null },
             title = { Text(stringResource(R.string.confirm_delete_title)) },
-            text = { Text(stringResource(R.string.confirm_delete_message, toDelete.name)) },
+            text = { Text(stringResource(R.string.confirm_delete_message, toDelete.displayName)) },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        onDeleteProfile(toDelete.id)
-                        pendingDeleteProfile = null
+                        onDeleteProfile(toDelete.profile.id)
+                        pendingDeleteMatched = null
                     },
                     modifier = Modifier.testTag("confirm_delete_profile_button")
                 ) {
@@ -446,7 +491,7 @@ fun DevicesScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { pendingDeleteProfile = null }) {
+                TextButton(onClick = { pendingDeleteMatched = null }) {
                     Text(stringResource(R.string.action_cancel))
                 }
             }

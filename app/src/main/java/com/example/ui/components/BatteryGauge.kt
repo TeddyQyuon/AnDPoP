@@ -130,7 +130,7 @@ fun CircularPodBatteryGauge(
                 modifier = Modifier
                     .size(ringSize - 16.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)),
+                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)),
                 contentAlignment = Alignment.Center
             ) {
                 SinglePodGlyph(
@@ -144,6 +144,21 @@ fun CircularPodBatteryGauge(
                     } else {
                         stringResource(R.string.cd_pod_left)
                     }
+                )
+            }
+
+            // Crisp L / R side badge anchored at bottom of the gauge ring
+            Surface(
+                modifier = Modifier.align(Alignment.BottomCenter),
+                shape = RoundedCornerShape(50),
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                tonalElevation = 1.dp,
+            ) {
+                Text(
+                    text = if (isRight) "R" else "L",
+                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp)
                 )
             }
         }

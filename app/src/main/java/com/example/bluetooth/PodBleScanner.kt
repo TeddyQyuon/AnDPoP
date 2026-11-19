@@ -5,7 +5,7 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
-import android.bluetooth.BluetoothProfile
+
 import android.bluetooth.le.BluetoothLeScanner
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanFilter
@@ -238,7 +238,6 @@ class PodBleScanner(private val context: Context) {
 
     @SuppressLint("MissingPermission")
     fun startScanning(scanMode: BleScanMode = currentScanMode) {
-        currentScanMode = scanMode
         val state = resolveHardwareState()
         _hardwareState.value = state
         if (state != BluetoothHardwareState.READY) {
@@ -252,6 +251,7 @@ class PodBleScanner(private val context: Context) {
             return
         }
 
+        if (_isScanning.value && currentScanMode == scanMode) return
         if (_isScanning.value) {
             stopScanning()
         }
@@ -273,6 +273,7 @@ class PodBleScanner(private val context: Context) {
 
         try {
             scanner.startScan(listOf(appleFilter), settings, scanCallback)
+            currentScanMode = scanMode
             activeScanner = scanner
             _isScanning.value = true
         } catch (e: SecurityException) {
@@ -430,15 +431,8 @@ class PodBleScanner(private val context: Context) {
         }
 
         try {
-            val isA2dpConnected = adapter.getProfileConnectionState(BluetoothProfile.A2DP) ==
-                BluetoothProfile.STATE_CONNECTED
-            val isHeadsetConnected = adapter.getProfileConnectionState(BluetoothProfile.HEADSET) ==
-                BluetoothProfile.STATE_CONNECTED
-
             val bonded = adapter.bondedDevices.orEmpty().map { device ->
-                val connected = isDeviceConnected(device) ||
-                    connectedAddresses.contains(device.address) ||
-                    ((isA2dpConnected || isHeadsetConnected) && connectedAddresses.contains(device.address))
+                val connected = isDeviceConnected(device) || device.address in connectedAddresses
                 BondedBluetoothDevice(
                     name = device.name?.takeIf { it.isNotBlank() } ?: device.address,
                     address = device.address,

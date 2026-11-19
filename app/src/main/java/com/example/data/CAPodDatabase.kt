@@ -60,7 +60,7 @@ abstract class CAPodDatabase : RoomDatabase() {
                 "personalizedVolumeEnabled" to "INTEGER NOT NULL DEFAULT 0",
                 "allowAncOnePodEnabled" to "INTEGER NOT NULL DEFAULT 0",
                 "adaptiveNoiseLevel" to "INTEGER NOT NULL DEFAULT 50",
-                "microphoneModeId" to "TEXT NOT NULL DEFAULT 'automatic'",
+                "microphoneModeId" to "TEXT NOT NULL DEFAULT 'auto'",
                 "lastFirmwareVersion" to "TEXT",
                 "lastFirmwareCheckMillis" to "INTEGER",
             )

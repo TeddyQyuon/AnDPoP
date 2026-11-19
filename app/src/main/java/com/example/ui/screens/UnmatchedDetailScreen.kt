@@ -33,6 +33,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -56,6 +58,7 @@ import com.example.ui.components.SignalBarsIcon
 @Composable
 fun UnmatchedDetailScreen(
     unmatchedDevices: List<BlePodSnapshot>,
+    snackbarHostState: SnackbarHostState,
     onQuickAddProfile: (BlePodSnapshot) -> Unit,
     onNavigateBack: () -> Unit,
 ) {
@@ -63,6 +66,7 @@ fun UnmatchedDetailScreen(
         modifier = Modifier.fillMaxSize(),
         contentWindowInsets = WindowInsets.safeDrawing,
         containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -97,8 +101,8 @@ fun UnmatchedDetailScreen(
             if (unmatchedDevices.isEmpty()) {
                 Column(
                     modifier = Modifier
-                        .fillMaxSize()
                         .widthIn(max = 520.dp)
+                        .fillMaxSize()
                         .padding(32.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
@@ -127,8 +131,8 @@ fun UnmatchedDetailScreen(
             } else {
                 LazyColumn(
                     modifier = Modifier
-                        .fillMaxSize()
                         .widthIn(max = 640.dp)
+                        .fillMaxSize()
                         .navigationBarsPadding(),
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -209,23 +213,23 @@ private fun UnmatchedPacketCard(
             ) {
                 if (snapshot.model.formFactor == PodFormFactor.SINGLE_HEADSET) {
                     TelemetryChip(
-                        label = "Headset",
+                        label = stringResource(R.string.cd_headset),
                         value = snapshot.headsetBattery?.let { "$it%" } ?: "--%",
                         modifier = Modifier.weight(1f)
                     )
                 } else {
                     TelemetryChip(
-                        label = "Left",
+                        label = stringResource(R.string.label_left_pod),
                         value = snapshot.leftBattery?.let { "$it%" } ?: "--%",
                         modifier = Modifier.weight(1f)
                     )
                     TelemetryChip(
-                        label = "Right",
+                        label = stringResource(R.string.label_right_pod),
                         value = snapshot.rightBattery?.let { "$it%" } ?: "--%",
                         modifier = Modifier.weight(1f)
                     )
                     TelemetryChip(
-                        label = "Case",
+                        label = stringResource(R.string.label_case),
                         value = snapshot.caseBattery?.let { "$it%" } ?: "--%",
                         modifier = Modifier.weight(1f)
                     )
