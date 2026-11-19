@@ -1,6 +1,6 @@
+crowdin.yml
 *.iml
 .gradle
-.kotlin
 /local.properties
 /.idea/caches
 /.idea/libraries
@@ -14,9 +14,4 @@
 .externalNativeBuild
 .cxx
 local.properties
-.env
-debug.keystore
-*.jks
-*.keystore
-.idea/
-.scratch/
+/.kotlin
