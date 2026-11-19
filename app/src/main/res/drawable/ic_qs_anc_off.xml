@@ -1,0 +1,13 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- ANC Off: headphones outline with diagonal off slash -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12,5C15.87,5 19,8.13 19,12V13H16C15.45,13 15,13.45 15,14V14.17L20.66,19.83C20.88,19.59 21,19.31 21,19V12C21,7.03 16.97,3 12,3C10.17,3 8.46,3.55 7.04,4.5L8.49,5.95C9.53,5.35 10.72,5 12,5Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M2.81,2.81L1.39,4.22L4.38,7.21C3.51,8.59 3,10.23 3,12V19C3,20.1 3.9,21 5,21H8C8.55,21 9,20.55 9,20V14C9,13.45 8.55,13 8,13H5V12C5,10.75 5.33,9.59 5.9,8.58L15,17.68V20C15,20.55 15.45,21 16,21H18.32L19.78,22.46L21.19,21.05L2.81,2.81Z" />
+</vector>

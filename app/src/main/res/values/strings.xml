@@ -1,0 +1,270 @@
+<resources>
+    <string name="app_name">CAPod</string>
+    <string name="brand_badge_companion">Companion</string>
+
+    <!-- Navigation & Screen Titles -->
+    <string name="title_overview">CAPod</string>
+    <string name="title_devices">Device Profiles</string>
+    <string name="title_add_profile">Add Device Profile</string>
+    <string name="title_edit_profile">Edit Device Profile</string>
+    <string name="title_unmatched">Unmatched Devices</string>
+    <string name="title_settings">Settings</string>
+
+    <!-- Top Bar & Common Actions -->
+    <string name="cd_back">Navigate back</string>
+    <string name="cd_toggle_scan">Toggle Bluetooth scanning</string>
+    <string name="cd_manage_devices">Manage device profiles</string>
+    <string name="cd_open_settings">Open settings</string>
+    <string name="cd_edit_profile">Configure device profile</string>
+    <string name="cd_add_profile">Add new device profile</string>
+    <string name="cd_delete_profile">Delete device profile</string>
+    <string name="cd_signal_strength">Bluetooth signal strength</string>
+    <string name="cd_pod_left">Left earbud</string>
+    <string name="cd_pod_right">Right earbud</string>
+    <string name="cd_pod_case">Charging case</string>
+    <string name="cd_headset">Headphones</string>
+    <string name="cd_in_ear">In ear</string>
+    <string name="cd_charging">Charging</string>
+    <string name="cd_connected">Bluetooth connected</string>
+    <string name="cd_encrypted">Identity key configured</string>
+
+    <!-- Permissions & Bluetooth States -->
+    <string name="perm_title">Bluetooth access needed</string>
+    <string name="perm_description">CAPod uses Bluetooth Low Energy to read battery levels, charging state, and ear detection directly from nearby AirPods and Beats.</string>
+    <string name="perm_grant_button">Grant Bluetooth access</string>
+    <string name="bt_off_title">Bluetooth is turned off</string>
+    <string name="bt_off_description">Turn on Bluetooth so CAPod can scan nearby devices and monitor your connected audio profiles.</string>
+    <string name="bt_enable_button">Enable Bluetooth</string>
+    <string name="bt_unavailable_title">Bluetooth LE unavailable</string>
+    <string name="bt_unavailable_description">This device does not expose a Bluetooth Low Energy adapter. You can still configure and manage device profiles.</string>
+    <string name="scan_paused_banner">Bluetooth scanning is paused</string>
+    <string name="scan_resume_button">Resume</string>
+
+    <!-- Overview & Device Cards -->
+    <string name="status_scanning_title">Scanning for nearby pods</string>
+    <string name="status_scanning_subtitle">Open your AirPods or Beats case nearby, or add a profile from Devices so CAPod recognizes your gear automatically.</string>
+    <string name="action_add_first_profile">Add Device Profile</string>
+    <string name="status_waiting_signal">Waiting for signal</string>
+    <string name="status_waiting_hint">Open the lid or wear your pods nearby to receive live telemetry</string>
+    <string name="status_charging_badge">Charging</string>
+    <string name="status_in_ear">In ear</string>
+    <string name="status_lid_open">Case open</string>
+    <string name="status_connected">Connected</string>
+    <string name="status_paired_only">Paired</string>
+    <string name="label_left_pod">Left</string>
+    <string name="label_right_pod">Right</string>
+    <string name="label_case">Case</string>
+    <string name="label_battery_unknown">--%</string>
+    <string name="label_last_seen_just_now">Just now</string>
+
+    <!-- Listening Modes -->
+    <string name="anc_off">Off</string>
+    <string name="anc_noise_cancellation">Noise Cancellation</string>
+    <string name="anc_transparency">Transparency</string>
+    <string name="anc_adaptive">Adaptive</string>
+
+    <!-- Unmatched Devices Card & Screen -->
+    <string name="unmatched_title">Unmatched devices</string>
+    <string name="unmatched_singular_body">1 nearby device was detected without a matching profile. Show it for available details. If it is yours, add a profile from Devices to recognize it.</string>
+    <string name="unmatched_plural_body">%1$d nearby devices were detected without a matching profile. Show them for available details. If one is yours, add a profile from Devices to recognize it.</string>
+    <string name="action_show">Show</string>
+    <string name="action_hide">Hide</string>
+    <string name="action_inspect_all">Inspect packets</string>
+    <string name="action_create_profile">Add profile</string>
+    <string name="unmatched_empty_title">No unmatched devices nearby</string>
+    <string name="unmatched_empty_subtitle">Unrecognized Apple Continuity BLE broadcasts detected within range will appear here in real time.</string>
+    <string name="label_raw_payload">Apple 0x004C Payload</string>
+
+    <!-- Devices & Profile Editor -->
+    <string name="devices_empty_title">No device profiles yet</string>
+    <string name="devices_empty_subtitle">Add a profile for your AirPods or Beats to track exact battery gauges, charging time estimates, and ear detection.</string>
+    <string name="section_paired_bluetooth">Paired Bluetooth Audio Devices</string>
+    <string name="section_saved_profiles">Saved Profiles</string>
+    <string name="label_profile_name">Profile name</string>
+    <string name="hint_profile_name">My AirPods Pro</string>
+    <string name="label_device_model">Device model</string>
+    <string name="label_linked_bluetooth">Linked Bluetooth device</string>
+    <string name="label_no_linked_device">Match by BLE broadcast only</string>
+    <string name="label_min_rssi">Minimum signal threshold</string>
+    <string name="label_irk_optional">Identity Resolving Key (optional)</string>
+    <string name="hint_irk">32-character hex key (16 bytes)</string>
+    <string name="helper_irk">Used to verify randomized Bluetooth addresses for higher accuracy in crowded spaces.</string>
+    <string name="label_auto_pause">Auto-pause when removed</string>
+    <string name="desc_auto_pause">Pause media playback when an earbud leaves your ear.</string>
+    <string name="label_auto_resume">Auto-resume when inserted</string>
+    <string name="desc_auto_resume">Resume media playback when you put your earbuds back in.</string>
+    <string name="label_one_pod_mode">One-pod ear detection</string>
+    <string name="desc_one_pod_mode">Keep media playing as long as at least one earbud stays in your ear.</string>
+    <string name="action_save_profile">Save profile</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="confirm_delete_title">Delete profile?</string>
+    <string name="confirm_delete_message">CAPod will stop matching %1$s until you add it again.</string>
+
+    <!-- Connection Popup -->
+    <string name="popup_dismiss">Dismiss</string>
+    <string name="popup_open_details">Details</string>
+
+    <!-- Settings -->
+    <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_theme">Theme</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="settings_dynamic_color">Dynamic color</string>
+    <string name="settings_dynamic_color_desc">Adapt accent surfaces to your Android wallpaper</string>
+
+    <string name="settings_section_scanner">Bluetooth Scanner</string>
+    <string name="settings_scan_mode">Scan responsiveness</string>
+    <string name="scan_mode_low_latency">Fast</string>
+    <string name="scan_mode_balanced">Balanced</string>
+    <string name="scan_mode_low_power">Power saver</string>
+    <string name="settings_show_unmatched">Show unmatched devices</string>
+    <string name="settings_show_unmatched_desc">Display nearby unrecognized AirPods and Beats broadcasts on the dashboard</string>
+
+    <string name="settings_section_behavior">Companion Features</string>
+    <string name="settings_popup_enabled">Case-open popup card</string>
+    <string name="settings_popup_enabled_desc">Show a quick battery sheet inside CAPod when a matched case lid opens</string>
+    <string name="settings_notification_enabled">Battery status notification</string>
+    <string name="settings_notification_enabled_desc">Post a live notification with left, right, and case percentages</string>
+
+    <string name="settings_section_about">About CAPod</string>
+    <string name="settings_protocol_info">Apple Continuity BLE (0x004C) &amp; AAP Companion</string>
+    <string name="settings_version">Version 1.0</string>
+
+    <!-- Home Screen Widget & Quick Settings -->
+    <string name="widget_label">CAPod Battery</string>
+    <string name="widget_description">Live battery levels for your AirPods and Beats</string>
+    <string name="widget_status_idle">Ready</string>
+    <string name="widget_label_signal">Signal</string>
+    <string name="widget_label_state">State</string>
+    <string name="settings_section_widgets">Widgets &amp; Data</string>
+    <string name="settings_pin_widget">Add Home Screen Widget</string>
+    <string name="settings_pin_widget_desc">Pin a live CAPod battery card directly to your launcher</string>
+    <string name="action_pin_widget">Add Widget</string>
+    <string name="settings_clear_history">Clear battery history</string>
+    <string name="settings_clear_history_desc">Delete locally recorded battery trend samples for all devices</string>
+    <string name="action_clear">Clear</string>
+
+    <!-- Device Detail, Find My Pods & Battery History -->
+    <string name="detail_find_my_pods">Find My Pods</string>
+    <string name="detail_battery_history">Battery History</string>
+    <string name="detail_live_telemetry">Live BLE Telemetry</string>
+    <string name="history_empty_hint">Battery trend points are recorded automatically whenever CAPod receives live BLE readings from this device.</string>
+    <string name="finder_signal_none">No signal detected</string>
+    <string name="finder_very_close">Very close</string>
+    <string name="finder_nearby">Nearby</string>
+    <string name="finder_far">Far away</string>
+    <string name="finder_signal_hint">Move around with Bluetooth scanning active to detect your device.</string>
+    <string name="finder_chime_hint">Play a high-clarity locating chirp over connected Bluetooth audio (remove earbuds from ears first).</string>
+    <string name="action_play_chime">Play locating chime</string>
+    <string name="action_stop_chime">Stop chime</string>
+    <string name="label_both_pods">Both</string>
+
+    <!-- BLE Discovery & Pairing -->
+    <string name="title_ble_discovery">Discover BLE Devices</string>
+    <string name="cd_discover_ble">Discover and pair nearby Bluetooth LE devices</string>
+    <string name="cd_refresh_scan">Refresh BLE scan</string>
+    <string name="action_discover_ble">Discover &amp; Pair BLE</string>
+    <string name="action_start_scan">Start Scan</string>
+    <string name="action_stop_scan">Stop Scan</string>
+    <string name="action_pair">Pair</string>
+    <string name="status_pairing">Pairing…</string>
+    <string name="label_beacon">Beacon</string>
+    <string name="filter_all">All</string>
+    <string name="filter_named">Named</string>
+    <string name="filter_audio_apple">Audio &amp; Apple</string>
+    <string name="discovery_perm_desc">Grant Bluetooth scan and connect access to discover nearby Bluetooth LE accessories and initiate pairing.</string>
+    <string name="discovery_scanning_title">Searching for BLE devices…</string>
+    <string name="discovery_paused_title">BLE scanner paused</string>
+    <string name="discovery_scanning_subtitle">Put your AirPods, headphones, or Bluetooth LE accessory into pairing mode nearby to discover and pair it.</string>
+
+    <!-- Battery Drain Trends Analytics Dashboard -->
+    <string name="title_battery_analytics">Battery Trends</string>
+    <string name="cd_open_analytics">Open battery drain trends dashboard</string>
+    <string name="action_open_trends">Full Trends</string>
+    <string name="analytics_selected_point">Selected sample</string>
+    <string name="analytics_latest_reading">Latest reading</string>
+    <string name="analytics_waiting_title">Collecting drain history</string>
+    <string name="analytics_waiting_subtitle">Keep your headphones nearby or connected. CAPod plots real drain curves as soon as at least 2 telemetry points are recorded in this window.</string>
+    <string name="analytics_bars_empty">Net drain and charging deltas will appear across time buckets once battery changes are recorded in this range.</string>
+    <string name="analytics_no_profile_title">No headphone profile to analyze</string>
+    <string name="analytics_no_profile_subtitle">Add a device profile first so CAPod can record historical battery levels and compute drain velocity.</string>
+    <string name="analytics_metric_drain_rate">Drain Rate</string>
+    <string name="analytics_metric_no_drain">No drain recorded</string>
+    <string name="analytics_metric_est_runtime">Est. Runtime</string>
+    <string name="analytics_metric_charge_gain">Charge Gain</string>
+    <string name="analytics_metric_lr_delta">L/R Imbalance</string>
+    <string name="analytics_metric_samples">Telemetry Samples</string>
+    <string name="analytics_net_change_title">Drain vs. Charge by Interval</string>
+    <string name="analytics_net_change_subtitle">Downward bars show net drain; upward bars show charging gains</string>
+
+    <!-- Firmware Version & Update Notifications -->
+    <string name="detail_firmware_title">Firmware Version</string>
+    <string name="firmware_current_label">Installed</string>
+    <string name="firmware_latest_label">Latest</string>
+    <string name="firmware_not_checked">Not checked</string>
+    <string name="firmware_up_to_date">Up to date</string>
+    <string name="firmware_update_available">Update available</string>
+    <string name="action_check_firmware">Check firmware</string>
+    <string name="status_checking_firmware">Reading firmware…</string>
+    <string name="firmware_check_hint">Reads the connected device firmware over Bluetooth GATT (0x2A26) or Apple Accessory Protocol.</string>
+    <string name="settings_firmware_alerts">Firmware update notifications</string>
+    <string name="settings_firmware_alerts_desc">Automatically check connected devices and notify you when a newer firmware build is available</string>
+    <string name="notif_channel_firmware_name">Firmware Updates</string>
+    <string name="notif_channel_firmware_desc">Alerts when a newer firmware build is available for your connected AirPods or Beats</string>
+    <string name="notif_firmware_title">Firmware update available for %1$s</string>
+    <string name="notif_firmware_body">Installed %1$s → Latest %2$s. Tap for update instructions.</string>
+
+    <!-- Bluetooth Runtime Permission Dialogs -->
+    <string name="perm_rationale_title">Allow Nearby Devices access</string>
+    <string name="perm_rationale_body_s">CAPod needs Nearby Devices (Bluetooth Scan and Connect) permissions to discover nearby Bluetooth LE accessories, read AirPods and Beats battery levels, and initiate pairing.</string>
+    <string name="perm_rationale_body_legacy">CAPod needs Location permission on Android 11 and earlier so Android allows Bluetooth Low Energy scanning for nearby devices.</string>
+    <string name="perm_settings_title">Permission disabled in Settings</string>
+    <string name="perm_settings_body">Bluetooth scanning permission was permanently denied. Open App Settings and enable Nearby Devices (or Location on Android 11 and earlier) so CAPod can scan and connect to your headphones.</string>
+    <string name="action_open_settings">Open Settings</string>
+    <string name="action_allow">Allow</string>
+    <string name="action_not_now">Not now</string>
+
+    <!-- Custom Bluetooth Device Renaming -->
+    <string name="cd_rename_device">Rename device</string>
+    <string name="rename_dialog_title">Rename device</string>
+    <string name="rename_input_label">Custom name</string>
+    <string name="rename_input_placeholder">Work AirPods Pro</string>
+    <string name="rename_helper_datastore">Saved on this device</string>
+    <string name="action_reset_name">Reset to default name</string>
+    <string name="action_save">Save</string>
+
+    <!-- ANC Quick Settings Tile -->
+    <string name="qs_tile_anc_label">ANC Mode</string>
+    <string name="qs_tile_anc_off_label">ANC Off</string>
+    <string name="qs_tile_anc_no_device">Add ANC device</string>
+    <string name="qs_tile_anc_tap_to_cycle">Tap to switch to %1$s</string>
+    <string name="qs_tile_pin_action">QS Tile</string>
+    <string name="qs_tile_pinned_badge">QS Linked</string>
+    <string name="cd_pin_anc_qs_tile">Add Active Noise Cancellation Quick Settings tile</string>
+    <string name="qs_tile_added_snackbar">Added ANC Mode tile to Quick Settings for %1$s</string>
+    <string name="qs_tile_already_added_snackbar">ANC Mode Quick Settings tile is now linked to %1$s</string>
+    <string name="qs_tile_manual_hint_snackbar">Linked %1$s. Swipe down Quick Settings, tap Edit, and add \"ANC Mode\".</string>
+
+    <!-- Upgraded Overview Status Strip -->
+    <string name="overview_chip_scanning">Live Scan</string>
+    <string name="overview_chip_paused">Scan Paused</string>
+    <string name="overview_chip_bt_off">Bluetooth Off</string>
+    <string name="overview_chip_perm_needed">Setup Needed</string>
+    <string name="overview_chip_devices_count">%1$d Profile(s)</string>
+    <string name="overview_quick_discover">Discover</string>
+    <string name="overview_quick_trends">Trends</string>
+    <string name="overview_quick_profiles">Profiles</string>
+
+    <!-- Automatic Ear Detection via Bluetooth GATT -->
+    <string name="settings_ear_detection_title">Automatic Ear Detection</string>
+    <string name="settings_ear_detection_desc">Auto-pause and resume playback when removing or inserting earbuds, synced to your Bluetooth device over BLE GATT</string>
+    <string name="ear_detection_gatt_syncing">Syncing via Bluetooth GATT…</string>
+    <string name="ear_detection_gatt_synced">Synced via BLE GATT (%1$s)</string>
+    <string name="ear_detection_aap_synced">Synced via Bluetooth AAP (%1$s)</string>
+    <string name="ear_detection_gatt_local_only">Saved on phone · %1$s</string>
+    <string name="ear_detection_gatt_ready">GATT Service ready · %1$s</string>
+    <string name="ear_detection_gatt_idle">Applies automatically and syncs via BLE GATT when connected</string>
+    <string name="action_sync_gatt">Sync GATT</string>
+</resources>

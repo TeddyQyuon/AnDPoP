@@ -1,0 +1,38 @@
+package com.example.ui.theme
+
+import androidx.compose.ui.graphics.Color
+
+// Brand & Signature Accents (matching CAPod's clean Cobalt Blue + Mint Green + Amber Charging)
+val CapodBlue = Color(0xFF3B7BFF)
+val CapodBlueBright = Color(0xFF5A95FF)
+val CapodBlueDark = Color(0xFF235AD6)
+val CapodMint = Color(0xFF4ADE80)
+val CapodMintDark = Color(0xFF16A34A)
+val ChargingAmber = Color(0xFFFACC15)
+val ChargingAmberText = Color(0xFF422006)
+val ChargingAmberContainerDark = Color(0xFF3B2F0B)
+val ChargingAmberTextDark = Color(0xFFFDE047)
+val BatteryLowRed = Color(0xFFEF4444)
+val BatteryMidAmber = Color(0xFFF59E0B)
+
+// Light Theme Surfaces (Crisp Porcelain + Pure White Elevated Cards)
+val LightBackground = Color(0xFFF3F6FB)
+val LightSurface = Color(0xFFFFFFFF)
+val LightSurfaceContainerLow = Color(0xFFF7F9FD)
+val LightSurfaceContainer = Color(0xFFEEF2F9)
+val LightSurfaceContainerHigh = Color(0xFFE4EAF4)
+val LightOnSurface = Color(0xFF111827)
+val LightOnSurfaceVariant = Color(0xFF5B6474)
+val LightOutline = Color(0xFFD6DEEC)
+val LightOutlineVariant = Color(0xFFE6ECF6)
+
+// Dark Theme Surfaces (Deep Slate Obsidian matching CAPod Dark Mode screenshot)
+val DarkBackground = Color(0xFF111419)
+val DarkSurface = Color(0xFF181C23)
+val DarkSurfaceContainerLow = Color(0xFF1B2029)
+val DarkSurfaceContainer = Color(0xFF222834)
+val DarkSurfaceContainerHigh = Color(0xFF2B3241)
+val DarkOnSurface = Color(0xFFF1F5F9)
+val DarkOnSurfaceVariant = Color(0xFF94A3B8)
+val DarkOutline = Color(0xFF364052)
+val DarkOutlineVariant = Color(0xFF262E3D)

@@ -1,0 +1,6 @@
+{
+  "name": "CAPod",
+  "description": "Companion app for AirPods and Beats on Android with real-time BLE battery monitoring, ear detection, ANC controls, and device profiles.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
