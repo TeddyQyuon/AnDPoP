@@ -22,6 +22,12 @@ Open this directory in Android Studio with JDK 21 and install Android SDK Platfo
 
 On Windows, use `gradlew.bat :app:assembleFossDebug`. The APK is written to `app/build/outputs/apk/foss/debug/`. Release builds can use your own Android signing key.
 
+## Accounts and guest profiles
+
+Choose **Continue as guest** to use AnDPoP offline. Open **Account** on the dashboard to see the current profile and save a connected pair of AirPods. The app keeps a separate set of supported preferences and a remembered device for each profile.
+
+On a fresh 1.4.0 install, online sign-in controls are disabled until you connect a Supabase project. See the [account setup guide](docs/ACCOUNT_SETUP.md) for email, Google, Apple, password recovery, and deletion. See the [Android release guide](docs/ANDROID_RELEASE.md) for signed bundles, Play Console internal testing, and device checks.
+
 ## Credits and license
 
 Based on [LibrePods v1.0.4](https://github.com/librepods-org/librepods/tree/v1.0.4), commit `89356c08cea3db0b6b54792d9329d09a87cc85fa`. Original Android and native code copyright © 2025 LibrePods contributors. AnDPoP changes are available under GPL version 3 or later. See the included LICENSE. AirPods, AirPods Pro, and AirPods Max are Apple trademarks.
@@ -31,16 +37,3 @@ The AACP battery record layout is documented by [apple-wireshark](https://github
 AirPods Pro 2 artwork is cropped and color-adjusted from [AirPods Pro (2nd generation).jpg by Hajoon0102](https://commons.wikimedia.org/wiki/File:AirPods_Pro_(2nd_generation).jpg). These three WebP cutouts are licensed under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
 AirPods Max artwork is a crop of the [first-generation AirPods Max photo](https://commons.wikimedia.org/wiki/File:Apple_airpods_max_1.jpg) by [Arne Müseler / arne-mueseler.com](https://www.arne-mueseler.com/), licensed under [CC BY-SA 3.0 DE](https://creativecommons.org/licenses/by-sa/3.0/de/deed.en). It represents the Max family in the battery views.
 
-## Accounts and guest profiles
-
-Open **Account** on the AirPods dashboard. Guests can use the app offline. Existing installations start in the guest profile with their current preferences. Profiles remember a selected connected AirPods name and model, plus local app preferences such as Appearance, conversation volume, and popup behavior. Use **Remember connected AirPods** on the profile page to save the current device. Android manages Bluetooth pairing, and the AirPods manage their own listening mode and on-device controls. Profile data is local to this phone.
-
-### Enable online accounts
-
-1. Create or select your AnDPoP [Supabase project](https://supabase.com/docs/guides/auth). Open **Account → Log in → Connect account service** and enter its HTTPS project URL and public publishable key. A legacy anon key is also accepted. Keep service-role keys and provider secrets on the server.
-2. Enable Email in Authentication → Providers. Keep email confirmation enabled and configure [SMTP](https://supabase.com/docs/guides/auth/auth-smtp) for emails to testers outside your project team.
-3. Add `app.andpop.android://auth/callback/*` to the [Auth redirect allow list](https://supabase.com/docs/guides/auth/redirect-urls). Each request generates a new single-use callback identifier and PKCE verifier. Open confirmation and recovery links on the phone that made the request. Use the default Supabase confirmation and recovery templates or preserve their confirmation URLs.
-4. To enable the browser-based buttons, configure [Google](https://supabase.com/docs/guides/auth/social-login/auth-google) and [Apple](https://supabase.com/docs/guides/auth/social-sign-in/auth-apple) in Supabase Authentication. Register the Supabase provider callback URL with Google and Apple.
-5. For in-app account deletion, run [delete-account.sql](account-setup/delete-account.sql) in your AnDPoP project. The function deletes only the account identified by the current access token. This app stores device profiles locally, and deletion clears that account’s profile from the current phone.
-
-Session credentials stay in encrypted, excluded-from-backup storage. The app uses Android Keystore, system-browser OAuth, and a PKCE code exchange. A connected Supabase project is required for live account flows.
