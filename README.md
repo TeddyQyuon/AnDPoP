@@ -26,7 +26,7 @@ On Windows, use `gradlew.bat :app:assembleFossDebug`. The APK is written to `app
 
 Choose **Continue as guest** to use AnDPoP offline. Open **Account** on the dashboard to see the current profile and save a connected pair of AirPods. The app keeps a separate set of supported preferences and a remembered device for each profile.
 
-On a fresh 1.4.0 install, online sign-in controls are disabled until you connect a Supabase project. See the [account setup guide](docs/ACCOUNT_SETUP.md) for email, Google, Apple, password recovery, and deletion. See the [Android release guide](docs/ANDROID_RELEASE.md) for signed bundles, Play Console internal testing, and device checks.
+On a fresh install, choose **Set up online sign-in** to connect a Supabase project before using the account forms. See the [account setup guide](docs/ACCOUNT_SETUP.md) for email, Google, Apple, password recovery, and deletion. See the [Android release guide](docs/ANDROID_RELEASE.md) for signed bundles, Play Console internal testing, and device checks.
 
 ## Credits and license
 

@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,6 +15,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
@@ -47,6 +47,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import me.kavishdevar.librepods.presentation.screens.DeviceArt
+import me.kavishdevar.librepods.presentation.screens.DeviceArtKind
 import me.kavishdevar.librepods.presentation.theme.LocalAndpopPalette
 import me.kavishdevar.librepods.presentation.theme.devicePanel
 
@@ -58,6 +60,7 @@ internal fun AccountScreen(
 ) {
     BackHandler(onBack = model::back)
     val palette = LocalAndpopPalette.current
+    var emailDraft by rememberSaveable { mutableStateOf("") }
     Box(
         Modifier.fillMaxSize().background(palette.scheme.background)
             .windowInsetsPadding(WindowInsets.safeDrawing).imePadding(),
@@ -83,11 +86,26 @@ internal fun AccountScreen(
                 AccountPage.Reset -> "Set a new password"
                 AccountPage.Project -> "Connect account service"
             }
-            Text(
-                title,
-                Modifier.semantics { heading() },
-                style = MaterialTheme.typography.headlineLarge,
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (!state.entered && state.page == AccountPage.Profile) {
+                    Box(
+                        Modifier.size(64.dp).devicePanel(palette, color = palette.scheme.primaryContainer),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        DeviceArt(DeviceArtKind.Buds, Modifier.size(46.dp), palette.scheme.onPrimaryContainer)
+                    }
+                }
+                Text(title, Modifier.semantics { heading() }, style = MaterialTheme.typography.headlineLarge)
+                val description = when (state.page) {
+                    AccountPage.Profile -> if (state.entered) null else
+                        "Check your AirPods battery and adjust your controls."
+                    AccountPage.Login -> "Access your account and its preferences on this phone."
+                    AccountPage.SignUp -> "Keep your AirPods and app preferences in a separate profile on this phone."
+                    AccountPage.Forgot -> "We’ll email you a link to reset your password."
+                    AccountPage.Reset, AccountPage.Project -> null
+                }
+                description?.let { Text(it, color = palette.scheme.onSurfaceVariant) }
+            }
             if (state.busy) LinearProgressIndicator(Modifier.fillMaxWidth())
             state.message?.let {
                 Text(
@@ -100,7 +118,7 @@ internal fun AccountScreen(
                 when (state.page) {
                     AccountPage.Profile -> ProfileCard(state, model, connectedDevice)
                     AccountPage.Login, AccountPage.SignUp, AccountPage.Forgot, AccountPage.Reset ->
-                        AccountForm(state, model)
+                        AccountForm(state, model, emailDraft) { emailDraft = it }
                     AccountPage.Project -> ProjectForm(state, model)
                 }
             }
@@ -144,8 +162,6 @@ private fun ProfileCard(state: AccountUiState, model: AccountViewModel, connecte
                 }
             }
         }
-    } else {
-        Text("Set up a profile for your AirPods and preferences.", color = palette.scheme.onSurfaceVariant)
     }
     if (state.signedIn) {
         TextButton(onClick = { model.page(AccountPage.Forgot) }, enabled = !state.busy && state.email.isNotBlank()) {
@@ -157,16 +173,23 @@ private fun ProfileCard(state: AccountUiState, model: AccountViewModel, connecte
         TextButton(onClick = { delete = true }, enabled = !state.busy) {
             Text("Delete account", color = palette.scheme.error)
         }
+    } else if (state.configured) {
+        AccountButton("Log in", !state.busy) { model.page(AccountPage.Login) }
+        AccountOutline("Create an account", !state.busy) { model.page(AccountPage.SignUp) }
+        if (!state.entered) AccountLink("Continue as guest", !state.busy, model::guest)
+        AccountLink("Account service settings", !state.busy) { model.page(AccountPage.Project) }
     } else {
-        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            AccountButton("Log in", !state.busy) { model.page(AccountPage.Login) }
-            OutlinedButton(onClick = { model.page(AccountPage.SignUp) }, enabled = !state.busy, modifier = Modifier.fillMaxWidth()) {
-                Text("Create an account")
-            }
-            TextButton(onClick = model::guest, enabled = !state.busy, modifier = Modifier.fillMaxWidth()) {
-                Text("Continue as guest")
+        if (!state.entered) {
+            Panel {
+                Text("Guest profile", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    "Your saved AirPods and preferences stay on this phone.",
+                    color = palette.scheme.onSurfaceVariant,
+                )
+                AccountButton("Continue as guest", !state.busy, model::guest)
             }
         }
+        AccountLink("Set up online sign-in", !state.busy) { model.page(AccountPage.Project) }
     }
     if (delete) {
         AlertDialog(
@@ -182,30 +205,33 @@ private fun ProfileCard(state: AccountUiState, model: AccountViewModel, connecte
 }
 
 @Composable
-private fun AccountForm(state: AccountUiState, model: AccountViewModel) {
+private fun AccountForm(
+    state: AccountUiState,
+    model: AccountViewModel,
+    emailDraft: String,
+    updateEmailDraft: (String) -> Unit,
+) {
     val palette = LocalAndpopPalette.current
     val page = state.page
-    var email by rememberSaveable { mutableStateOf(if (page == AccountPage.Forgot) state.email else "") }
+    var email by rememberSaveable {
+        mutableStateOf(if (page == AccountPage.Forgot) state.email.ifBlank { emailDraft } else emailDraft)
+    }
     var password by remember { mutableStateOf("") }
     var confirmation by remember { mutableStateOf("") }
     val emailValid = email.trim().length <= 254 && Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches()
     val confirmedPassword = validNewPassword(password) && password == confirmation
     val active = state.configured && !state.busy
-    if (!state.configured && page != AccountPage.Reset) {
-        Panel {
-            Text("Connect your account service to use email, Google, or Apple.", color = palette.scheme.onSurfaceVariant)
-            AccountButton("Connect account service", !state.busy) { model.page(AccountPage.Project) }
-        }
-    }
-
-    if (page == AccountPage.Forgot) {
-        Text("We’ll send a link to set a new password.", color = palette.scheme.onSurfaceVariant)
-    }
+    val invalidEmail = email.isNotBlank() && !emailValid
     Panel {
         if (page != AccountPage.Reset) {
             OutlinedTextField(
-                email, { email = it }, label = { Text("Email address") },
+                email, { value ->
+                    email = value
+                    if (!state.signedIn) updateEmailDraft(value)
+                }, label = { Text("Email address") },
                 modifier = Modifier.fillMaxWidth(), enabled = active, singleLine = true,
+                isError = invalidEmail,
+                supportingText = if (invalidEmail) ({ Text("Enter a valid email address.") }) else null,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             )
         }
@@ -216,57 +242,47 @@ private fun AccountForm(state: AccountUiState, model: AccountViewModel) {
             )
         }
         if (page == AccountPage.SignUp || page == AccountPage.Reset) {
-            PasswordField(confirmation, { confirmation = it }, active, "Confirm password")
+            val mismatch = confirmation.isNotEmpty() && confirmation != password
+            PasswordField(confirmation, { confirmation = it }, active, "Confirm password", mismatch)
             Text(
-                if (confirmation.isNotEmpty() && confirmation != password) "Passwords must match." else "Use at least 8 characters.",
-                color = palette.scheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall,
+                when {
+                    mismatch -> "Passwords must match."
+                    password.toByteArray(Charsets.UTF_8).size > 72 -> "Use a shorter password."
+                    else -> "Use at least 8 characters."
+                },
+                color = if (mismatch) palette.scheme.error else palette.scheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodySmall,
             )
         }
         when (page) {
             AccountPage.Login -> AccountButton("Log in", active && emailValid && password.isNotEmpty()) {
                 model.signIn(email.trim(), password)
-                password = ""
             }
             AccountPage.SignUp -> AccountButton("Create an account", active && emailValid && confirmedPassword) {
                 model.signUp(email.trim(), password)
-                password = ""
-                confirmation = ""
             }
             AccountPage.Forgot -> AccountButton("Send reset link", active && emailValid) { model.forgot(email.trim()) }
             AccountPage.Reset -> AccountButton("Save password", active && confirmedPassword) {
                 model.resetPassword(password)
-                password = ""
-                confirmation = ""
             }
             else -> Unit
         }
+        if (page == AccountPage.Login) {
+            AccountLink("Forgot password?", active) { model.page(AccountPage.Forgot) }
+        }
     }
     if (page == AccountPage.Login || page == AccountPage.SignUp) {
+        HorizontalDivider(color = palette.scheme.outlineVariant)
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            AccountOutline("Continue with Google", active) { model.signInWithProvider(FlowPurpose.Google) }
+            AccountOutline("Continue with Apple", active) { model.signInWithProvider(FlowPurpose.Apple) }
+        }
         if (page == AccountPage.Login) {
-            TextButton(onClick = { model.page(AccountPage.Forgot) }, enabled = !state.busy) {
-                Text("Forgot password?")
-            }
+            AccountLink("Create an account", active) { model.page(AccountPage.SignUp) }
+        } else {
+            AccountLink("Already have an account? Log in", active) { model.page(AccountPage.Login) }
         }
-        OutlinedButton(
-            onClick = { model.signInWithProvider(FlowPurpose.Google) }, enabled = active,
-            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-        ) { Text("Continue with Google") }
-        OutlinedButton(
-            onClick = { model.signInWithProvider(FlowPurpose.Apple) }, enabled = active,
-            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-        ) { Text("Continue with Apple") }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            val switch = if (page == AccountPage.Login) AccountPage.SignUp else AccountPage.Login
-            TextButton(onClick = { model.page(switch) }, enabled = !state.busy) {
-                Text(if (page == AccountPage.Login) "Create an account" else "Log in")
-            }
-            TextButton(onClick = model::guest, enabled = !state.busy) { Text("Continue as guest") }
-        }
-        if (state.configured) {
-            TextButton(onClick = { model.page(AccountPage.Project) }, enabled = !state.busy) {
-                Text("Account service settings")
-            }
-        }
+        AccountLink("Continue as guest", active, model::guest)
     }
 }
 
@@ -299,11 +315,17 @@ private fun ProjectForm(state: AccountUiState, model: AccountViewModel) {
 }
 
 @Composable
-private fun PasswordField(value: String, onChange: (String) -> Unit, enabled: Boolean, label: String) {
+private fun PasswordField(
+    value: String,
+    onChange: (String) -> Unit,
+    enabled: Boolean,
+    label: String,
+    isError: Boolean = false,
+) {
     var visible by remember { mutableStateOf(false) }
     OutlinedTextField(
         value, onChange, label = { Text(label) }, modifier = Modifier.fillMaxWidth(),
-        enabled = enabled, singleLine = true,
+        enabled = enabled, singleLine = true, isError = isError,
         visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
         trailingIcon = {
@@ -317,6 +339,16 @@ private fun PasswordField(value: String, onChange: (String) -> Unit, enabled: Bo
 @Composable
 private fun AccountButton(label: String, enabled: Boolean, action: () -> Unit) {
     Button(action, Modifier.fillMaxWidth().heightIn(min = 48.dp), enabled = enabled) { Text(label) }
+}
+
+@Composable
+private fun AccountOutline(label: String, enabled: Boolean, action: () -> Unit) {
+    OutlinedButton(action, Modifier.fillMaxWidth().heightIn(min = 48.dp), enabled = enabled) { Text(label) }
+}
+
+@Composable
+private fun AccountLink(label: String, enabled: Boolean, action: () -> Unit) {
+    TextButton(action, Modifier.fillMaxWidth().heightIn(min = 48.dp), enabled = enabled) { Text(label) }
 }
 
 @Composable

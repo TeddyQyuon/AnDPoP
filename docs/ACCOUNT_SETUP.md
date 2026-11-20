@@ -1,13 +1,13 @@
 # AnDPoP account setup
 
-AnDPoP 1.4.0 ships without a connected account service. Until you save a Supabase connection on the phone, the email form and Google and Apple buttons remain disabled. For AirPods battery and controls, choose **Continue as guest**.
+AnDPoP offers a guest profile on a fresh install. Choose **Continue as guest** to use AirPods battery and controls, or **Set up online sign-in** to connect a Supabase project on this phone.
 
 ## Configure a test project
 
 1. Create or select a Supabase project dedicated to AnDPoP testing. Copy its HTTPS project URL, such as `https://your-project.supabase.co`, and its publishable key from the project’s **Connect** dialog. AnDPoP also accepts a legacy `anon` key. Keep secret keys, service-role keys, and provider credentials out of the app and repository. [Supabase API keys](https://supabase.com/docs/guides/api/api-keys)
 2. In **Authentication → URL Configuration**, add `app.andpop.android://auth/callback/*` to **Redirect URLs**. AnDPoP adds a different single-use identifier after `/callback/` for each request. OAuth and email links use this same allow-list entry. [Supabase redirect URLs](https://supabase.com/docs/guides/auth/redirect-urls)
 3. Enable **Email** and allow new sign-ups in Supabase Auth. Keep email confirmation enabled. Use the default confirmation and recovery templates, or preserve their generated confirmation URLs if you customize them. Configure custom SMTP to send messages to testers outside the Supabase project team. [Supabase SMTP setup](https://supabase.com/docs/guides/auth/auth-smtp)
-4. Open **Account → Log in → Connect account service** in AnDPoP. Enter the project URL and publishable key, then choose **Save connection**. The connection is saved on that installation. Test a sign-in to confirm it reaches the intended project.
+4. Open **Account → Set up online sign-in** in AnDPoP. Enter the project URL and publishable key, then choose **Save connection**. The connection is saved on that installation. Test a sign-in to confirm it reaches the intended project.
 
 ## Enable Google and Apple
 
@@ -29,7 +29,7 @@ Google and Apple sign-in open in the Android browser and return to AnDPoP. The S
 
 | Symptom | Check |
 | --- | --- |
-| All sign-in options are disabled | Open **Connect account service** and save the project URL and publishable key. |
+| Only the guest profile is available | Open **Set up online sign-in** and save the project URL and publishable key. |
 | A provider opens an error page | Enable the provider in Supabase and check its credentials, exact HTTPS callback URL, and tester access. |
 | No confirmation or reset email arrives | Check spam, the Email provider settings, and the project’s SMTP delivery logs. |
 | The browser or email leaves you outside AnDPoP | Check the Android callback entry in Supabase and open a fresh link on the same phone that started the request. |

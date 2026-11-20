@@ -43,7 +43,7 @@ internal class AccountViewModel(application: Application) : AndroidViewModel(app
     private val browserChannel = Channel<Uri>(Channel.BUFFERED)
     val browser = browserChannel.receiveAsFlow()
     private var operation: Job? = null
-    private var returnFromProject = AccountPage.Login
+    private var returnFromProject = AccountPage.Profile
 
     init {
         val entered = profiles.hasEntered || preferences.getBoolean("onboarding_complete", false)
@@ -101,8 +101,16 @@ internal class AccountViewModel(application: Application) : AndroidViewModel(app
 
     fun page(page: AccountPage) {
         if (state.value.busy) return
-        if (page == AccountPage.Project) returnFromProject = state.value.page
-        mutableState.update { it.copy(page = page, message = null) }
+        val destination = when (page) {
+            AccountPage.Login, AccountPage.SignUp, AccountPage.Forgot ->
+                if (memory.project == null) AccountPage.Project else page
+            else -> page
+        }
+        if (destination == AccountPage.Project) {
+            if (state.value.signedIn || state.value.page == AccountPage.Project) return
+            returnFromProject = state.value.page
+        }
+        mutableState.update { it.copy(page = destination, message = null) }
     }
 
     fun back() {
@@ -132,8 +140,7 @@ internal class AccountViewModel(application: Application) : AndroidViewModel(app
         perform {
             save(AccountMemory(project = project))
             publish()
-            mutableState.update { it.copy(page = returnFromProject) }
-            message("Project saved. Try signing in to check its configuration.")
+            mutableState.update { it.copy(page = AccountPage.Login) }
         }
     }
 
