@@ -27,9 +27,6 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Install Android build components
         run: |
           sdkmanager --install "platforms;android-37" "build-tools;37.0.0" "ndk;29.0.14206865" "cmake;3.22.1"
