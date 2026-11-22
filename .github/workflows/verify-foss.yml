@@ -18,10 +18,11 @@ jobs:
           java-version: '21'
       - name: Install Android build components
         run: |
-          sdkmanager --install --channel=3 'platforms;android-37.0' 'ndk;29.0.14206865' 'cmake;3.22.1'
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -path '*/bin/sdkmanager' | sort -V | tail -n 1)"
+          "$SDKMANAGER" --install --channel=3 'platforms;android-37.0' 'ndk;29.0.14206865' 'cmake;3.22.1'
       - uses: gradle/actions/setup-gradle@v4
       - name: Assemble FOSS testing packages
-        run: ./gradlew :app:assembleFossDebug :app:bundleFossDebug :app:assembleFossDebugAndroidTest --max-workers=2 -Pkotlin.compiler.execution.strategy=in-process
+        run: bash ./gradlew :app:assembleFossDebug :app:bundleFossDebug :app:assembleFossDebugAndroidTest --max-workers=2 -Pkotlin.compiler.execution.strategy=in-process
       - uses: actions/upload-artifact@v4
         with:
           name: AnDPoP-FOSS-testing
@@ -37,7 +38,7 @@ jobs:
           api-level: 35
           arch: x86_64
           disable-animations: true
-          script: ./gradlew :app:connectedFossDebugAndroidTest --max-workers=2
+          script: bash ./gradlew :app:connectedFossDebugAndroidTest --max-workers=2
       - uses: actions/upload-artifact@v4
         if: always()
         with:
