@@ -1,0 +1,74 @@
+name: Publish AnDPoP 1.5 testing APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/publish-testing-apk.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: andpop-1.5-testing-release
+  cancel-in-progress: false
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android build components
+        run: |
+          sdkmanager --install "platforms;android-37" "build-tools;37.0.0" "ndk;29.0.14206865" "cmake;3.22.1"
+          yes | sdkmanager --licenses > /dev/null || true
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build FOSS debug APK
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:assembleFossDebug --no-daemon
+
+      - name: Prepare distributable
+        run: |
+          cp app/build/outputs/apk/foss/debug/app-foss-debug.apk AnDPoP-1.5-testing.apk
+          sha256sum AnDPoP-1.5-testing.apk > AnDPoP-1.5-testing.apk.sha256
+
+      - name: Publish GitHub prerelease
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.5.0-testing
+          target_commitish: ${{ github.sha }}
+          name: AnDPoP 1.5.0 — Testing
+          prerelease: true
+          draft: false
+          generate_release_notes: false
+          body: |
+            Android testing build for AnDPoP 1.5.0.
+
+            - Six appearance palettes: three dark and three light.
+            - Glacier dark and Iris light defaults.
+            - Refined listening mode, device and battery screens.
+            - Profile-specific appearance preferences.
+
+            This APK is automatically built from the repository source and signed using a temporary Android debug key. It is not the manually uploaded APK. You may need to uninstall a prior test build before installing it because the signing certificate may differ. Uninstalling clears local app data.
+
+            Features involving AirPods Bluetooth behavior require testing on a physical device; no Play Store publication is implied.
+          files: |
+            AnDPoP-1.5-testing.apk
+            AnDPoP-1.5-testing.apk.sha256
+          fail_on_unmatched_files: true
