@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - '.github/workflows/verify-foss.yml'
+      - 'app/src/**'
+      - 'app/build.gradle.kts'
 permissions:
   contents: read
 jobs:

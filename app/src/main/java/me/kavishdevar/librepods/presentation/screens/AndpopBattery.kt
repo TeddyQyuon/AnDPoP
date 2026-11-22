@@ -114,9 +114,9 @@ internal fun dashboardBattery(
                 art = DeviceArtKind.Case,
                 label = R.string.andpop_case,
                 level = caseReading?.level,
-                charging = connected && caseReading?.charging == true && caseCurrent,
+                charging = caseReading?.charging == true && caseCurrent,
                 estimated = caseReading?.estimated == true,
-                lastSeen = caseReading != null && (!connected || !caseCurrent),
+                lastSeen = caseReading != null && !caseCurrent,
             ),
         )
     }

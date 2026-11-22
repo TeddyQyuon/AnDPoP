@@ -2,6 +2,8 @@ package me.kavishdevar.librepods
 
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.width
 import androidx.compose.ui.Modifier
@@ -40,6 +42,8 @@ class DashboardRegressionTest {
         assertEquals(listOf(false, true, true), flags(true, true))
         assertEquals(listOf(false, true, false), flags(true, false))
         assertEquals(listOf(false), flags(false, false))
+        // Nearby broadcasts may supply a live case reading without an audio connection.
+        assertEquals(listOf(true), flags(false, true))
         for (component in listOf(BatteryComponent.LEFT, BatteryComponent.RIGHT, BatteryComponent.HEADPHONES)) {
             for (level in listOf(0, 12, 100, 255)) {
                 val max = component == BatteryComponent.HEADPHONES
@@ -80,7 +84,7 @@ class DashboardRegressionTest {
             val density = LocalDensity.current.density
             CompositionLocalProvider(LocalDensity provides Density(density, 1.6f)) {
                 LibrePodsTheme(darkTheme = false, m3eEnabled = true) {
-                    Box(Modifier.width(288.dp)) {
+                    Box(Modifier.width(288.dp).verticalScroll(rememberScrollState())) {
                         DashboardListeningModes(demoState.copy(offListeningMode = true)) {}
                     }
                 }
@@ -89,8 +93,9 @@ class DashboardRegressionTest {
         val results = mutableListOf<TextLayoutResult>()
         compose.onNodeWithText(label(R.string.transparency), useUnmergedTree = true)
             .performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(results) }
-        assertEquals(1, results.single().lineCount)
-        assertFalse(results.single().hasVisualOverflow)
+        val layout = results.single()
+        assertEquals(1, layout.lineCount)
+        assertFalse("Text bounds: ${layout.size}, paragraph: ${layout.multiParagraph.width} × ${layout.multiParagraph.height}", layout.hasVisualOverflow)
     }
 
     @Test fun dashboardSlidersOpenFullSettingsAndSystemBackReturns() {
