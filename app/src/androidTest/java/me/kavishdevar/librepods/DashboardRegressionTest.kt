@@ -79,6 +79,27 @@ class DashboardRegressionTest {
         compose.onNode(charging and right).assertIsDisplayed()
     }
 
+    @Test fun caseGaugeReflectsCurrentCaseReading() {
+        val case = androidx.compose.runtime.mutableStateOf(DashboardBattery(DeviceArtKind.Case, R.string.andpop_case, 90, false))
+        compose.setContent {
+            LibrePodsTheme(darkTheme = true, m3eEnabled = true) {
+                BatterySection(listOf(DashboardBattery(DeviceArtKind.Left, R.string.andpop_left, 100, true), case.value),
+                    null, false, false, {}, {})
+            }
+        }
+        val gauge = SemanticsMatcher.expectValue(androidx.compose.ui.semantics.SemanticsProperties.ProgressBarRangeInfo,
+            androidx.compose.ui.semantics.ProgressBarRangeInfo(90f, 0f..100f))
+        val caseGauge = hasText(label(R.string.andpop_case)) and gauge
+        val charging = hasContentDescription(label(R.string.andpop_charging))
+        compose.onNode(caseGauge).assertIsDisplayed().assert(!charging)
+        compose.runOnIdle { case.value = case.value.copy(charging = true) }
+        compose.onNode(caseGauge and charging).assertIsDisplayed()
+        compose.runOnIdle { case.value = case.value.copy(lastSeen = true) }
+        compose.onNode(caseGauge).assertDoesNotExist()
+        compose.runOnIdle { case.value = case.value.copy(level = null, lastSeen = false) }
+        compose.onNode(caseGauge).assertDoesNotExist()
+    }
+
     @Test fun narrowLargeTextKeepsTransparencyWhole() {
         compose.setContent {
             val density = LocalDensity.current.density

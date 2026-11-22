@@ -44,6 +44,8 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -289,22 +291,30 @@ private fun BatteryValue(item: DashboardBattery) {
 @Composable
 private fun BatteryDetail(item: DashboardBattery) {
     val colors = LocalAndpopPalette.current.scheme
-    if (item.activelyCharging) {
-        ChargingGlyph(requireNotNull(item.level), stringResource(R.string.andpop_charging))
-    } else {
-        item.detail?.let {
-            Text(stringResource(it), color = if (item.low) colors.error else colors.onSurfaceVariant,
-                style = MaterialTheme.typography.labelSmall)
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        val level = item.level
+        if (level != null && !item.lastSeen) {
+            BatteryGauge(level, item.activelyCharging)
+        }
+        if (!item.activelyCharging) {
+            item.detail?.let {
+                Text(stringResource(it), color = if (item.low) colors.error else colors.onSurfaceVariant,
+                    style = MaterialTheme.typography.labelSmall)
+            }
         }
     }
 }
 
 @Composable
-private fun ChargingGlyph(level: Int, description: String) {
+private fun BatteryGauge(level: Int, charging: Boolean) {
+    val description = if (charging) stringResource(R.string.andpop_charging) else null
     val dark = LocalAndpopPalette.current.scheme.background.luminance() < 0.5f
     val shell = if (dark) Color(0xFFD5E3E4) else Color(0xFF304347)
     val well = if (dark) Color(0xFF12303A) else Color.White
-    Canvas(Modifier.size(44.dp, 24.dp).semantics { contentDescription = description }) {
+    Canvas(Modifier.size(44.dp, 24.dp).semantics {
+        progressBarRangeInfo = ProgressBarRangeInfo(level.toFloat(), 0f..100f)
+        if (description != null) contentDescription = description
+    }) {
         withTransform({ scale(size.width / 48f, size.height / 25f, Offset.Zero) }) {
             val origin = Offset(1.5f, 4f)
             val body = Size(40.5f, 17f)
@@ -314,6 +324,7 @@ private fun ChargingGlyph(level: Int, description: String) {
             drawRoundRect(shell, Offset(44.3f, 9f), Size(2.8f, 7f), CornerRadius(1.1f))
             drawRoundRect(Color(0xFF69D447), Offset(4.5f, 7f),
                 Size(level.coerceIn(0, 100) * 0.345f, 11f), CornerRadius(1.3f))
+            if (!charging) return@withTransform
             val bolt = Path().apply {
                 moveTo(26.8f, 1.3f)
                 lineTo(17f, 14f)
