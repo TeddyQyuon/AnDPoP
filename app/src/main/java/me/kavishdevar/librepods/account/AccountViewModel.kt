@@ -18,6 +18,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+private val defaultAuthProject = AuthProject(
+    url = "https://btfbwwnbkarlpcqmkzzb.supabase.co",
+    key = "sb_publishable_s3GqJUDO5e_3PAC_aqytLg_tSdk5tSr",
+)
+
 internal enum class AccountPage { Profile, Login, SignUp, Forgot, Reset, Project }
 
 internal data class AccountUiState(
@@ -26,6 +31,7 @@ internal data class AccountUiState(
     val page: AccountPage = AccountPage.Profile,
     val busy: Boolean = true,
     val configured: Boolean = false,
+    val showSocialSignIn: Boolean = false,
     val projectUrl: String = "",
     val signedIn: Boolean = false,
     val email: String = "",
@@ -57,12 +63,13 @@ internal class AccountViewModel(application: Application) : AndroidViewModel(app
                 message("The saved session could not be read. Sign in again to restore your profile.")
                 AccountMemory()
             }
-            memory = restored
+            // Keep existing custom projects and their stored sessions.
+            memory = if (restored.project == null) restored.copy(project = defaultAuthProject) else restored
             val signed = restored.session
             if (restored.recovering && signed != null && !signed.expiresSoon(now())) {
                 mutableState.update { it.copy(open = true, page = AccountPage.Reset) }
             } else {
-                if (restored.recovering) save(restored.copy(session = null, recovering = false))
+                if (restored.recovering) save(memory.copy(session = null, recovering = false))
                 val user = memory.session
                 val project = memory.project
                 if (project != null && user != null) {
@@ -331,6 +338,7 @@ internal class AccountViewModel(application: Application) : AndroidViewModel(app
                 signedIn = session != null,
                 email = session?.email.orEmpty(),
                 configured = memory.project != null,
+                showSocialSignIn = memory.project?.let { it.url != defaultAuthProject.url } ?: false,
                 projectUrl = memory.project?.url.orEmpty(),
                 remembered = profiles.rememberedDevice(),
             )

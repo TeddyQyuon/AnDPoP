@@ -272,10 +272,12 @@ private fun AccountForm(
         }
     }
     if (page == AccountPage.Login || page == AccountPage.SignUp) {
-        HorizontalDivider(color = palette.scheme.outlineVariant)
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            AccountOutline("Continue with Google", active) { model.signInWithProvider(FlowPurpose.Google) }
-            AccountOutline("Continue with Apple", active) { model.signInWithProvider(FlowPurpose.Apple) }
+        if (state.showSocialSignIn) {
+            HorizontalDivider(color = palette.scheme.outlineVariant)
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                AccountOutline("Continue with Google", active) { model.signInWithProvider(FlowPurpose.Google) }
+                AccountOutline("Continue with Apple", active) { model.signInWithProvider(FlowPurpose.Apple) }
+            }
         }
         if (page == AccountPage.Login) {
             AccountLink("Create an account", active) { model.page(AccountPage.SignUp) }
