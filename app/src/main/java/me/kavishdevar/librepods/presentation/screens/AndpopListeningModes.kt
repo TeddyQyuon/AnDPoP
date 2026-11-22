@@ -131,6 +131,7 @@ private fun ListeningModeButton(
             ListeningModeGlyph(option.mode, palette.scheme.onSurface)
             Text(
                 stringResource(option.label), color = palette.scheme.onSurface,
+                modifier = Modifier.fillMaxWidth(),
                 style = MaterialTheme.typography.labelSmall,
                 textAlign = TextAlign.Center,
             )
