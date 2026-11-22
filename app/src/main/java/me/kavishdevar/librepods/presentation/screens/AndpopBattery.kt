@@ -7,6 +7,7 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -39,6 +40,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
@@ -70,12 +76,13 @@ internal data class DashboardBattery(
     val estimated: Boolean = false,
     val lastSeen: Boolean = false,
 ) {
+    val activelyCharging get() = level != null && charging && !lastSeen
     val low = level != null && level <= 20 && !charging && !lastSeen
     val detail: Int?
         @StringRes get() = when {
             level == null -> R.string.andpop_no_reading
             lastSeen -> R.string.andpop_last_seen
-            charging -> R.string.andpop_charging
+            activelyCharging -> R.string.andpop_charging
             estimated -> R.string.andpop_estimated
             low -> R.string.andpop_low_battery
             else -> null
@@ -107,9 +114,9 @@ internal fun dashboardBattery(
                 art = DeviceArtKind.Case,
                 label = R.string.andpop_case,
                 level = caseReading?.level,
-                charging = caseReading?.charging == true && caseCurrent,
+                charging = connected && caseReading?.charging == true && caseCurrent,
                 estimated = caseReading?.estimated == true,
-                lastSeen = caseReading != null && !caseCurrent,
+                lastSeen = caseReading != null && (!connected || !caseCurrent),
             ),
         )
     }
@@ -213,7 +220,7 @@ private fun BatteryCell(item: DashboardBattery, model: AirPodsBase?, modifier: M
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(3.dp),
     ) {
-        val artSize = if (item.art == DeviceArtKind.Headphones) 96.dp else 63.dp
+        val artSize = if (item.art == DeviceArtKind.Headphones) 96.dp else 72.dp
         BatteryArtwork(item, model, Modifier.size(artSize))
         BatteryValue(item)
         Text(
@@ -222,7 +229,7 @@ private fun BatteryCell(item: DashboardBattery, model: AirPodsBase?, modifier: M
             style = MaterialTheme.typography.labelMedium,
             textAlign = TextAlign.Center,
         )
-        BatteryDetail(item)
+        Box(Modifier.heightIn(min = 24.dp), contentAlignment = Alignment.Center) { BatteryDetail(item) }
     }
 }
 
@@ -256,14 +263,14 @@ private fun BatteryRow(item: DashboardBattery, model: AirPodsBase?) {
             style = MaterialTheme.typography.bodyMedium,
         )
         Column(horizontalAlignment = Alignment.End) {
-            BatteryValue(item, showGlyph = true)
+            BatteryValue(item)
             BatteryDetail(item)
         }
     }
 }
 
 @Composable
-private fun BatteryValue(item: DashboardBattery, showGlyph: Boolean = false) {
+private fun BatteryValue(item: DashboardBattery) {
     val palette = LocalAndpopPalette.current
     val colors = palette.scheme
     val ink = when {
@@ -276,47 +283,49 @@ private fun BatteryValue(item: DashboardBattery, showGlyph: Boolean = false) {
         item.estimated -> stringResource(R.string.andpop_estimated_value, item.level)
         else -> stringResource(R.string.andpop_battery_value, item.level)
     }
-    Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(value, color = ink, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-        if (showGlyph && item.level != null) {
-            BatteryGlyph(item.level, if (item.charging) palette.connected else if (item.low) ink else colors.primary)
-        }
-    }
+    Text(value, color = ink, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
 }
 
 @Composable
 private fun BatteryDetail(item: DashboardBattery) {
-    val palette = LocalAndpopPalette.current
-    val colors = palette.scheme
-    item.detail?.let {
-        Text(
-            stringResource(it),
-            color = if (item.low) colors.error else if (item.charging) palette.connected else colors.onSurfaceVariant,
-            style = MaterialTheme.typography.labelSmall,
-        )
+    val colors = LocalAndpopPalette.current.scheme
+    if (item.activelyCharging) {
+        ChargingGlyph(requireNotNull(item.level), stringResource(R.string.andpop_charging))
+    } else {
+        item.detail?.let {
+            Text(stringResource(it), color = if (item.low) colors.error else colors.onSurfaceVariant,
+                style = MaterialTheme.typography.labelSmall)
+        }
     }
 }
 
 @Composable
-private fun BatteryGlyph(level: Int, ink: Color) {
-    Canvas(Modifier.size(width = 20.dp, height = 10.dp)) {
-        if (size.width < 8.dp.toPx()) return@Canvas
-        val stroke = 1.dp.toPx()
-        val body = size.width - 3.dp.toPx()
-        val radius = CornerRadius(2.dp.toPx())
-        drawRoundRect(
-            ink.copy(alpha = 0.78f), Offset(stroke / 2, stroke / 2),
-            Size(body - stroke, size.height - stroke), radius, style = Stroke(stroke),
-        )
-        val inset = 2.dp.toPx()
-        val chargeWidth = (body - inset * 2) * level.coerceIn(0, 100) / 100f
-        if (chargeWidth > 0f) {
-            drawRoundRect(ink, Offset(inset, inset), Size(chargeWidth, size.height - inset * 2), CornerRadius(stroke))
+private fun ChargingGlyph(level: Int, description: String) {
+    val dark = LocalAndpopPalette.current.scheme.background.luminance() < 0.5f
+    val shell = if (dark) Color(0xFFD5E3E4) else Color(0xFF304347)
+    val well = if (dark) Color(0xFF12303A) else Color.White
+    Canvas(Modifier.size(44.dp, 24.dp).semantics { contentDescription = description }) {
+        withTransform({ scale(size.width / 48f, size.height / 25f, Offset.Zero) }) {
+            val origin = Offset(1.5f, 4f)
+            val body = Size(40.5f, 17f)
+            val corner = CornerRadius(3.2f)
+            drawRoundRect(well, origin, body, corner)
+            drawRoundRect(shell, origin, body, corner, style = Stroke(2f))
+            drawRoundRect(shell, Offset(44.3f, 9f), Size(2.8f, 7f), CornerRadius(1.1f))
+            drawRoundRect(Color(0xFF69D447), Offset(4.5f, 7f),
+                Size(level.coerceIn(0, 100) * 0.345f, 11f), CornerRadius(1.3f))
+            val bolt = Path().apply {
+                moveTo(26.8f, 1.3f)
+                lineTo(17f, 14f)
+                lineTo(23.1f, 14f)
+                lineTo(20.7f, 23.6f)
+                lineTo(31.2f, 10f)
+                lineTo(24.9f, 10f)
+                close()
+            }
+            drawPath(bolt, Color(0xFF101713))
+            drawPath(bolt, Color(0xFFF1F9E9), style = Stroke(1.15f, join = StrokeJoin.Round))
         }
-        drawRoundRect(
-            ink.copy(alpha = 0.78f), Offset(body + stroke, size.height * 0.28f),
-            Size(stroke, size.height * 0.44f), CornerRadius(stroke),
-        )
     }
 }
 

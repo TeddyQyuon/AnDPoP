@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import me.kavishdevar.librepods.R
@@ -69,10 +70,19 @@ internal fun DashboardListeningModes(state: AirPodsUiState, onSelectMode: (Noise
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             BoxWithConstraints(Modifier.fillMaxWidth().selectableGroup()) {
-                val fontScale = LocalDensity.current.fontScale
+                val measurer = rememberTextMeasurer()
+                val density = LocalDensity.current
+                val style = MaterialTheme.typography.labelSmall
+                // Let each translated word fit without splitting it at large font sizes.
+                val widths = options.associateWith { option ->
+                    val words = stringResource(option.label).split(' ')
+                    val pixels = words.maxOf { measurer.measure(it, style).size.width }
+                    with(density) { pixels.toDp() + 6.dp }.coerceAtLeast(48.dp)
+                }
+                val total = widths.values.reduce { a, b -> a + b } + 4.dp * (options.size - 1)
                 val columns = when {
-                    maxWidth >= 78.dp * options.size && fontScale <= 1.22f -> options.size
-                    maxWidth >= 225.dp && fontScale <= 1.5f -> 2
+                    maxWidth >= 298.dp && total <= maxWidth -> options.size
+                    widths.values.max() * 2 + 4.dp <= maxWidth -> 2
                     else -> 1
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -83,7 +93,7 @@ internal fun DashboardListeningModes(state: AirPodsUiState, onSelectMode: (Noise
                                     option = option,
                                     selected = option == selected,
                                     onSelect = { onSelectMode(option.mode) },
-                                    modifier = Modifier.weight(1f),
+                                    modifier = Modifier.weight(if (columns == options.size) widths.getValue(option).value else 1f),
                                 )
                             }
                             repeat(columns - row.size) { Box(Modifier.weight(1f)) }

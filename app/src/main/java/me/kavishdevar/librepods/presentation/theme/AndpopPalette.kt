@@ -36,9 +36,8 @@ internal class AndpopPalette(val scheme: ColorScheme, val selectedCheck: Color) 
     val connected: Color get() = scheme.onSurfaceVariant
 }
 
-private fun palette(dark: Boolean, base: Color, ink: Color, accent: Color): AndpopPalette {
+private fun palette(dark: Boolean, base: Color, panel: Color, ink: Color, accent: Color): AndpopPalette {
     fun blend(amount: Float) = androidx.compose.ui.graphics.lerp(base, ink, amount)
-    val panel = if (dark) blend(0.065f) else androidx.compose.ui.graphics.lerp(base, Color.White, 0.36f)
     val scheme = (if (dark) darkColorScheme() else lightColorScheme()).copy(
         background = base, onBackground = ink, surface = panel, onSurface = ink,
         surfaceContainerLowest = base, surfaceContainerLow = panel,
@@ -54,12 +53,12 @@ private fun palette(dark: Boolean, base: Color, ink: Color, accent: Color): Andp
 }
 
 internal fun andpopPalette(tint: AndpopTint, dark: Boolean): AndpopPalette = when (tint) {
-    AndpopTint.Glacier -> if (dark) palette(true, Color(0xFF0E2931), Color(0xFFF0FBFD), Color(0xFFB3DFE9))
-        else palette(false, Color(0xFFDEF3F6), Color(0xFF122D34), Color(0xFF285863))
-    AndpopTint.Iris -> if (dark) palette(true, Color(0xFF211C39), Color(0xFFF5F1FF), Color(0xFFDACBFF))
-        else palette(false, Color(0xFFEEE9FF), Color(0xFF241E35), Color(0xFF564674))
-    AndpopTint.Guava -> if (dark) palette(true, Color(0xFF341E2A), Color(0xFFFFF1F4), Color(0xFFF4CBD6))
-        else palette(false, Color(0xFFFFE9E4), Color(0xFF352326), Color(0xFF754452))
+    AndpopTint.Glacier -> if (dark) palette(true, Color(0xFF0F2932), Color(0xFF28434A), Color(0xFFF2FAFB), Color(0xFFB9E0E9))
+        else palette(false, Color(0xFFDEF3F6), Color(0xFFF1FCFD), Color(0xFF122D34), Color(0xFF245460))
+    AndpopTint.Iris -> if (dark) palette(true, Color(0xFF211C39), Color(0xFF38324F), Color(0xFFF5F1FF), Color(0xFFE0D2FF))
+        else palette(false, Color(0xFFEEE9FF), Color(0xFFF9F6FF), Color(0xFF241E35), Color(0xFF584477))
+    AndpopTint.Guava -> if (dark) palette(true, Color(0xFF341E2A), Color(0xFF4E3341), Color(0xFFFFF1F4), Color(0xFFFFD1DD))
+        else palette(false, Color(0xFFFFE9E4), Color(0xFFFFF5F1), Color(0xFF352326), Color(0xFF754452))
 }
 
 internal val DarkAndpopPalette = andpopPalette(AndpopTint.Glacier, true)
@@ -71,7 +70,7 @@ val LocalSetAndpopAppearance = staticCompositionLocalOf<(AndpopAppearance) -> Un
 
 internal fun Modifier.devicePanel(
     palette: AndpopPalette,
-    shape: RoundedCornerShape = RoundedCornerShape(24.dp),
+    shape: RoundedCornerShape = RoundedCornerShape(23.dp),
     color: Color = palette.scheme.surface,
 ) = clip(shape)
     .background(Brush.verticalGradient(listOf(androidx.compose.ui.graphics.lerp(color, Color.White, 0.09f), color.copy(alpha = color.alpha * 0.89f))))
