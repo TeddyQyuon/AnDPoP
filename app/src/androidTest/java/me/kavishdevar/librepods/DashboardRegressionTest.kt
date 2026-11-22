@@ -95,7 +95,16 @@ class DashboardRegressionTest {
             .performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(results) }
         val layout = results.single()
         assertEquals(1, layout.lineCount)
-        assertFalse("Text bounds: ${layout.size}, paragraph: ${layout.multiParagraph.width} × ${layout.multiParagraph.height}", layout.hasVisualOverflow)
+        // The paragraph may use the parent's full width even when the Text node wraps its contents.
+        // Check the actual glyph bounds against the visible node instead of the paragraph's width.
+        val text = layout.layoutInput.text
+        assertEquals(text.length, layout.getLineEnd(0, visibleEnd = true))
+        for (index in text.indices) {
+            val glyph = layout.getBoundingBox(index)
+            assertTrue("Glyph $index at $glyph outside ${layout.size}",
+                glyph.left >= -1f && glyph.right <= layout.size.width + 1f &&
+                    glyph.top >= -1f && glyph.bottom <= layout.size.height + 1f)
+        }
     }
 
     @Test fun dashboardSlidersOpenFullSettingsAndSystemBackReturns() {
