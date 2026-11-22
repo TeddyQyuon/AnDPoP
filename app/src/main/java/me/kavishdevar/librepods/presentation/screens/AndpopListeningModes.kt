@@ -5,6 +5,8 @@ package me.kavishdevar.librepods.presentation.screens
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,9 +15,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.RadioButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,14 +26,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import me.kavishdevar.librepods.R
 import me.kavishdevar.librepods.bluetooth.AACPManager.Companion.ControlCommandIdentifiers
 import me.kavishdevar.librepods.data.Capability
 import me.kavishdevar.librepods.data.NoiseControlMode
 import me.kavishdevar.librepods.presentation.theme.LocalAndpopPalette
+import me.kavishdevar.librepods.presentation.theme.devicePanel
 import me.kavishdevar.librepods.presentation.viewmodel.AirPodsUiState
 
 private enum class ListeningOption(
@@ -56,29 +61,75 @@ internal fun DashboardListeningModes(state: AirPodsUiState, onSelectMode: (Noise
         if (Capability.ADAPTIVE_AUDIO in state.capabilities) add(ListeningOption.Adaptive)
         if (state.offListeningMode) add(ListeningOption.Off)
     }
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    val selected = options.firstOrNull { it.mode.ordinal + 1 == current }
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         DashboardHeading(stringResource(R.string.listening_mode), Modifier.padding(horizontal = 4.dp))
-        Column(Modifier.fillMaxWidth().selectableGroup()) {
-            options.forEach { option ->
-                val selected = option.mode.ordinal + 1 == current
-                Row(
-                    Modifier.fillMaxWidth().selectable(
-                        selected = selected, role = Role.RadioButton,
-                        onClick = { onSelectMode(option.mode) },
-                    ).heightIn(min = 52.dp).padding(horizontal = 8.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    ListeningModeGlyph(option.mode, colors.onSurfaceVariant)
-                    Column(Modifier.weight(1f)) {
-                        Text(stringResource(option.label), style = MaterialTheme.typography.bodyLarge)
-                        if (selected) {
-                            Text(stringResource(option.description), color = colors.onSurfaceVariant,
-                                style = MaterialTheme.typography.bodySmall)
+        Column(
+            Modifier.fillMaxWidth().devicePanel(palette).padding(8.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            BoxWithConstraints(Modifier.fillMaxWidth().selectableGroup()) {
+                val fontScale = LocalDensity.current.fontScale
+                val columns = when {
+                    maxWidth >= 78.dp * options.size && fontScale <= 1.22f -> options.size
+                    maxWidth >= 225.dp && fontScale <= 1.5f -> 2
+                    else -> 1
+                }
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    options.chunked(columns).forEach { row ->
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            row.forEach { option ->
+                                ListeningModeButton(
+                                    option = option,
+                                    selected = option == selected,
+                                    onSelect = { onSelectMode(option.mode) },
+                                    modifier = Modifier.weight(1f),
+                                )
+                            }
+                            repeat(columns - row.size) { Box(Modifier.weight(1f)) }
                         }
                     }
-                    RadioButton(selected = selected, onClick = null)
                 }
+            }
+            selected?.let {
+                Text(
+                    stringResource(it.description),
+                    Modifier.padding(start = 7.dp, end = 7.dp, bottom = 4.dp),
+                    color = colors.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ListeningModeButton(
+    option: ListeningOption,
+    selected: Boolean,
+    onSelect: () -> Unit,
+    modifier: Modifier,
+) {
+    val palette = LocalAndpopPalette.current
+    Box(
+        modifier.devicePanel(palette, RoundedCornerShape(15.dp), palette.scheme.surfaceContainerHigh)
+            .selectable(selected, role = Role.RadioButton, onClick = onSelect)
+            .heightIn(min = 76.dp).padding(horizontal = 2.dp, vertical = 6.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            ListeningModeGlyph(option.mode, palette.scheme.onSurface)
+            Text(
+                stringResource(option.label), color = palette.scheme.onSurface,
+                style = MaterialTheme.typography.labelSmall,
+                textAlign = TextAlign.Center,
+            )
+        }
+        if (selected) {
+            Canvas(Modifier.align(Alignment.TopEnd).padding(end = 2.dp).size(12.dp)) {
+                val elbow = Offset(size.width * 0.38f, size.height * 0.77f)
+                drawLine(palette.selectedCheck, Offset(size.width * 0.08f, size.height * 0.48f), elbow, 2.dp.toPx(), StrokeCap.Round)
+                drawLine(palette.selectedCheck, elbow, Offset(size.width * 0.92f, size.height * 0.16f), 2.dp.toPx(), StrokeCap.Round)
             }
         }
     }

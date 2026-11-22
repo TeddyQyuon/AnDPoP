@@ -23,66 +23,49 @@ enum class AndpopAppearance(@param:StringRes val label: Int) {
     Dark(R.string.andpop_theme_dark),
 }
 
-internal class AndpopPalette(
-    val scheme: ColorScheme,
-    val connected: Color,
-)
+enum class AndpopTint {
+    Glacier, Iris, Guava;
 
-internal val DarkAndpopPalette = AndpopPalette(
-    scheme = darkColorScheme(
-        background = Color(0xFF17171D),
-        onBackground = Color(0xFFF4F1F7),
-        surface = Color(0xFF23232D),
-        surfaceContainerLowest = Color(0xFF14141B),
-        surfaceContainerLow = Color(0xFF1C1C26),
-        surfaceContainer = Color(0xFF23232D),
-        surfaceContainerHigh = Color(0xFF2E2C3B),
-        surfaceContainerHighest = Color(0xFF393649),
-        surfaceVariant = Color(0xFF393649),
-        onSurface = Color(0xFFF4F1F7),
-        onSurfaceVariant = Color(0xFFC1BBCD),
-        primary = Color(0xFFD9C9FF),
-        onPrimary = Color(0xFF2C2043),
-        primaryContainer = Color(0xFF4C3B71),
-        onPrimaryContainer = Color(0xFFF2E9FF),
-        secondary = Color(0xFFD5C5EE),
-        secondaryContainer = Color(0xFF35304B),
-        onSecondaryContainer = Color(0xFFEEE4FF),
-        outline = Color(0xFF9E96AB),
-        outlineVariant = Color(0xFF3E394D),
-        error = Color(0xFFFFB5AD),
-    ),
-    connected = Color(0xFF8EDDB3),
-)
+    companion object {
+        fun saved(name: String?, dark: Boolean): AndpopTint =
+            entries.firstOrNull { it.name == name } ?: if (dark) Glacier else Iris
+    }
+}
 
-internal val LightAndpopPalette = AndpopPalette(
-    scheme = lightColorScheme(
-        background = Color(0xFFF3F0F6),
-        onBackground = Color(0xFF211C2A),
-        surface = Color(0xFFFFFCFF),
-        surfaceContainerLowest = Color.White,
-        surfaceContainerLow = Color(0xFFFAF7FC),
-        surfaceContainer = Color(0xFFF3F0F6),
-        surfaceContainerHigh = Color(0xFFEDE7F3),
-        surfaceContainerHighest = Color(0xFFE6DFEE),
-        surfaceVariant = Color(0xFFE6DFEE),
-        onSurface = Color(0xFF211C2A),
-        onSurfaceVariant = Color(0xFF5F556B),
-        primary = Color(0xFF624893),
-        onPrimary = Color.White,
-        primaryContainer = Color(0xFFECDEFF),
-        onPrimaryContainer = Color(0xFF412864),
-        secondary = Color(0xFF6B507D),
-        secondaryContainer = Color(0xFFEBE1F0),
-        onSecondaryContainer = Color(0xFF493553),
-        outline = Color(0xFF7E718A),
-        outlineVariant = Color(0xFFE1DAE9),
-        error = Color(0xFFA63A3A),
-    ),
-    connected = Color(0xFF1B6E4A),
-)
+internal class AndpopPalette(val scheme: ColorScheme, val selectedCheck: Color) {
+    val connected: Color get() = scheme.onSurfaceVariant
+}
 
+private fun palette(dark: Boolean, base: Color, ink: Color, accent: Color): AndpopPalette {
+    fun blend(amount: Float) = androidx.compose.ui.graphics.lerp(base, ink, amount)
+    val panel = if (dark) blend(0.065f) else androidx.compose.ui.graphics.lerp(base, Color.White, 0.36f)
+    val scheme = (if (dark) darkColorScheme() else lightColorScheme()).copy(
+        background = base, onBackground = ink, surface = panel, onSurface = ink,
+        surfaceContainerLowest = base, surfaceContainerLow = panel,
+        surfaceContainer = panel, surfaceContainerHigh = blend(0.12f),
+        surfaceContainerHighest = blend(0.17f), surfaceVariant = blend(0.13f),
+        onSurfaceVariant = blend(0.78f), primary = accent, onPrimary = base,
+        primaryContainer = blend(0.16f), onPrimaryContainer = ink,
+        secondary = accent, onSecondary = base, secondaryContainer = blend(0.12f),
+        onSecondaryContainer = ink, outline = blend(0.55f), outlineVariant = blend(0.24f),
+        surfaceTint = accent, inverseSurface = ink, inverseOnSurface = base,
+    )
+    return AndpopPalette(scheme, if (dark) Color(0xFF76E6A7) else Color(0xFF147044))
+}
+
+internal fun andpopPalette(tint: AndpopTint, dark: Boolean): AndpopPalette = when (tint) {
+    AndpopTint.Glacier -> if (dark) palette(true, Color(0xFF0E2931), Color(0xFFF0FBFD), Color(0xFFB3DFE9))
+        else palette(false, Color(0xFFDEF3F6), Color(0xFF122D34), Color(0xFF285863))
+    AndpopTint.Iris -> if (dark) palette(true, Color(0xFF211C39), Color(0xFFF5F1FF), Color(0xFFDACBFF))
+        else palette(false, Color(0xFFEEE9FF), Color(0xFF241E35), Color(0xFF564674))
+    AndpopTint.Guava -> if (dark) palette(true, Color(0xFF341E2A), Color(0xFFFFF1F4), Color(0xFFF4CBD6))
+        else palette(false, Color(0xFFFFE9E4), Color(0xFF352326), Color(0xFF754452))
+}
+
+internal val DarkAndpopPalette = andpopPalette(AndpopTint.Glacier, true)
 internal val LocalAndpopPalette = staticCompositionLocalOf { DarkAndpopPalette }
+internal val LocalAndpopTint = staticCompositionLocalOf { AndpopTint.Glacier }
+internal val LocalSetAndpopTint = staticCompositionLocalOf<(AndpopTint) -> Unit> { {} }
 val LocalAndpopAppearance = staticCompositionLocalOf { AndpopAppearance.System }
 val LocalSetAndpopAppearance = staticCompositionLocalOf<(AndpopAppearance) -> Unit> { {} }
 
@@ -91,11 +74,11 @@ internal fun Modifier.devicePanel(
     shape: RoundedCornerShape = RoundedCornerShape(24.dp),
     color: Color = palette.scheme.surface,
 ) = clip(shape)
-    .background(Brush.verticalGradient(listOf(color, color.copy(alpha = color.alpha * 0.84f))))
+    .background(Brush.verticalGradient(listOf(androidx.compose.ui.graphics.lerp(color, Color.White, 0.09f), color.copy(alpha = color.alpha * 0.89f))))
     .border(
         1.dp,
         Brush.verticalGradient(
-            listOf(palette.scheme.outlineVariant, palette.scheme.outlineVariant.copy(alpha = 0.48f)),
+            listOf(androidx.compose.ui.graphics.lerp(palette.scheme.outlineVariant, Color.White, 0.40f), palette.scheme.outlineVariant.copy(alpha = 0.48f)),
         ),
         shape,
     )

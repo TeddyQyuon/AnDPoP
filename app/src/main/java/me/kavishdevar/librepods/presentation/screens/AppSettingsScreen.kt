@@ -69,6 +69,9 @@ import me.kavishdevar.librepods.presentation.components.StyledList
 import me.kavishdevar.librepods.presentation.components.StyledListItem
 import me.kavishdevar.librepods.presentation.components.StyledSlider
 import me.kavishdevar.librepods.presentation.components.StyledToggle
+import me.kavishdevar.librepods.presentation.theme.AndpopTint
+import me.kavishdevar.librepods.presentation.theme.LocalAndpopTint
+import me.kavishdevar.librepods.presentation.theme.LocalSetAndpopTint
 import me.kavishdevar.librepods.presentation.theme.AndpopAppearance
 import me.kavishdevar.librepods.presentation.theme.DesignSystem
 import me.kavishdevar.librepods.presentation.theme.LocalAndpopAppearance
@@ -118,6 +121,22 @@ fun AppSettingsScreen(
                         onClick = { setAppearance(option) },
                         shape = SegmentedButtonDefaults.itemShape(index, AndpopAppearance.entries.size),
                         label = { Text(stringResource(option.label)) },
+                    )
+                }
+            }
+        }
+        val tint = LocalAndpopTint.current
+        val setTint = LocalSetAndpopTint.current
+        StyledList(title = stringResource(R.string.andpop_color_palette)) {
+            SingleChoiceSegmentedButtonRow(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+            ) {
+                AndpopTint.entries.forEachIndexed { index, option ->
+                    SegmentedButton(
+                        selected = tint == option,
+                        onClick = { setTint(option) },
+                        shape = SegmentedButtonDefaults.itemShape(index, AndpopTint.entries.size),
+                        label = { Text(option.name) },
                     )
                 }
             }
@@ -326,51 +345,71 @@ fun AppSettingsScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        StyledList(title = stringResource(R.string.andpop_about)) {
-            StyledListItem(
-                name = stringResource(R.string.andpop_upstream),
-                onClick = {
-                    context.startActivity(
-                        Intent(Intent.ACTION_VIEW, "https://github.com/librepods-org/librepods".toUri())
-                    )
-                }
-            )
-            StyledListItem(
-                name = stringResource(R.string.andpop_photo_credit),
-                description = stringResource(R.string.andpop_photo_credit_detail),
-                onClick = {
-                    context.startActivity(Intent(
-                        Intent.ACTION_VIEW,
-                        "https://commons.wikimedia.org/wiki/File:AirPods_Pro_(2nd_generation).jpg".toUri(),
-                    ))
+        val showCredits = androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
+        StyledListItem(
+            name = stringResource(R.string.andpop_credits),
+            onClick = { showCredits.value = true },
+        )
+        if (showCredits.value) {
+            AlertDialog(
+                onDismissRequest = { showCredits.value = false },
+                title = { Text(stringResource(R.string.andpop_credits)) },
+                text = {
+                    Column(Modifier.verticalScroll(rememberScrollState())) {
+                        StyledListItem(
+                            name = stringResource(R.string.andpop_upstream),
+                            onClick = {
+                                context.startActivity(
+                                    Intent(Intent.ACTION_VIEW, "https://github.com/librepods-org/librepods".toUri())
+                                )
+                            }
+                        )
+                        StyledListItem(
+                            name = stringResource(R.string.andpop_photo_credit),
+                            description = stringResource(R.string.andpop_photo_credit_detail),
+                            onClick = {
+                                context.startActivity(Intent(
+                                    Intent.ACTION_VIEW,
+                                    "https://commons.wikimedia.org/wiki/File:AirPods_Pro_(2nd_generation).jpg".toUri(),
+                                ))
+                            },
+                        )
+                        StyledListItem(
+                            name = stringResource(R.string.andpop_photo_license),
+                            onClick = {
+                                context.startActivity(Intent(
+                                    Intent.ACTION_VIEW,
+                                    "https://creativecommons.org/licenses/by-sa/4.0/".toUri(),
+                                ))
+                            },
+                        )
+                        StyledListItem(
+                            name = stringResource(R.string.andpop_max_photo_credit),
+                            description = stringResource(R.string.andpop_max_photo_detail),
+                            onClick = {
+                                context.startActivity(Intent(
+                                    Intent.ACTION_VIEW,
+                                    "https://commons.wikimedia.org/wiki/File:Apple_airpods_max_1.jpg".toUri(),
+                                ))
+                            },
+                        )
+                        StyledListItem(
+                            name = stringResource(R.string.andpop_max_photo_license),
+                            onClick = {
+                                context.startActivity(Intent(
+                                    Intent.ACTION_VIEW,
+                                    "https://creativecommons.org/licenses/by-sa/3.0/de/deed.en".toUri(),
+                                ))
+                            },
+                        )
+                        StyledListItem(name = stringResource(R.string.open_source_licenses), onClick = {
+                            showCredits.value = false
+                            navigateToOpenSourceLicenses()
+                        })
+                    }
                 },
-            )
-            StyledListItem(
-                name = stringResource(R.string.andpop_photo_license),
-                onClick = {
-                    context.startActivity(Intent(
-                        Intent.ACTION_VIEW,
-                        "https://creativecommons.org/licenses/by-sa/4.0/".toUri(),
-                    ))
-                },
-            )
-            StyledListItem(
-                name = stringResource(R.string.andpop_max_photo_credit),
-                description = stringResource(R.string.andpop_max_photo_detail),
-                onClick = {
-                    context.startActivity(Intent(
-                        Intent.ACTION_VIEW,
-                        "https://commons.wikimedia.org/wiki/File:Apple_airpods_max_1.jpg".toUri(),
-                    ))
-                },
-            )
-            StyledListItem(
-                name = stringResource(R.string.andpop_max_photo_license),
-                onClick = {
-                    context.startActivity(Intent(
-                        Intent.ACTION_VIEW,
-                        "https://creativecommons.org/licenses/by-sa/3.0/de/deed.en".toUri(),
-                    ))
+                confirmButton = {
+                    TextButton(onClick = { showCredits.value = false }) { Text(stringResource(android.R.string.ok)) }
                 },
             )
         }
@@ -379,10 +418,6 @@ fun AppSettingsScreen(
         DeviceInfoCard()
         Spacer(modifier = Modifier.height(16.dp))
 
-        StyledListItem(
-            name = stringResource(R.string.open_source_licenses),
-            onClick = navigateToOpenSourceLicenses,
-        )
 
         Spacer(modifier = Modifier.height(bottomPadding))
 

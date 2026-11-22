@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="andpop_battery_unavailable">Battery levels unavailable</string>
+    <string name="andpop_color_palette">Color palette</string>
+    <string name="andpop_credits">Credits and licenses</string>
 </resources>

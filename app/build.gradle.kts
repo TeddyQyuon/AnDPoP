@@ -46,10 +46,11 @@ android {
     defaultConfig {
         applicationId = "app.andpop.android"
         targetSdk = 37
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         minSdk = 33
         ndk { abiFilters += listOf("arm64-v8a", "x86_64") }
-        versionCode = 6
-        versionName = "1.4.0"
+        versionCode = 7
+        versionName = "1.5.0"
     }
     buildTypes {
         release {
@@ -98,7 +99,7 @@ android {
             version = "3.22.1"
         }
     }
-    ndkVersion = "30.0.14904198"
+    ndkVersion = "29.0.14206865"
 
     flavorDimensions += "env"
 }
@@ -123,6 +124,10 @@ dependencies {
     implementation(libs.androidx.dynamicanimation)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.material.icons.core)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
     debugImplementation(libs.androidx.compose.ui.tooling)
     implementation(libs.androidx.compose.foundation.layout)
     implementation(libs.aboutlibraries)

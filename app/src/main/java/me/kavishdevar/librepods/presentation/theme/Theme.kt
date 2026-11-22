@@ -59,9 +59,10 @@ private val AppleLightColorScheme = lightColorScheme(
 fun LibrePodsTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     m3eEnabled: Boolean = false,
+    tint: AndpopTint = if (darkTheme) AndpopTint.Glacier else AndpopTint.Iris,
     content: @Composable () -> Unit
 ) {
-    val palette = if (darkTheme) DarkAndpopPalette else LightAndpopPalette
+    val palette = androidx.compose.runtime.remember(tint, darkTheme) { andpopPalette(tint, darkTheme) }
     val colorScheme = when {
         m3eEnabled -> palette.scheme
         darkTheme -> AppleDarkColorScheme
@@ -73,6 +74,7 @@ fun LibrePodsTheme(
             if (m3eEnabled) DesignSystem.Material
             else DesignSystem.Apple,
         LocalAndpopPalette provides palette,
+        LocalAndpopTint provides tint,
     ) {
         MaterialExpressiveTheme(
             colorScheme = colorScheme,

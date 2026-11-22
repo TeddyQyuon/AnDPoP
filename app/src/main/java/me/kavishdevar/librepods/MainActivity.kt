@@ -48,6 +48,8 @@ import me.kavishdevar.librepods.account.AccountViewModel
 import me.kavishdevar.librepods.account.RememberedAirPods
 import me.kavishdevar.librepods.data.ControlCommandRepository
 import me.kavishdevar.librepods.presentation.navigation.NavigationRoot
+import me.kavishdevar.librepods.presentation.theme.AndpopTint
+import me.kavishdevar.librepods.presentation.theme.LocalSetAndpopTint
 import me.kavishdevar.librepods.presentation.theme.AndpopAppearance
 import me.kavishdevar.librepods.presentation.theme.LibrePodsTheme
 import me.kavishdevar.librepods.presentation.theme.LocalAndpopAppearance
@@ -120,12 +122,19 @@ class MainActivity : ComponentActivity() {
 
             fun loadAppearance(): AndpopAppearance {
                 val saved = settings.getString("andpop_appearance", null)
-                return AndpopAppearance.entries.firstOrNull { it.name == saved } ?: AndpopAppearance.System
+                return AndpopAppearance.entries.firstOrNull { it.name == saved } ?: AndpopAppearance.Dark
             }
             var appearance by remember { mutableStateOf(loadAppearance()) }
+            fun loadTint(dark: Boolean) = AndpopTint.saved(
+                settings.getString(if (dark) "andpop_dark_tint" else "andpop_light_tint", null), dark,
+            )
+            var darkTint by remember { mutableStateOf(loadTint(true)) }
+            var lightTint by remember { mutableStateOf(loadTint(false)) }
             DisposableEffect(settings) {
                 val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-                    if (key == "andpop_appearance") appearance = loadAppearance()
+                    if (key == "andpop_appearance" || key == null) appearance = loadAppearance()
+                    if (key == "andpop_dark_tint" || key == null) darkTint = loadTint(true)
+                    if (key == "andpop_light_tint" || key == null) lightTint = loadTint(false)
                 }
                 settings.registerOnSharedPreferenceChangeListener(listener)
                 onDispose { settings.unregisterOnSharedPreferenceChangeListener(listener) }
@@ -143,13 +152,17 @@ class MainActivity : ComponentActivity() {
                 enableEdgeToEdge(statusBarStyle = bars, navigationBarStyle = bars)
             }
             CompositionLocalProvider(
+                LocalSetAndpopTint provides { preference ->
+                    settings.edit { putString(if (dark) "andpop_dark_tint" else "andpop_light_tint", preference.name) }
+                    if (dark) darkTint = preference else lightTint = preference
+                },
                 LocalAndpopAppearance provides appearance,
                 LocalSetAndpopAppearance provides { preference ->
                     settings.edit { putString("andpop_appearance", preference.name) }
                     appearance = preference
                 },
             ) {
-                LibrePodsTheme(darkTheme = dark, m3eEnabled = true) {
+                LibrePodsTheme(darkTheme = dark, m3eEnabled = true, tint = if (dark) darkTint else lightTint) {
                     if (accountState.open) {
                         val connected = deviceState.takeIf { it.isLocallyConnected }?.let {
                             RememberedAirPods(it.deviceName.ifBlank { "AirPods" }, it.modelName)

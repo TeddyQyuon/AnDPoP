@@ -187,7 +187,7 @@ internal fun BatterySection(
             HorizontalDivider(Modifier.padding(horizontal = 16.dp), color = colors.outlineVariant)
             TextButton(
                 onClick = onQuickView,
-                modifier = Modifier.align(Alignment.End).padding(end = 6.dp),
+                modifier = Modifier.align(Alignment.End).padding(end = 10.dp, bottom = 6.dp).devicePanel(palette, RoundedCornerShape(50), colors.surfaceContainerHigh),
             ) {
                 Text(stringResource(R.string.andpop_battery_details))
                 Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, Modifier.size(20.dp))

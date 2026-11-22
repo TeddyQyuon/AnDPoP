@@ -94,7 +94,9 @@ internal class ProfilePreferences(private val prefs: SharedPreferences) {
     // App preferences only. Pairing addresses, hardware keys, serial numbers, and live controls
     // are owned by the device/service and are never copied into a profile.
     private val defaults = mapOf(
-        "andpop_appearance" to "System",
+        "andpop_appearance" to "Dark",
+        "andpop_dark_tint" to "Glacier",
+        "andpop_light_tint" to "Iris",
         "show_phone_battery_in_widget" to true,
         "conversation_awareness_pause_music" to false,
         "relative_conversation_awareness_volume" to true,

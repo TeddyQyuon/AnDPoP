@@ -160,7 +160,7 @@ internal fun DashboardContent(
     val blur by animateDpAsState(if (batteryVisible) 12.dp else 0.dp, label = "Battery details blur")
 
     Box(
-        Modifier.fillMaxSize().background(colors.surface).blur(blur)
+        Modifier.fillMaxSize().background(colors.background).blur(blur)
             .windowInsetsPadding(WindowInsets.safeDrawing),
         contentAlignment = Alignment.TopCenter,
     ) {
@@ -184,7 +184,7 @@ internal fun DashboardContent(
                 TextButton(onClick = onAccount) { Text("Account") }
                 IconButton(
                     onClick = onAppSettings,
-                    modifier = Modifier.size(48.dp),
+                    modifier = Modifier.size(48.dp).devicePanel(palette, androidx.compose.foundation.shape.RoundedCornerShape(50)),
                 ) {
                     val settings = stringResource(R.string.settings)
                     DeviceArt(
