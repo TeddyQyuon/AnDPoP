@@ -1,0 +1,45 @@
+name: Verify FOSS testing build
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/verify-foss.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install Android build components
+        run: |
+          sdkmanager --install --channel=3 'platforms;android-37.0' 'ndk;29.0.14206865' 'cmake;3.22.1'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Assemble FOSS testing packages
+        run: ./gradlew :app:assembleFossDebug :app:bundleFossDebug :app:assembleFossDebugAndroidTest --max-workers=2 -Pkotlin.compiler.execution.strategy=in-process
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AnDPoP-FOSS-testing
+          path: |
+            app/build/outputs/apk/foss/debug/*.apk
+            app/build/outputs/bundle/fossDebug/*.aab
+          if-no-files-found: error
+      - name: Enable emulator acceleration
+        run: sudo chmod a+rw /dev/kvm
+      - name: Run Android instrumentation
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          disable-animations: true
+          script: ./gradlew :app:connectedFossDebugAndroidTest --max-workers=2
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: instrumentation-results
+          path: app/build/outputs/androidTest-results/connected/
