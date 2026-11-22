@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.IconButton
@@ -42,8 +41,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -163,12 +160,7 @@ internal fun DashboardContent(
     val blur by animateDpAsState(if (batteryVisible) 12.dp else 0.dp, label = "Battery details blur")
 
     Box(
-        Modifier.fillMaxSize().background(
-            Brush.verticalGradient(
-                0f to colors.primaryContainer.copy(alpha = 0.24f).compositeOver(colors.background),
-                0.55f to colors.background,
-            ),
-        ).blur(blur)
+        Modifier.fillMaxSize().background(colors.surface).blur(blur)
             .windowInsetsPadding(WindowInsets.safeDrawing),
         contentAlignment = Alignment.TopCenter,
     ) {
@@ -182,18 +174,17 @@ internal fun DashboardContent(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                DeviceArt(DeviceArtKind.Brand, Modifier.size(17.dp), colors.primary)
                 Text(
                     stringResource(R.string.app_name),
                     Modifier.weight(1f),
-                    color = colors.primary,
-                    style = MaterialTheme.typography.labelLarge,
+                    color = colors.onSurfaceVariant,
+                    style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                 )
                 TextButton(onClick = onAccount) { Text("Account") }
                 IconButton(
                     onClick = onAppSettings,
-                    modifier = Modifier.size(48.dp).devicePanel(palette, RoundedCornerShape(50)),
+                    modifier = Modifier.size(48.dp),
                 ) {
                     val settings = stringResource(R.string.settings)
                     DeviceArt(
@@ -265,7 +256,7 @@ internal fun DashboardContent(
 internal fun DashboardHeading(text: String, modifier: Modifier = Modifier) {
     Text(
         text, modifier.semantics { heading() },
-        style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
+        style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium,
     )
 }
 
@@ -281,7 +272,7 @@ private fun DeviceHeader(deviceName: String, model: AirPodsBase?, connected: Boo
             heading,
             Modifier.semantics { heading() },
             color = colors.onBackground,
-            style = MaterialTheme.typography.headlineLarge,
+            style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.SemiBold,
         )
         if (connected) {

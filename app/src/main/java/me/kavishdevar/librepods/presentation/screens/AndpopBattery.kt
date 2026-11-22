@@ -146,7 +146,15 @@ internal fun BatterySection(
                 }
             }
 
-            BoxWithConstraints(Modifier.fillMaxWidth().padding(horizontal = 10.dp)) {
+            if (items.all { it.level == null }) {
+                Text(
+                    stringResource(if (refreshing) R.string.andpop_checking_battery else R.string.andpop_battery_unavailable),
+                    Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp)
+                        .semantics { liveRegion = LiveRegionMode.Polite },
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = colors.onSurface,
+                )
+            } else BoxWithConstraints(Modifier.fillMaxWidth().padding(horizontal = 10.dp)) {
                 val sideBySide = maxWidth >= 288.dp && LocalDensity.current.fontScale <= 1.25f && items.size > 1
                 val headphones = items.singleOrNull()?.takeIf { it.art == DeviceArtKind.Headphones }
                 if (headphones != null) {
@@ -186,7 +194,7 @@ internal fun BatterySection(
             }
         }
 
-        if (refreshing || caseNeedsReading) {
+        if ((refreshing && items.any { it.level != null }) || (caseNeedsReading && !refreshing)) {
             Text(
                 stringResource(if (refreshing) R.string.andpop_checking_battery else R.string.andpop_case_hint),
                 Modifier.padding(horizontal = 4.dp).semantics { liveRegion = LiveRegionMode.Polite },
