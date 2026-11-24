@@ -45,12 +45,22 @@ body.shot.is-board .wb-stage{padding:0;background:#0d0f12}
 /* ───────────── Design tokens (inside the phone and boards) ───────────── */
 .tk[data-theme=dark]{color-scheme:dark;--ok:#7BE0A0;--okc:rgba(123,224,160,.14);--warn:#FFB68A;--warnc:rgba(255,182,138,.14);--err:#FFB4AB;--errc:rgba(255,180,171,.13);--charge:#69D447;--bolt:#0E1A12;--boltedge:#F1F9E9;--scrim:rgba(0,0,0,.55);--elev:0 1px 2px rgba(0,0,0,.35),0 10px 30px rgba(0,0,0,.28);--white-well:#F3F5F6}
 .tk[data-theme=light]{color-scheme:light;--ok:#1B7A43;--okc:rgba(27,122,67,.10);--warn:#A3470F;--warnc:rgba(163,71,15,.10);--err:#B3261E;--errc:rgba(179,38,30,.08);--charge:#3AAA35;--bolt:#0E1A12;--boltedge:#F6FBEF;--scrim:rgba(10,15,20,.36);--elev:0 1px 2px rgba(20,30,40,.06),0 8px 24px rgba(20,30,40,.08);--white-well:#FFFFFF}
-.tk[data-theme=dark][data-palette=glacier]{--bg:#0A1D23;--glow:#1F5A68;--s1:#112830;--s2:#173239;--s3:#1E3C45;--s4:#284952;--line:rgba(214,240,246,.07);--line2:rgba(214,240,246,.15);--on:#E6F4F7;--on2:#A9C3C9;--on3:#7E99A0;--pri:#8ED4E4;--onpri:#00313B;--pc:#1D4C58;--onpc:#CFF2FA}
-.tk[data-theme=dark][data-palette=iris]{--bg:#141128;--glow:#3D3478;--s1:#1C1834;--s2:#24203E;--s3:#2D2849;--s4:#383257;--line:rgba(230,224,255,.07);--line2:rgba(230,224,255,.15);--on:#EEEAFF;--on2:#BDB6DA;--on3:#8E87AC;--pri:#CBBEFF;--onpri:#2A1E5C;--pc:#3A3068;--onpc:#E8DFFF}
-.tk[data-theme=dark][data-palette=guava]{--bg:#22111A;--glow:#6B2840;--s1:#2C1922;--s2:#36212B;--s3:#422935;--s4:#4F3341;--line:rgba(255,226,234,.07);--line2:rgba(255,226,234,.15);--on:#FFEEF2;--on2:#DDBAC5;--on3:#AD8C97;--pri:#FFB3C6;--onpri:#581A2E;--pc:#6A2C41;--onpc:#FFD9E2}
-.tk[data-theme=light][data-palette=glacier]{--bg:#EDF6F8;--glow:#BDE6EF;--s1:#FFFFFF;--s2:#E2EFF2;--s3:#D3E5EA;--s4:#C4DBE1;--line:rgba(16,39,45,.07);--line2:rgba(16,39,45,.16);--on:#10272D;--on2:#45626A;--on3:#516D73;--pri:#1D6374;--onpri:#FFFFFF;--pc:#CBEAF2;--onpc:#03313C}
-.tk[data-theme=light][data-palette=iris]{--bg:#F5F2FF;--glow:#DCD2FF;--s1:#FFFFFF;--s2:#ECE7FA;--s3:#E0D9F4;--s4:#D3CBEC;--line:rgba(29,24,50,.07);--line2:rgba(29,24,50,.16);--on:#1D1832;--on2:#585172;--on3:#67608A;--pri:#5A4A99;--onpri:#FFFFFF;--pc:#E5DDFF;--onpc:#1B0F4A}
-.tk[data-theme=light][data-palette=guava]{--bg:#FFF3F1;--glow:#FFD6DD;--s1:#FFFFFF;--s2:#FBE8E7;--s3:#F5DADB;--s4:#EDCACD;--line:rgba(46,21,25,.07);--line2:rgba(46,21,25,.16);--on:#2E1519;--on2:#6D4E55;--on3:#7A5D64;--pri:#8D3954;--onpri:#FFFFFF;--pc:#FFD9E2;--onpc:#3B0717}
+.tk[data-theme=dark]{--line:color-mix(in srgb,var(--on) 8%,transparent);--line2:color-mix(in srgb,var(--on) 15%,transparent)}
+.tk[data-theme=light]{--line:color-mix(in srgb,var(--on) 8%,transparent);--line2:color-mix(in srgb,var(--on) 15%,transparent)}
+.tk[data-theme=dark][data-palette=wallpaper]{--bg:#0C1015;--glow:#1A2F46;--s1:#141A20;--s2:#1C232A;--s3:#252C35;--s4:#2E3640;--on:#EFF2F6;--on2:#B7C0CB;--on3:#939CA8;--pri:#99C8FE;--onpri:#091E34;--pc:#213B57;--onpc:#D6E8FE}
+.tk[data-theme=light][data-palette=wallpaper]{--bg:#F5F8FC;--glow:#D6E8FE;--s1:#FFFFFF;--s2:#EAF0F7;--s3:#DEE6EF;--s4:#D2DCE7;--on:#12181E;--on2:#47515C;--on3:#5F6973;--pri:#1566B1;--onpri:#FFFFFF;--pc:#D5E8FF;--onpc:#052C51}
+.tk[data-theme=dark][data-palette=glacier]{--bg:#0A1113;--glow:#04343C;--s1:#111B1D;--s2:#192427;--s3:#202E31;--s4:#29383C;--on:#EDF3F4;--on2:#B3C3C6;--on3:#8E9FA3;--pri:#68D6EC;--onpri:#002228;--pc:#00414B;--onpc:#C9EEF6}
+.tk[data-theme=light][data-palette=glacier]{--bg:#F3F9FA;--glow:#C9EEF6;--s1:#FFFFFF;--s2:#E7F1F3;--s3:#DBE8EB;--s4:#CEDEE2;--on:#0F191B;--on2:#425357;--on3:#5B6B6E;--pri:#007182;--onpri:#FFFFFF;--pc:#C5EFF8;--onpc:#01323A}
+.tk[data-theme=dark][data-palette=iris]{--bg:#100F15;--glow:#2E2945;--s1:#191820;--s2:#22212A;--s3:#2B2A34;--s4:#353440;--on:#F2F1F6;--on2:#BFBDCA;--on3:#9B99A7;--pri:#C5B9FE;--onpri:#1E1832;--pc:#3A3356;--onpc:#E6E2FE}
+.tk[data-theme=light][data-palette=iris]{--bg:#F8F7FC;--glow:#E6E2FE;--s1:#FFFFFF;--s2:#EFEEF6;--s3:#E5E4EF;--s4:#DBD9E6;--on:#17161E;--on2:#504E5B;--on3:#676672;--pri:#6852AD;--onpri:#FFFFFF;--pc:#E6E2FF;--onpc:#2D224F}
+.tk[data-theme=dark][data-palette=guava]{--bg:#150E0F;--glow:#432329;--s1:#201718;--s2:#2A1F20;--s3:#342829;--s4:#3F3133;--on:#F6F0F1;--on2:#CABBBD;--on3:#A79699;--pri:#FEA8B7;--onpri:#301218;--pc:#532B33;--onpc:#FEDCE1}
+.tk[data-theme=light][data-palette=guava]{--bg:#FCF6F7;--glow:#FEDCE1;--s1:#FFFFFF;--s2:#F6ECEE;--s3:#EFE1E3;--s4:#E6D6D8;--on:#1E1416;--on2:#5B4B4D;--on3:#726365;--pri:#A33A55;--onpri:#FFFFFF;--pc:#FFDCE1;--onpc:#4B1624}
+.tk[data-theme=dark][data-palette=sage]{--bg:#0C110E;--glow:#183524;--s1:#141C17;--s2:#1C251F;--s3:#242E27;--s4:#2D3931;--on:#EFF3F0;--on2:#B7C3BA;--on3:#929F96;--pri:#8DD8A9;--onpri:#062313;--pc:#1D422D;--onpc:#D3EEDC}
+.tk[data-theme=light][data-palette=sage]{--bg:#F5F9F6;--glow:#D3EEDC;--s1:#FFFFFF;--s2:#EAF1EC;--s3:#DEE8E1;--s4:#D2DED6;--on:#111914;--on2:#46544B;--on3:#5F6B63;--pri:#057846;--onpri:#FFFFFF;--pc:#D0EFDA;--onpc:#00351C}
+.tk[data-theme=dark][data-palette=apricot]{--bg:#140F0B;--glow:#402713;--s1:#1F1813;--s2:#29201A;--s3:#332922;--s4:#3E332B;--on:#F5F1EE;--on2:#C9BDB4;--on3:#A5998F;--pri:#F8B37F;--onpri:#2E1603;--pc:#503117;--onpc:#FCE0CD}
+.tk[data-theme=light][data-palette=apricot]{--bg:#FBF7F4;--glow:#FCE0CD;--s1:#FFFFFF;--s2:#F5EDE8;--s3:#EDE3DC;--s4:#E4D8CF;--on:#1D1510;--on2:#594D44;--on3:#71655C;--pri:#965002;--onpri:#FFFFFF;--pc:#FEE0C9;--onpc:#442101}
+.tk[data-theme=dark][data-palette=graphite]{--bg:#101010;--glow:#2E2E2E;--s1:#191919;--s2:#222222;--s3:#2B2B2B;--s4:#353535;--on:#F2F2F2;--on2:#BFBFBF;--on3:#9B9B9B;--pri:#E8E8E8;--onpri:#121212;--pc:#3D3D3D;--onpc:#E6E6E6}
+.tk[data-theme=light][data-palette=graphite]{--bg:#F8F8F8;--glow:#E6E6E6;--s1:#FFFFFF;--s2:#EFEFEF;--s3:#E5E5E5;--s4:#DBDBDB;--on:#171717;--on2:#505050;--on3:#676767;--pri:#1F1F1F;--onpri:#FFFFFF;--pc:#DEDEDE;--onpc:#2B2B2B}
 
 /* ───────────── Phone frame ───────────── */
 .ph{--fs:1;position:relative;width:calc(var(--w) * 1px + 20px);border-radius:46px;padding:10px;background:#050607;box-shadow:0 0 0 1.5px #2b3036,0 30px 80px rgba(0,0,0,.55);flex:none}
@@ -64,7 +74,7 @@ body.shot.is-board .wb-stage{padding:0;background:#0d0f12}
 .gb{position:absolute;left:0;right:0;bottom:0;height:22px;display:flex;align-items:center;justify-content:center;z-index:30;cursor:pointer}
 .gb i{width:108px;height:4px;border-radius:2px;background:var(--on);opacity:.55}
 .host{position:absolute;inset:0;overflow:hidden}
-.scr{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;padding-bottom:28px;scrollbar-width:none;background:radial-gradient(130% 46% at 50% -8%,color-mix(in srgb,var(--glow) 58%,transparent),transparent 62%),var(--bg)}
+.scr{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;padding-bottom:28px;scrollbar-width:none;background:radial-gradient(120% 40% at 50% -8%,color-mix(in srgb,var(--glow) 70%,transparent),transparent 64%),var(--bg)}
 .scr::-webkit-scrollbar{display:none}
 .scr.enter-push{animation:pushIn .32s cubic-bezier(.2,0,0,1) both}
 .scr.enter-pop{animation:popIn .32s cubic-bezier(.2,0,0,1) both}
@@ -230,7 +240,7 @@ body.shot.is-board .wb-stage{padding:0;background:#0d0f12}
 @keyframes rip{to{transform:scale(1);opacity:0}}
 
 /* ───────────── Dashboard ───────────── */
-.hero{position:relative;padding:18px 16px 10px;border-radius:28px;background:linear-gradient(180deg,color-mix(in srgb,var(--pc) 62%,var(--s1)) 0%,var(--s1) 72%);border:1px solid var(--line);overflow:hidden}
+.hero{position:relative;padding:18px 16px 10px;border-radius:28px;background:linear-gradient(180deg,color-mix(in srgb,var(--pc) 48%,var(--s1)) 0%,var(--s1) 70%);border:1px solid var(--line);overflow:hidden}
 .hero-top{display:flex;gap:12px;align-items:flex-start;padding:0 4px}
 .hero-id{flex:1;min-width:0}
 .hero-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-top:6px}
@@ -325,20 +335,42 @@ body.shot.is-board .wb-stage{padding:0;background:#0d0f12}
 .sysdlg .opts button{min-height:48px;border-radius:24px;background:var(--s3);font-weight:600;font-size:14.5px;color:var(--on)}
 .sysdlg .opts button.p{background:var(--pri);color:var(--onpri)}
 
-/* Settings: appearance preview cards and palette swatches */
-.app-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px;background:var(--s1);border-radius:24px 24px 6px 6px}
-.app-card{display:flex;flex-direction:column;align-items:center;gap:8px;padding:8px 4px 10px;border-radius:18px;cursor:pointer;transition:background .2s}
-.app-card .mini{width:100%;max-width:84px;aspect-ratio:3/4.2;border-radius:14px;overflow:hidden;position:relative;box-shadow:inset 0 0 0 1px var(--line2);transition:box-shadow .2s}
-.app-card.on .mini{box-shadow:inset 0 0 0 2.5px var(--pri)}
-.app-card .mini i{position:absolute;left:10%;right:10%;height:12%;border-radius:6px}
-.app-card .lbl{display:flex;align-items:center;gap:6px}
-.swatches{display:flex;justify-content:space-around;gap:8px;padding:14px 12px 12px;background:var(--s1);border-radius:6px 6px 24px 24px}
-.swatch{display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;min-width:64px}
-.swatch .dot{position:relative;width:52px;height:52px;border-radius:50%;display:grid;place-items:center;transition:transform .2s,box-shadow .2s;overflow:hidden}
-.swatch .dot::after{content:"";position:absolute;inset:0;border-radius:50%;background:linear-gradient(135deg,transparent 50%,var(--sw2) 50%)}
-.swatch.on .dot{box-shadow:0 0 0 3px var(--s1),0 0 0 5.5px var(--pri)}
-.swatch .dot .ck{position:relative;z-index:1;width:22px;height:22px;border-radius:50%;background:var(--s1);color:var(--pri);display:none;place-items:center}
-.swatch.on .dot .ck{display:grid}
+/* Settings: appearance modes and colour themes */
+.appear{padding:14px 12px}
+.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.mode{display:flex;flex-direction:column;align-items:center;gap:10px;padding:4px 2px 2px;border-radius:18px;cursor:pointer;color:var(--on2)}
+.mode-pv{position:relative;width:100%;max-width:92px;aspect-ratio:3/4;border-radius:16px;box-shadow:0 0 0 1px var(--line2);transition:box-shadow .2s,transform .2s}
+.mode.on .mode-pv{box-shadow:0 0 0 2.5px var(--pri)}
+.mode:active .mode-pv{transform:scale(.97)}
+.mode-ck{position:absolute;top:-7px;right:-7px;width:22px;height:22px;border-radius:11px;background:var(--pri);color:var(--onpri);display:grid;place-items:center;box-shadow:0 0 0 3px var(--s1);transform:scale(0);transition:transform .25s cubic-bezier(.3,1.4,.5,1)}
+.mode.on .mode-ck{transform:scale(1)}
+.mode-lbl{display:flex;align-items:center;gap:6px}
+.mode.on .mode-lbl{color:var(--on)}
+.mode.on .mode-lbl svg{color:var(--pri)}
+.mm{position:absolute;inset:0;border-radius:16px;overflow:hidden;padding:9px 8px;display:flex;flex-direction:column;gap:5px}
+.mm-hero{border-radius:9px;padding:6px 6px 7px;display:flex;flex-direction:column;gap:6px}
+.mm-hero i{display:block;height:4px;border-radius:2px;opacity:.85}
+.mm-b{display:flex;justify-content:space-around}
+.mm-b b{width:11px;height:11px;border-radius:50%;opacity:.55}
+.mm-seg{height:15px;border-radius:8px;padding:2px;display:flex}
+.mm-seg i{width:36%;border-radius:6px}
+.mm-row{height:15px;border-radius:7px;display:flex;align-items:center;justify-content:space-between;padding:0 5px}
+.mm-row i{width:45%;height:3px;border-radius:2px;opacity:.7}
+.mm-row span{width:14px;height:8px;border-radius:4px}
+.mm-split{position:absolute;inset:0;border-radius:16px;overflow:hidden}
+.mm-half{position:absolute;inset:0;clip-path:inset(0 0 0 50%)}
+.pal-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px 6px;padding:4px 0 2px}
+.pal{display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;color:var(--on2)}
+.pal.on{color:var(--on)}
+.pal-ring{position:relative;display:grid;place-items:center;border-radius:50%;padding:4px;box-shadow:0 0 0 2px transparent;transition:box-shadow .2s}
+.pal.on .pal-ring{box-shadow:0 0 0 2.5px var(--pri)}
+.pal:active .pal-ring{transform:scale(.96)}
+.pal-dot{position:relative;display:block;border-radius:50%;background:linear-gradient(180deg,var(--a) 50%,transparent 50%),linear-gradient(90deg,var(--b) 50%,var(--c) 50%);box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
+.pal-wp{position:absolute;right:-3px;bottom:-3px;width:22px;height:22px;border-radius:11px;background:var(--s3);color:var(--on);display:grid;place-items:center;box-shadow:0 0 0 2px var(--s1)}
+.pal-ck{position:absolute;width:26px;height:26px;border-radius:13px;background:var(--s1);color:var(--pri);display:grid;place-items:center;transform:scale(0);transition:transform .25s cubic-bezier(.3,1.4,.5,1)}
+.pal.on .pal-ck{transform:scale(1)}
+.pal-cap{display:flex;gap:8px;align-items:flex-start;margin:14px 2px 0;padding-top:12px;border-top:1px solid var(--line)}
+.pal-cap svg{flex:none;margin-top:1px;color:var(--pri)}
 .foot{padding:24px 12px 8px;text-align:center;color:var(--on3)}
 
 /* Equalizer */
@@ -530,7 +562,7 @@ function appIcon(size = 96, shape = 'squircle', mono = false) {
 /* ───────────── State ───────────── */
 const S = {
   w: 384, h: 832, fs: 1, sysDark: true,
-  appearance: 'dark', tint: { dark: 'glacier', light: 'iris' },
+  appearance: 'dark', palette: 'glacier',
   device: 'pro2', scenario: 'normal', conn: 'connected',
   mode: 'anc', offMode: true,
   ca: true, wear: true, mic: 'auto', name: 'Qyuon’s AirPods Pro',
@@ -606,7 +638,9 @@ function modeList() {
   return l;
 }
 const isDark = () => S.appearance === 'dark' || (S.appearance === 'system' && S.sysDark);
-const palette = () => S.tint[isDark() ? 'dark' : 'light'];
+const palette = () => S.palette;
+/* Generated by palettes.py from one OKLCH tonal scale; same lightness steps in every palette. */
+const PAL = {"wallpaper": {"label": "Wallpaper", "dark": {"bg": "#0C1015", "s1": "#141A20", "s2": "#1C232A", "s3": "#252C35", "s4": "#2E3640", "on": "#EFF2F6", "on2": "#B7C0CB", "on3": "#939CA8", "pri": "#99C8FE", "onpri": "#091E34", "pc": "#213B57", "onpc": "#D6E8FE", "glow": "#1A2F46"}, "light": {"bg": "#F5F8FC", "s1": "#FFFFFF", "s2": "#EAF0F7", "s3": "#DEE6EF", "s4": "#D2DCE7", "on": "#12181E", "on2": "#47515C", "on3": "#5F6973", "pri": "#1566B1", "onpri": "#FFFFFF", "pc": "#D5E8FF", "onpc": "#052C51", "glow": "#D6E8FE"}}, "glacier": {"label": "Glacier", "dark": {"bg": "#0A1113", "s1": "#111B1D", "s2": "#192427", "s3": "#202E31", "s4": "#29383C", "on": "#EDF3F4", "on2": "#B3C3C6", "on3": "#8E9FA3", "pri": "#68D6EC", "onpri": "#002228", "pc": "#00414B", "onpc": "#C9EEF6", "glow": "#04343C"}, "light": {"bg": "#F3F9FA", "s1": "#FFFFFF", "s2": "#E7F1F3", "s3": "#DBE8EB", "s4": "#CEDEE2", "on": "#0F191B", "on2": "#425357", "on3": "#5B6B6E", "pri": "#007182", "onpri": "#FFFFFF", "pc": "#C5EFF8", "onpc": "#01323A", "glow": "#C9EEF6"}}, "iris": {"label": "Iris", "dark": {"bg": "#100F15", "s1": "#191820", "s2": "#22212A", "s3": "#2B2A34", "s4": "#353440", "on": "#F2F1F6", "on2": "#BFBDCA", "on3": "#9B99A7", "pri": "#C5B9FE", "onpri": "#1E1832", "pc": "#3A3356", "onpc": "#E6E2FE", "glow": "#2E2945"}, "light": {"bg": "#F8F7FC", "s1": "#FFFFFF", "s2": "#EFEEF6", "s3": "#E5E4EF", "s4": "#DBD9E6", "on": "#17161E", "on2": "#504E5B", "on3": "#676672", "pri": "#6852AD", "onpri": "#FFFFFF", "pc": "#E6E2FF", "onpc": "#2D224F", "glow": "#E6E2FE"}}, "guava": {"label": "Guava", "dark": {"bg": "#150E0F", "s1": "#201718", "s2": "#2A1F20", "s3": "#342829", "s4": "#3F3133", "on": "#F6F0F1", "on2": "#CABBBD", "on3": "#A79699", "pri": "#FEA8B7", "onpri": "#301218", "pc": "#532B33", "onpc": "#FEDCE1", "glow": "#432329"}, "light": {"bg": "#FCF6F7", "s1": "#FFFFFF", "s2": "#F6ECEE", "s3": "#EFE1E3", "s4": "#E6D6D8", "on": "#1E1416", "on2": "#5B4B4D", "on3": "#726365", "pri": "#A33A55", "onpri": "#FFFFFF", "pc": "#FFDCE1", "onpc": "#4B1624", "glow": "#FEDCE1"}}, "sage": {"label": "Sage", "dark": {"bg": "#0C110E", "s1": "#141C17", "s2": "#1C251F", "s3": "#242E27", "s4": "#2D3931", "on": "#EFF3F0", "on2": "#B7C3BA", "on3": "#929F96", "pri": "#8DD8A9", "onpri": "#062313", "pc": "#1D422D", "onpc": "#D3EEDC", "glow": "#183524"}, "light": {"bg": "#F5F9F6", "s1": "#FFFFFF", "s2": "#EAF1EC", "s3": "#DEE8E1", "s4": "#D2DED6", "on": "#111914", "on2": "#46544B", "on3": "#5F6B63", "pri": "#057846", "onpri": "#FFFFFF", "pc": "#D0EFDA", "onpc": "#00351C", "glow": "#D3EEDC"}}, "apricot": {"label": "Apricot", "dark": {"bg": "#140F0B", "s1": "#1F1813", "s2": "#29201A", "s3": "#332922", "s4": "#3E332B", "on": "#F5F1EE", "on2": "#C9BDB4", "on3": "#A5998F", "pri": "#F8B37F", "onpri": "#2E1603", "pc": "#503117", "onpc": "#FCE0CD", "glow": "#402713"}, "light": {"bg": "#FBF7F4", "s1": "#FFFFFF", "s2": "#F5EDE8", "s3": "#EDE3DC", "s4": "#E4D8CF", "on": "#1D1510", "on2": "#594D44", "on3": "#71655C", "pri": "#965002", "onpri": "#FFFFFF", "pc": "#FEE0C9", "onpc": "#442101", "glow": "#FCE0CD"}}, "graphite": {"label": "Graphite", "dark": {"bg": "#101010", "s1": "#191919", "s2": "#222222", "s3": "#2B2B2B", "s4": "#353535", "on": "#F2F2F2", "on2": "#BFBFBF", "on3": "#9B9B9B", "pri": "#E8E8E8", "onpri": "#121212", "pc": "#3D3D3D", "onpc": "#E6E6E6", "glow": "#2E2E2E"}, "light": {"bg": "#F8F8F8", "s1": "#FFFFFF", "s2": "#EFEFEF", "s3": "#E5E5E5", "s4": "#DBDBDB", "on": "#171717", "on2": "#505050", "on3": "#676767", "pri": "#1F1F1F", "onpri": "#FFFFFF", "pc": "#DEDEDE", "onpc": "#2B2B2B", "glow": "#E6E6E6"}}};
 
 /* ───────────── Small helpers ───────────── */
 const $ = (s, r = document) => r.querySelector(s);
@@ -1119,32 +1153,39 @@ SCR.callMute = { name: 'Call controls', group: 'AirPods', kind: 'app', render: (
 SCR.callHang = { name: 'Call controls · Hang up', group: 'AirPods', kind: 'app', hidden: true, render: () => callScreen('hang') };
 
 /* ── App settings ── */
-const TINTS = {
-  glacier: { name: 'Glacier', d: ['#0A1D23', '#8ED4E4'], l: ['#EDF6F8', '#1D6374'] },
-  iris: { name: 'Iris', d: ['#141128', '#CBBEFF'], l: ['#F5F2FF', '#5A4A99'] },
-  guava: { name: 'Guava', d: ['#22111A', '#FFB3C6'], l: ['#FFF3F1', '#8D3954'] },
-};
+function modeMini(mode) {
+  const t = PAL[palette()][mode];
+  return `<div class="mm" style="background:${t.bg}">
+    <div class="mm-hero" style="background:linear-gradient(180deg,color-mix(in srgb,${t.pc} 50%,${t.s1}),${t.s1})"><i style="background:${t.on};width:58%"></i>
+      <div class="mm-b"><b style="background:${t.on2}"></b><b style="background:${t.on2}"></b><b style="background:${t.on2}"></b></div></div>
+    <div class="mm-seg" style="background:${t.s2}"><i style="background:${t.pc}"></i></div>
+    <div class="mm-row" style="background:${t.s1}"><i style="background:${t.on2}"></i><span style="background:${t.pri}"></span></div>
+  </div>`;
+}
 function appearanceCards() {
-  const mini = (bg, s, p) => `<div class="mini" style="background:${bg}"><i style="top:12%;background:${s};height:20%"></i><i style="top:38%;background:${s}"></i><i style="top:56%;background:${s}"></i><i style="top:76%;left:30%;right:30%;background:${p};height:9%;border-radius:8px"></i></div>`;
-  const dk = TINTS[S.tint.dark].d, lt = TINTS[S.tint.light].l;
   const opts = [
-    ['system', 'System', `<div class="mini" style="background:linear-gradient(135deg,${lt[0]} 50%,${dk[0]} 50%)"><i style="top:12%;background:#8884;height:20%"></i><i style="top:38%;background:#8884"></i><i style="top:56%;background:#8884"></i></div>`],
-    ['light', 'Light', mini(lt[0], '#0000000f', lt[1])],
-    ['dark', 'Dark', mini(dk[0], '#ffffff14', dk[1])],
+    ['system', 'System', 'auto', `<div class="mm-split">${modeMini('light')}<div class="mm-half">${modeMini('dark')}</div></div>`],
+    ['light', 'Light', 'sun', modeMini('light')],
+    ['dark', 'Dark', 'moon', modeMini('dark')],
   ];
-  return `<div class="app-cards" role="radiogroup" aria-label="Appearance">${opts.map(([k, l, m]) => `<div class="app-card rp${S.appearance === k ? ' on' : ''}" ${A('appearance', k)} role="radio" aria-checked="${S.appearance === k}" tabindex="0">${m}<span class="lbl t-ll"><span class="rad${S.appearance === k ? ' on' : ''}" style="width:16px;height:16px"></span>${l}</span></div>`).join('')}</div>`;
+  return `<div class="modes" role="radiogroup" aria-label="Appearance">${opts.map(([k, l, icon, m]) => `<div class="mode rp${S.appearance === k ? ' on' : ''}" ${A('appearance', k)} role="radio" aria-checked="${S.appearance === k}" tabindex="0">
+    <div class="mode-pv">${m}<span class="mode-ck">${ic('check', 14, '', 3)}</span></div><span class="mode-lbl t-ll">${ic(icon, 18)}${l}</span></div>`).join('')}</div>`;
+}
+function palDot(k, size = 56) {
+  const p = PAL[k];
+  return `<span class="pal-dot" style="width:${size}px;height:${size}px;--a:${p.dark.pri};--b:${p.light.pri};--c:${p.light.pc}">${k === 'wallpaper' ? `<span class="pal-wp">${ic('sparkle', 12, '', 2.2)}</span>` : ''}</span>`;
 }
 function swatches() {
-  const mode = isDark() ? 'd' : 'l';
-  return `<div class="swatches" role="radiogroup" aria-label="Color palette">${Object.entries(TINTS).map(([k, t]) => `<div class="swatch${palette() === k ? ' on' : ''}" ${A('tint', k)} role="radio" aria-checked="${palette() === k}" tabindex="0" aria-label="${t.name}">
-    <span class="dot" style="background:${t[mode][0]};--sw2:${t[mode][1]}"><span class="ck">${ic('check', 16, '', 2.6)}</span></span><span class="t-lm">${t.name}</span></div>`).join('')}</div>`;
+  return `<div class="pal-grid" role="radiogroup" aria-label="Color">${Object.keys(PAL).map(k => `<div class="pal rp${palette() === k ? ' on' : ''}" ${A('palette', k)} role="radio" aria-checked="${palette() === k}" tabindex="0" aria-label="${PAL[k].label}">
+    <span class="pal-ring">${palDot(k)}<span class="pal-ck">${ic('check', 16, '', 2.8)}</span></span><span class="t-lm">${PAL[k].label}</span></div>`).join('')}</div>`;
 }
 
 SCR.settings = {
   name: 'Settings', group: 'App', kind: 'app',
   render: () => `${topBar({ title: 'Settings' })}<div class="page">${largeTitle('Settings')}
-    ${section('Appearance')}${appearanceCards()}${swatches()}
-    <p class="t-bs on3" style="padding:8px 8px 0">Palette applies to the ${isDark() ? 'dark' : 'light'} appearance. ${isDark() ? 'Light' : 'Dark'} keeps ${TINTS[S.tint[isDark() ? 'light' : 'dark']].name}.</p>
+    ${section('Appearance')}<div class="card appear">${appearanceCards()}</div>
+    ${section('Color')}<div class="card appear">${swatches()}
+      <p class="t-bs on2 pal-cap" aria-live="polite">${palette() === 'wallpaper' ? `${ic('sparkle', 16)}<span>Matches your wallpaper on Android 12 and later. A sample wallpaper is shown here.</span>` : `${ic('info', 16)}<span>${PAL[palette()].label} applies to light and dark.</span>`}</p></div>
     ${section('Widget and popups')}${group([
       row({ icon: 'widget', t1: 'Show phone battery in widget', sw: 'widgetPhone' }),
       row({ icon: 'popup', t1: 'Connection popup', t2: 'Slides up from the bottom when AirPods connect.', sw: 'popSheet' }),
@@ -1413,13 +1454,14 @@ function boardDesign() {
   const sample = (b) => `<div style="display:flex;flex-direction:column;align-items:center;gap:6px;min-width:84px"><span class="bpct num${b.last || b.lvl == null ? ' muted' : isLow(b) ? ' low' : ''}" style="font-size:22px">${pctText(b)}</span>${glyph(b) || '<span style="height:18px"></span>'}<span class="t-ls on3">${b.cap}</span></div>`;
   return `<div class="board">
   <h1>AnDPoP 2.0 design system</h1>
-  <p class="lead">One visual language for the dashboard, every detail screen, account, onboarding, widgets and popups. It is built on Material 3 Expressive, which the app already loads through <code>MaterialExpressiveTheme</code>, with AnDPoP’s Glacier, Iris and Guava palettes as the colour source. This board follows the appearance and palette chosen on the left.</p>
+  <p class="lead">One visual language for the dashboard, every detail screen, account, onboarding, widgets and popups. It is built on Material 3 Expressive, which the app already loads through <code>MaterialExpressiveTheme</code>, with seven AnDPoP color themes built from one tonal scale. This board follows the appearance and color chosen on the left.</p>
 
-  <h2>Colour roles · ${TINTS[palette()].name} ${isDark() ? 'dark' : 'light'}</h2>
+  <h2>Color roles · ${PAL[palette()].label} ${isDark() ? 'dark' : 'light'}</h2>
   <div class="bgrid" style="grid-template-columns:repeat(5,1fr)">${TOKENS.map(([k, n]) => `<div class="sw-tile"><div style="background:var(--${k})"></div><p><b>${n}</b><span data-token="${k}">--${k}</span></p></div>`).join('')}</div>
 
-  <h2>All six palettes</h2>
-  <div class="bgrid" style="grid-template-columns:repeat(6,1fr)">${['dark', 'light'].flatMap(t => Object.keys(TINTS).map(p => `<div class="tk sw-tile" data-theme="${t}" data-palette="${p}" style="background:var(--bg)"><div style="height:86px;padding:12px;display:flex;flex-direction:column;gap:6px"><span style="height:18px;border-radius:9px;background:var(--s1);display:block"></span><span style="height:18px;width:70%;border-radius:9px;background:var(--pc);display:block"></span><span style="height:18px;width:40%;border-radius:9px;background:var(--pri);display:block"></span></div><p style="background:var(--s1);color:var(--on)"><b>${TINTS[p].name}</b><span>${t}${(t === 'dark' && p === 'glacier') || (t === 'light' && p === 'iris') ? ' · default' : ''}</span></p></div>`)).join('')}</div>
+  <h2>All seven color themes</h2>
+  <div class="bgrid" style="grid-template-columns:repeat(7,1fr)">${['dark', 'light'].flatMap(t => Object.keys(PAL).map(p => `<div class="tk sw-tile" data-theme="${t}" data-palette="${p}" style="background:var(--bg)"><div style="height:86px;padding:12px;display:flex;flex-direction:column;gap:6px"><span style="height:18px;border-radius:9px;background:var(--s1);display:block"></span><span style="height:18px;width:70%;border-radius:9px;background:var(--pc);display:block"></span><span style="height:18px;width:40%;border-radius:9px;background:var(--pri);display:block"></span></div><p style="background:var(--s1);color:var(--on)"><b>${PAL[p].label}</b><span>${t}${p === 'glacier' ? ' · default' : ''}</span></p></div>`)).join('')}</div>
+  <p class="t-bs on2" style="margin-top:10px;max-width:760px">Every theme comes from one OKLCH tonal scale. Each role has the same lightness in every theme, and only the hue changes, so text contrast is identical across themes. Graphite uses zero chroma.</p>
 
   <h2>Typography · Roboto Flex, bundled</h2>
   <div class="specimen">
@@ -1465,7 +1507,7 @@ function boardDesign() {
     <tr><td>Open a screen</td><td>Shared-axis X, 300 ms; predictive back scales to 0.9 and follows the gesture</td><td>none</td></tr>
     <tr><td>Battery refresh</td><td>Icon spins, values shimmer, numbers count to the new level</td><td><code>CONFIRM</code> when it finishes</td></tr>
     <tr><td>Bottom sheet</td><td>Slides up 340 ms, scrim fades to 55%; drag to dismiss</td><td>none</td></tr>
-    <tr><td>Blocked action (last two cycle modes)</td><td>Checkbox shakes 2 × 4 dp, helper text turns to the error colour</td><td><code>REJECT</code></td></tr>
+    <tr><td>Blocked action (last two cycle modes)</td><td>Checkbox shakes 2 × 4 dp, helper text turns to the error color</td><td><code>REJECT</code></td></tr>
     <tr><td>Reduce motion on</td><td>All of the above become 150 ms cross-fades</td><td>unchanged</td></tr></table>
 
   <h2>Icons · Material Symbols Rounded, 24 dp, weight 400</h2>
@@ -1478,7 +1520,7 @@ function boardStore() {
     ['Battery for each bud and the case', 'dashboard', { scenario: 'charging' }],
     ['Switch listening modes in one tap', 'dashboard', { mode: 'transparency', scenario: 'normal', appearance: 'light' }, 0, 'light', 'iris'],
     ['Set press and hold for each bud', 'pressLeft', {}],
-    ['Light, dark and three palettes', 'settings', { appearance: 'dark', tint: { dark: 'guava', light: 'iris' } }, 0, 'dark', 'guava'],
+    ['Seven color themes, light and dark', 'settings', { appearance: 'dark', palette: 'sage' }, 0, 'dark', 'sage'],
     ['Works with AirPods Max too', 'dashboard', { scenario: 'max', mode: 'anc' }],
   ];
   return `<div class="board">
@@ -1516,6 +1558,18 @@ function boardStore() {
   </div>`;
 }
 
+function boardPalettes() {
+  return `<div class="board">
+  <h1>Color themes</h1>
+  <p class="lead">Seven themes, each in light and dark. Pick one in Settings › Color and it applies to both appearances. Wallpaper uses Material You colors from the phone’s wallpaper on Android 12 and later; the sample here is blue.</p>
+  <div class="bgrid" style="grid-template-columns:repeat(7,1fr);margin-top:26px;gap:12px">${Object.keys(PAL).map(k => `<div style="display:flex;flex-direction:column;align-items:center;gap:12px">
+    ${palDot(k, 44)}<b style="font-size:14px">${PAL[k].label}</b>
+    ${miniPhone('dashboard', { scenario: 'charging', palette: k, mode: 'transparency' }, 150, 'dark', k)}
+    <div style="height:6px"></div>
+    ${miniPhone('dashboard', { scenario: 'charging', palette: k, mode: 'transparency' }, 150, 'light', k)}
+  </div>`).join('')}</div></div>`;
+}
+SCR.boardPalettes = { name: 'Color themes', group: 'Boards', kind: 'board', render: boardPalettes };
 SCR.boardDesign = { name: 'Design system', group: 'Boards', kind: 'board', render: boardDesign };
 SCR.boardStore = { name: 'Play Store assets', group: 'Boards', kind: 'board', render: boardStore };
 
@@ -1527,7 +1581,7 @@ const NOTES = {
   privacy: { sub: 'A short, accurate summary with a link to the hosted policy. Play requires the in-app policy to match the listing’s Data safety form.', changes: ['Adds the optional account (email sign-in, deletion), which the current text omits.', 'Removes “Links to LibrePods open in your browser”.', 'Strings move to resources so they can be translated (they are hard-coded today).'], compose: [P + 'screens/onboarding/PrivacyPolicyPage.kt'], a11y: ['The external link announces “opens in browser”.'] },
   permissions: { sub: 'Each permission gets its own Allow button and a one-line reason, which also serves as the prominent disclosure. The required one is marked.', changes: ['“Grant all”, which chained four prompts, is replaced by one button per permission. This matches Play’s guidance to request permissions in context.', 'Continue is enabled once Nearby devices is allowed. Optional permissions can wait.', 'Fixes the Phone and Overlay icons, which are announced as “bluetooth” today.'], interactions: ['Allow shows the system prompt (mocked here), then the row reads “Allowed”.', 'Display over other apps opens Android settings and is re-checked on resume.'], compose: [P + 'screens/onboarding/PermissionsPage.kt'], a11y: ['Each row merges into one TalkBack node: “Notifications, optional, Show battery and connection status, Allow, button”.'] },
   unsupported: { sub: 'Explains the Android requirement in plain terms and shows the phone’s own model and version.', changes: ['The full Device and App info cards move behind Troubleshooting.', '“Bypass compatibility check” is hidden unless developer options are on. Play builds never show it.'], compose: [P + 'screens/onboarding/NotSupportedPage.kt'] },
-  dashboard: { sub: 'Keeps the v1.5 single-column order: battery, listening mode, Sound, AirPods controls, Press and hold, About. The device header and battery merge into one hero card.', changes: ['Header and battery panel become one hero card: name, model, status pill, refresh, three photo cells, “Updated just now” and Battery details.', 'The glass gradient and border on every panel are replaced by tonal surfaces. Groups use the connected-list style that Android 16 Settings uses.', 'Section headings drop from bold headline size to sentence-case label size, so the content leads.', 'The “Account” text button becomes an avatar (initials when signed in). Settings keeps the round sliders button.', 'Press and hold becomes two L/R tiles. “More device controls” is renamed “All device settings” and gains a subtitle.', 'Disconnected: Reconnect is the main action and the last-seen battery stays visible. Never paired: three pairing steps. Loading: skeleton.'], interactions: ['Tap the battery cells or Battery details to open the bottom sheet.', 'Refresh: the icon spins and values shimmer for about 3 s (the existing <code>REFRESH_WINDOW_MS</code>).', 'Listening mode: the indicator slides and the description updates. Device-reported changes animate the same way.', 'Use the Device state menu on the left to see charging, low, last-seen, estimated, missing, Max, disconnected, unpaired and loading.'], compose: [P + 'screens/AndpopDashboard.kt', P + 'screens/AndpopBattery.kt', P + 'screens/AndpopListeningModes.kt', P + 'screens/AndpopDeviceSettings.kt'], a11y: ['Each battery cell is one node: “Right bud, 48 percent, charging”.', 'Listening modes are a radio group with Selected state. The check mark gives a cue that does not rely on colour.', 'At font scale 1.3 or more, modes switch to 2 × 2. At 1.6, battery cells become rows and the L/R tiles stack.'] },
+  dashboard: { sub: 'Keeps the v1.5 single-column order: battery, listening mode, Sound, AirPods controls, Press and hold, About. The device header and battery merge into one hero card.', changes: ['Header and battery panel become one hero card: name, model, status pill, refresh, three photo cells, “Updated just now” and Battery details.', 'The glass gradient and border on every panel are replaced by tonal surfaces. Groups use the connected-list style that Android 16 Settings uses.', 'Section headings drop from bold headline size to sentence-case label size, so the content leads.', 'The “Account” text button becomes an avatar (initials when signed in). Settings keeps the round sliders button.', 'Press and hold becomes two L/R tiles. “More device controls” is renamed “All device settings” and gains a subtitle.', 'Disconnected: Reconnect is the main action and the last-seen battery stays visible. Never paired: three pairing steps. Loading: skeleton.'], interactions: ['Tap the battery cells or Battery details to open the bottom sheet.', 'Refresh: the icon spins and values shimmer for about 3 s (the existing <code>REFRESH_WINDOW_MS</code>).', 'Listening mode: the indicator slides and the description updates. Device-reported changes animate the same way.', 'Use the Device state menu on the left to see charging, low, last-seen, estimated, missing, Max, disconnected, unpaired and loading.'], compose: [P + 'screens/AndpopDashboard.kt', P + 'screens/AndpopBattery.kt', P + 'screens/AndpopListeningModes.kt', P + 'screens/AndpopDeviceSettings.kt'], a11y: ['Each battery cell is one node: “Right bud, 48 percent, charging”.', 'Listening modes are a radio group with Selected state. The check mark gives a cue that does not rely on color.', 'At font scale 1.3 or more, modes switch to 2 × 2. At 1.6, battery cells become rows and the L/R tiles stack.'] },
   rename: { sub: 'Single text field with a live counter, a clear button and an explicit Save.', changes: ['Replaces the StyledInputField that saved as you typed. Save is enabled only when the name changed and isn’t blank.'], compose: [P + 'screens/RenameScreen.kt'], a11y: ['Counter is exposed as the field’s supporting text.'] },
   microphone: { sub: 'Radio list with a short explanation for each option.', compose: [P + 'screens/MicrophoneSettingsScreen.kt'] },
   pressLeft: { sub: 'Choose the action first, then the modes it cycles through.', changes: ['The native rule “at least two modes” used to fail silently (<code>toggleListeningMode</code> ignores the tap). Now the last two checkboxes look locked; tapping one shakes it and highlights the helper text.', 'Notes that the cycle list is shared by both buds.'], compose: [P + 'screens/PressAndHoldSettingsScreen.kt', P + 'viewmodel/AirPodsViewModel.kt (toggleListeningMode)'] },
@@ -1541,7 +1595,7 @@ const NOTES = {
   hearingAdjust: { sub: 'Shared slider template, also used by Transparency mode.', compose: [P + 'screens/HearingAidAdjustmentsScreen.kt', P + 'screens/TransparencySettingsScreen.kt'], changes: ['Transparency’s raw 0–100 “Band n” sliders get the same styled slider.'] },
   transparency: { sub: 'Same slider template as hearing aid adjustments.', compose: [P + 'screens/TransparencySettingsScreen.kt'] },
   callMute: { sub: 'Mute and Hang up are linked: one is Press once and the other Press twice (the existing flipped byte pair).', compose: [P + 'screens/CallControlScreen.kt'] },
-  settings: { sub: 'Same order as today, with clearer controls.', changes: ['Appearance: preview cards in place of the segmented row. Palette: colour swatches with localized names, which today are raw enum names.', 'Popups show an inline warning with Allow when the overlay permission is missing.', 'Automatic connection: the six status switches become two filter-chip groups.', 'Help and about adds Privacy policy and App version. Tapping App version 7 times shows Developer options.', 'Phone information collapses. A trademark notice sits at the bottom.', 'Credits stay in a dialog with OK, which keeps <code>AppearanceRegressionTest</code> passing.'], interactions: ['Try Light/Dark and the swatches. The whole prototype re-themes live.', 'Tap App version 7 times.'], compose: [P + 'screens/AppSettingsScreen.kt', P + 'theme/AndpopPalette.kt'] },
+  settings: { sub: 'Same order as today, with clearer controls.', changes: ['Appearance: three live preview cards (System, Light, Dark) drawn with the selected theme’s real colors, replacing the segmented row.', 'Color: seven themes (Wallpaper, Glacier, Iris, Guava, Sage, Apricot, Graphite) as Material You style swatches with localized names. Today the names are raw enum names.', 'One color choice now applies to both light and dark. This replaces the separate dark and light palettes and the “Light keeps Iris” caption.', 'Popups show an inline warning with Allow when the overlay permission is missing.', 'Automatic connection: the six status switches become two filter-chip groups.', 'Help and about adds Privacy policy and App version. Tapping App version 7 times shows Developer options.', 'Phone information collapses. A trademark notice sits at the bottom.', 'Credits stay in a dialog with OK, which keeps <code>AppearanceRegressionTest</code> passing.'], interactions: ['Try Light/Dark and the swatches. The whole prototype re-themes live.', 'Tap App version 7 times.'], compose: [P + 'screens/AppSettingsScreen.kt', P + 'theme/AndpopPalette.kt'] },
   troubleshooting: { sub: 'A three-step recorder replaces the five-step wizard and its hard-coded text.', changes: ['Xposed-specific steps appear only when Xposed is available.', 'Adds common fixes for problems users can solve themselves.'], compose: [P + 'screens/TroubleshootingScreen.kt'] },
   developer: { sub: 'Collects the tools that should not be visible to Play users.', changes: ['Account service (Supabase URL and key form), compatibility bypass, demo mode and “Act as an Apple device” move here from the account screen, onboarding and settings.'], compose: ['new DeveloperOptionsScreen.kt', 'BuildConfig.PLAY_BUILD gate'] },
   accountGuest: { sub: 'Account becomes a normal navigation destination with predictive back, so it no longer replaces the whole app.', changes: ['“Account service settings” is removed from this screen; it is now in developer options.', 'Remembered AirPods show as a row with Forget, which offers Undo.'], compose: ['account/AccountScreen.kt', 'MainActivity.kt (stop swapping NavigationRoot for AccountScreen)', P + 'navigation/AppNavGraph.kt (add Screen.Account)'] },
@@ -1555,6 +1609,7 @@ const NOTES = {
   shade: { sub: 'One informative notification replaces the two current ones.', changes: ['Rename the channel that shows the code text “AirPods BluetoothConnectionManager.aacpSocket? Connection Issues” in system settings to “Connection problems”.', 'The foreground-service notification is silent and minimized, and tapping it explains how to hide it.', 'The QS tile shows the mode name and device, and its icon matches the in-app glyph.'], interactions: ['Tap the listening-mode tile to cycle modes.'], compose: ['services/AirPodsService.kt', 'services/AirPodsQSService.kt'] },
   widgets: { sub: 'Widgets use the app palette and the same glyphs. Charging shows a bolt badge on the ring.', changes: ['Battery widget: rings for Left, Right, Case and, optionally, Phone. Listening-mode widget: a segmented row that matches the dashboard.', 'Recommended: move to Jetpack Glance for rounded, themed and resizable widgets.'], interactions: ['Tap a widget mode.'], compose: [P + 'widgets/BatteryWidget.kt', P + 'widgets/NoiseControlWidget.kt', 'res/layout/battery_widget.xml', 'listening_mode_widget.xml'] },
   boardDesign: { sub: 'Tokens and components that every screen shares.', changes: ['One component set replaces two: the Andpop <code>devicePanel</code> family and the LibrePods Styled* family. The unused Apple (liquid glass) branch is deleted.'], compose: [P + 'theme/*', P + 'components/*'] },
+  boardPalettes: { sub: 'Every color theme in dark and light, on the same dashboard.', changes: ['All themes share one OKLCH tonal scale, so contrast is identical everywhere. The lowest text pair is 4.8:1.', 'Dark surfaces are near-neutral graphite with a slight tint. Light surfaces are white cards on a faintly tinted background.', 'Wallpaper maps to <code>dynamicDarkColorScheme</code> / <code>dynamicLightColorScheme</code> on Android 12+. The other six are fixed schemes.'], compose: [P + 'theme/AndpopPalette.kt', P + 'theme/Theme.kt'] },
   boardStore: { sub: 'Icon, feature graphic, screenshots and listing copy.', changes: ['New icon. The current one (five mint bars) reads as an equalizer, not as earbuds.'] },
   licenses: { sub: 'AboutLibraries list restyled with the shared list group.', compose: [P + 'screens/OpenSourceLicensesScreen.kt'] },
   hearingProtection: { sub: 'Two switches with descriptions.', compose: [P + 'screens/HearingProtectionScreen.kt'] },
@@ -1586,7 +1641,7 @@ function buildNav() {
   $('#nav').innerHTML = `<div class="wb-brand">${appIcon(34, 'squircle')}<div><b>AnDPoP 2.0 prototype</b><span>UI/UX redesign · Nov 2026</span></div></div>
     <div class="wb-h">Appearance</div>${c('appearance', ['system', 'light', 'dark'], S.appearance, o => o[0].toUpperCase() + o.slice(1))}
     ${S.appearance === 'system' ? c('sysDark', ['dark', 'light'], S.sysDark ? 'dark' : 'light', o => 'Phone is ' + o) : ''}
-    <div class="wb-h">Palette (${isDark() ? 'dark' : 'light'})</div>${c('tint', Object.keys(TINTS), palette(), o => TINTS[o].name)}
+    <div class="wb-h">Color</div>${c('palette', Object.keys(PAL), palette(), o => PAL[o].label)}
     <div class="wb-h">Device state</div><select class="wb-sel" data-wb="scenario">${Object.entries(SCENARIOS).map(([k, v]) => `<option value="${k}" ${S.scenario === k ? 'selected' : ''}>${v}</option>`).join('')}</select>
     <div class="wb-h">Screen width · font scale</div>${c('w', ['360', '384', '412'], String(S.w), o => o + ' dp')}${c('fs', ['1', '1.3', '1.6', '2'], String(S.fs), o => Math.round(o * 100) + '%')}
     <div class="wb-h">Profile</div>${c('profile', ['guest', 'user'], S.profile, o => o === 'guest' ? 'Guest' : 'Signed in')}
@@ -1625,7 +1680,7 @@ function render(opts = {}) {
   document.body.classList.toggle('is-board', board);
   ph.style.display = board ? 'none' : '';
   $('#boardHost').style.display = board ? 'block' : 'none';
-  $('#cap').textContent = board ? '' : `Galaxy S26 Ultra class · ${S.w} × ${S.h} dp · ${TINTS[pl].name} ${th} · font ${Math.round(S.fs * 100)}%`;
+  $('#cap').textContent = board ? '' : `Galaxy S26 Ultra class · ${S.w} × ${S.h} dp · ${PAL[pl].label} ${th} · font ${Math.round(S.fs * 100)}%`;
   if (board) {
     $('#boardHost').innerHTML = s.render();
     requestAnimationFrame(() => $$('[data-token]').forEach(el => { el.textContent = '--' + el.dataset.token + ' · ' + toHex(getComputedStyle(el).getPropertyValue('--' + el.dataset.token).trim()); }));
@@ -1743,7 +1798,7 @@ const act = {
     S.cycle[m] = !S.cycle[m]; render({ keep: true });
   },
   appearance: k => { S.appearance = k; render({ keep: true }); },
-  tint: k => { S.tint[isDark() ? 'dark' : 'light'] = k; render({ keep: true }); },
+  palette: k => { S.palette = k; render({ keep: true }); },
   chip: (arg, el) => { const [o, k] = arg.split('|'); S[o][k] = !S[o][k]; el.classList.toggle('on', S[o][k]); el.setAttribute('aria-checked', S[o][k]); },
   perm: k => {
     if (k === 'overlay') { toast('Opens “Display over other apps” in Android settings'); setTimeout(() => { S.perms.overlay = true; render({ keep: true }); }, 1100); return; }
@@ -1811,7 +1866,7 @@ document.addEventListener('click', e => {
     const k = wb.dataset.wb, v = wb.dataset.v;
     if (k === 'appearance') S.appearance = v;
     else if (k === 'sysDark') S.sysDark = v === 'dark';
-    else if (k === 'tint') S.tint[isDark() ? 'dark' : 'light'] = v;
+    else if (k === 'palette') S.palette = v;
     else if (k === 'w') S.w = Number(v);
     else if (k === 'fs') S.fs = Number(v);
     else if (k === 'profile') { S.profile = v; if (cur().startsWith('account')) S.stack[S.stack.length - 1].id = v === 'user' ? 'accountUser' : 'accountGuest'; }
@@ -1859,7 +1914,7 @@ window.__shot = (cfg = {}) => {
   document.body.classList.add('shot');
   overlay = null;
   if (cfg.appearance) S.appearance = cfg.appearance;
-  if (cfg.palette) S.tint[isDark() ? 'dark' : 'light'] = cfg.palette;
+  if (cfg.palette) S.palette = cfg.palette;
   if (cfg.scenario) applyScenario(cfg.scenario);
   for (const k of ['mode', 'profile', 'fs', 'w', 'dev', 'logState', 'headTest', 'eqMode']) if (cfg[k] !== undefined) S[k] = cfg[k];
   if (cfg.perms) Object.assign(S.perms, cfg.perms);
