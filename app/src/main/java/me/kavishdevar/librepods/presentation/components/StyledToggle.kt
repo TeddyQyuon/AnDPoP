@@ -62,7 +62,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import me.kavishdevar.librepods.R
+import me.kavishdevar.librepods.presentation.theme.AndpopType
 import me.kavishdevar.librepods.presentation.theme.DesignSystem
+import me.kavishdevar.librepods.presentation.theme.LocalAndpopPalette
 import me.kavishdevar.librepods.presentation.theme.LibrePodsTheme
 import me.kavishdevar.librepods.presentation.theme.LocalDesignSystem
 import me.kavishdevar.librepods.presentation.theme.sectionHeader
@@ -89,8 +91,8 @@ fun StyledToggle(
             ) {
                 Text(
                     text = it,
-                    color = if (m3eEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.sectionHeader,
-                    style = MaterialTheme.typography.labelSmallEmphasized
+                    color = if (m3eEnabled) LocalAndpopPalette.current.on2 else MaterialTheme.colorScheme.sectionHeader,
+                    style = if (m3eEnabled) AndpopType.section else MaterialTheme.typography.labelSmallEmphasized
                 )
             }
         }
@@ -188,19 +190,20 @@ private fun StyledToggleContent(
             index == 0 -> RoundedCornerShape(
                 topStart = 24.dp,
                 topEnd = 24.dp,
-                bottomStart = 8.dp,
-                bottomEnd = 8.dp
+                bottomStart = 6.dp,
+                bottomEnd = 6.dp
             )
 
             index == count - 1 -> RoundedCornerShape(
-                topStart = 8.dp,
-                topEnd = 8.dp,
+                topStart = 6.dp,
+                topEnd = 6.dp,
                 bottomStart = 24.dp,
                 bottomEnd = 24.dp
             )
 
-            else -> RoundedCornerShape(8.dp)
+            else -> RoundedCornerShape(6.dp)
         }
+        val palette = LocalAndpopPalette.current
         Column {
             SegmentedListItem(
                 shapes = ListItemDefaults.shapes().copy(
@@ -211,29 +214,26 @@ private fun StyledToggleContent(
                 ),
                 onClick = { onCheckedChange(!currentChecked) },
                 trailingContent = {
-                    Switch(
-                        checked = currentChecked,
-                        onCheckedChange = onCheckedChange,
-                        modifier = Modifier.padding(end = if (header) 8.dp else 0.dp),
-                        enabled = enabled
-                    )
+                    Box(Modifier.padding(end = if (header) 8.dp else 0.dp)) {
+                        AndpopSwitch(checked = currentChecked, enabled = enabled)
+                    }
                 },
                 supportingContent = description?.let {
                     {
                         Text(
                             text = it,
-                            style = MaterialTheme.typography.bodySmall,
+                            style = AndpopType.supporting,
                             modifier = Modifier
                                 .padding(top = if (header) 2.dp else 4.dp, bottom = if (header) 8.dp else 4.dp)
                                 .padding(horizontal = if (header) 8.dp else 0.dp),
-                            color = if (header && enabled) MaterialTheme.colorScheme.onPrimaryContainer else Color.Unspecified
+                            color = if (header && enabled) MaterialTheme.colorScheme.onPrimaryContainer else palette.on2
                         )
                     }
                 },
                 content = {
                     Text(
                         text = label,
-                        style = MaterialTheme.typography.labelMediumEmphasized,
+                        style = AndpopType.body,
                         modifier = Modifier
                             .padding(
                                 top = if (header) 8.dp else 4.dp,
@@ -246,7 +246,7 @@ private fun StyledToggleContent(
                 enabled = enabled,
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.heightIn(min = 64.dp),
-                colors = if (header) ListItemDefaults.segmentedColors(containerColor = MaterialTheme.colorScheme.primaryContainer) else ListItemDefaults.segmentedColors()
+                colors = if (header) ListItemDefaults.segmentedColors(containerColor = MaterialTheme.colorScheme.primaryContainer) else ListItemDefaults.segmentedColors(containerColor = palette.s1)
             )
             if (index+1 != count) {
                 Spacer(modifier = Modifier.height(2.dp))

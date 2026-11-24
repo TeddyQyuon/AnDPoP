@@ -415,3 +415,9 @@ private fun TypographyPreview() {
         }
     }
 }
+
+// AnDPoP 2.0 families: standard-width Roboto Flex at fixed weights.
+internal val andpopRegular = robotoFlex(wght = 400f)
+internal val andpopMedium = robotoFlex(wght = 500f)
+internal val andpopSemiBold = robotoFlex(wght = 600f)
+internal val andpopBold = robotoFlex(wght = 700f)

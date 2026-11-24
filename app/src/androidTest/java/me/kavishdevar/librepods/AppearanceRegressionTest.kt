@@ -24,7 +24,7 @@ import org.junit.Test
 class AppearanceRegressionTest {
     @get:Rule val compose = createComposeRule()
 
-    @Test fun modesFollowReportedStateInAllSixPalettes() {
+    @Test fun modesFollowReportedStateInEveryColorTheme() {
         val dark = mutableStateOf(true)
         val tint = mutableStateOf(AndpopTint.Glacier)
         val reported = mutableStateOf(NoiseControlMode.ADAPTIVE)
@@ -95,23 +95,35 @@ class AppearanceRegressionTest {
         compose.waitUntil(10000) { model.state.value.entered }
     }
 
-    @Test fun profileSwitchRestoresBothPalettesAndRememberedDevice() {
+    @Test fun profileSwitchRestoresColorThemeAndRememberedDevice() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val prefs = context.getSharedPreferences("appearance_test", Context.MODE_PRIVATE)
         prefs.edit().clear().commit()
         val profiles = ProfilePreferences(prefs)
         val buds = RememberedAirPods("My buds", "AirPods Pro 2")
         profiles.rememberDevice(buds)
-        prefs.edit().putString("andpop_dark_tint", "Iris").putString("andpop_light_tint", "Guava").commit()
+        prefs.edit().putString(ANDPOP_PALETTE_KEY, "Sage").commit()
         profiles.enterProfile("test-user")
         assertEquals("Dark", prefs.getString("andpop_appearance", null))
-        assertEquals("Glacier", prefs.getString("andpop_dark_tint", null))
-        assertEquals("Iris", prefs.getString("andpop_light_tint", null))
+        assertEquals("Glacier", prefs.getString(ANDPOP_PALETTE_KEY, null))
         assertNull(profiles.rememberedDevice())
         profiles.enterProfile(GUEST_PROFILE)
-        assertEquals("Iris", prefs.getString("andpop_dark_tint", null))
-        assertEquals("Guava", prefs.getString("andpop_light_tint", null))
+        assertEquals("Sage", prefs.getString(ANDPOP_PALETTE_KEY, null))
         assertEquals(buds, profiles.rememberedDevice())
+    }
+
+    @Test fun olderDarkThemeChoiceCarriesOver() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val prefs = context.getSharedPreferences("appearance_migration_test", Context.MODE_PRIVATE)
+        prefs.edit().clear().commit()
+        // A 1.5 build stored one theme per appearance.
+        prefs.edit().putString(LEGACY_DARK_TINT_KEY, "Iris").putString("andpop_light_tint", "Guava").commit()
+        val profiles = ProfilePreferences(prefs)
+        profiles.enterProfile("test-user")
+        profiles.enterProfile(GUEST_PROFILE)
+        assertEquals("Iris", prefs.getString(ANDPOP_PALETTE_KEY, null))
+        assertEquals(AndpopTint.Iris, AndpopTint.saved(prefs.getString(ANDPOP_PALETTE_KEY, null)))
+        assertEquals(AndpopTint.Glacier, AndpopTint.saved("Unknown"))
     }
 
     @Test fun accountCallbacksAndPasswordRules() {

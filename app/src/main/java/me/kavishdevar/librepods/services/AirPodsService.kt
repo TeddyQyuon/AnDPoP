@@ -1713,7 +1713,7 @@ class AirPodsService : Service(), SharedPreferences.OnSharedPreferenceChangeList
 
         val socketFailureChannel = NotificationChannel(
             "socket_connection_failure",
-            "AirPods BluetoothConnectionManager.aacpSocket? Connection Issues",
+            getString(R.string.andpop_channel_connection_problems),
             NotificationManager.IMPORTANCE_HIGH
         ).apply {
             description = "Notifications about problems connecting to AirPods protocol"

@@ -95,8 +95,7 @@ internal class ProfilePreferences(private val prefs: SharedPreferences) {
     // are owned by the device/service and are never copied into a profile.
     private val defaults = mapOf(
         "andpop_appearance" to "Dark",
-        "andpop_dark_tint" to "Glacier",
-        "andpop_light_tint" to "Iris",
+        "andpop_palette" to "Glacier",
         "show_phone_battery_in_widget" to true,
         "conversation_awareness_pause_music" to false,
         "relative_conversation_awareness_volume" to true,
@@ -115,6 +114,9 @@ internal class ProfilePreferences(private val prefs: SharedPreferences) {
         "m3e_enabled" to true,
     )
 
+    // Keys renamed in 2.0. A profile saved by an older build is read through its old key.
+    private val legacy = mapOf("andpop_palette" to "andpop_dark_tint")
+
     val active get() = prefs.getString(ACTIVE_PROFILE_KEY, GUEST_PROFILE) ?: GUEST_PROFILE
     val hasEntered get() = prefs.getBoolean("andpop_account_entered", false)
 
@@ -128,7 +130,7 @@ internal class ProfilePreferences(private val prefs: SharedPreferences) {
                 val live = prefs.all
                 val snapshot = JSONObject()
                 for ((key, default) in defaults) {
-                    snapshot.put(key, live[key] ?: default)
+                    snapshot.put(key, live[key] ?: legacy[key]?.let { live[it] } ?: default)
                 }
                 edit.putString(settingsKey(current), snapshot.toString())
             }
@@ -138,7 +140,7 @@ internal class ProfilePreferences(private val prefs: SharedPreferences) {
                     is Boolean -> edit.putBoolean(key, next.optBoolean(key, default))
                     is Int -> edit.putInt(key, next.optInt(key, default))
                     is String -> {
-                        val value = next.optString(key, default)
+                        val value = next.optString(key, legacy[key]?.let { next.optString(it, default) } ?: default)
                         if (key == "custom_camera_package" && value.isBlank()) edit.remove(key)
                         else edit.putString(key, value)
                     }
