@@ -15,6 +15,13 @@
 | Type | Roboto Flex at standard width in four weights. | Bundled font file (decision 8) |
 | Play readiness | | `play` flavor, manifest permission review, remaining hard-coded strings |
 
+Screenshots of the built app, rendered by `ScreenshotTour` on the CI emulator (320 dp wide, so the battery cells use their stacked layout):
+
+| | | | |
+| --- | --- | --- | --- |
+| <img src="app/app-01-dashboard-glacier-dark.png" width="190"><br>Glacier dark | <img src="app/app-03-dashboard-iris-light.png" width="190"><br>Iris light | <img src="app/app-04-airpods-max-guava-dark.png" width="190"><br>AirPods Max · Guava | <img src="app/app-05-disconnected-sage-dark.png" width="190"><br>Disconnected · Sage |
+| <img src="app/app-06-pairing-apricot-light.png" width="190"><br>Pairing guide · Apricot | <img src="app/app-02-dashboard-glacier-dark-scrolled.png" width="190"><br>Controls | <img src="app/app-10-settings-glacier-dark-scrolled.png" width="190"><br>Settings · Appearance and Color | <img src="app/app-12-onboarding-welcome.png" width="190"><br>Onboarding welcome |
+
 Verification: CI builds the FOSS APK and AAB and runs the instrumented tests on an Android 15 emulator. `ScreenshotTour` renders the dashboard in every theme, Settings and onboarding, and CI uploads the PNGs as the `ui-screenshots` artifact. Bluetooth behavior still needs a check on a phone with AirPods.
 
 | File | What it is |
