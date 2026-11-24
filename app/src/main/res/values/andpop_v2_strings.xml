@@ -59,6 +59,12 @@
     <string name="andpop_privacy_tracking_title">No ads or tracking</string>
     <string name="andpop_privacy_tracking_body">AnDPoP includes no ads, analytics or purchases.</string>
 
+    <!-- Onboarding -->
+    <string name="andpop_welcome_title">Your AirPods, at home on Android</string>
+    <string name="andpop_welcome_body">See each bud and the case, switch listening modes, and change how your AirPods respond.</string>
+    <string name="andpop_get_started">Get started</string>
+    <string name="andpop_privacy_permissions_note">Only Nearby devices access is required. You can change permissions later in Android settings.</string>
+
     <!-- Notifications -->
     <string name="andpop_channel_connection_problems">Connection problems</string>
 </resources>

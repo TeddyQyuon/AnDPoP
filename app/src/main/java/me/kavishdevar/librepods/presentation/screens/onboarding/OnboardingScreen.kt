@@ -33,6 +33,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.layout.offset
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
@@ -41,7 +44,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import me.kavishdevar.librepods.R
+import me.kavishdevar.librepods.presentation.theme.AndpopType
 import me.kavishdevar.librepods.presentation.theme.LibrePodsTheme
+import me.kavishdevar.librepods.presentation.theme.LocalAndpopPalette
 import me.kavishdevar.librepods.utils.XposedState
 import me.kavishdevar.librepods.utils.bypassDeviceCheck
 import me.kavishdevar.librepods.utils.isSupported
@@ -64,7 +69,7 @@ fun OnboardingScreen(
 
     val titles = listOf(
         null,
-        stringResource(R.string.privacy_policy),
+        null,
         stringResource(R.string.not_supported),
         stringResource(R.string.permissions),
     )
@@ -100,12 +105,13 @@ fun OnboardingScreen(
                 itemWidth = LocalWindowInfo.current.containerDpSize.width - 24.dp,
                 userScrollEnabled = false
             ) { index ->
-                val shape = rememberMaskShape(RoundedCornerShape(52.dp))
+                val shape = rememberMaskShape(RoundedCornerShape(36.dp))
                 Surface(
                     shape = shape,
+                    color = LocalAndpopPalette.current.bg,
                     modifier = Modifier
                         .fillMaxSize()
-                        .clip(RoundedCornerShape(52.dp))
+                        .clip(RoundedCornerShape(36.dp))
                 ) {
                     Column(
                         modifier = Modifier,
@@ -115,66 +121,17 @@ fun OnboardingScreen(
                         titles[index]?.let {
                             Text(
                                 text = it,
-                                style = MaterialTheme.typography.displayMedium,
-                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(top = 16.dp),
+                                style = AndpopType.pageTitle,
+                                color = LocalAndpopPalette.current.on,
                                 textAlign = TextAlign.Center
                             )
                         }
                         when (index) {
                             0 -> {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize(),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth(),
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
-                                        Text(
-                                            text = "Welcome to",
-                                            style = MaterialTheme.typography.displayLarge,
-                                            color = MaterialTheme.colorScheme.primary,
-                                            textAlign = TextAlign.Center,
-                                        )
-                                        Text(
-                                            text = stringResource(R.string.app_name),
-                                            style = MaterialTheme.typography.displayLargeEmphasized,
-                                            color = MaterialTheme.colorScheme.tertiary,
-                                            textAlign = TextAlign.Center,
-                                        )
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Text(
-                                            text = stringResource(R.string.app_description),
-                                            style = MaterialTheme.typography.bodyMediumEmphasized,
-                                            color = MaterialTheme.colorScheme.primary,
-                                            textAlign = TextAlign.Center
-                                        )
-                                        Spacer(modifier = Modifier.height(64.dp))
-                                        FilledTonalIconButton(
-                                            onClick = {
-                                                animationScope.launch {
-                                                    state.animateScrollToItem(1)
-                                                }
-                                            },
-                                            modifier = Modifier
-                                                .minimumInteractiveComponentSize()
-                                                .size(
-                                                    IconButtonDefaults.largeContainerSize(
-                                                        IconButtonDefaults.IconButtonWidthOption.Wide
-                                                    )
-                                                ),
-                                            shape = IconButtonDefaults.largeRoundShape
-                                        ) {
-                                            Icon(
-                                                Icons.AutoMirrored.Default.ArrowForward,
-                                                contentDescription = "forward",
-                                                modifier = Modifier.size(IconButtonDefaults.largeIconSize),
-                                            )
-                                        }
-                                    }
-                                }
+                                WelcomePage(onForward = {
+                                    animationScope.launch { state.animateScrollToItem(1) }
+                                })
                             }
                             1 -> {
                                 PrivacyPolicyPage(
@@ -222,4 +179,89 @@ fun OnboardingScreen(
 @Composable
 fun OnboardingScreenPreview(){
     OnboardingScreen {}
+}
+
+
+/** Step dots shared by the welcome and privacy pages. */
+@Composable
+internal fun OnboardingDots(active: Int, count: Int = 3) {
+    val palette = LocalAndpopPalette.current
+    androidx.compose.foundation.layout.Row(
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        modifier = Modifier.padding(vertical = 14.dp),
+    ) {
+        repeat(count) { index ->
+            Box(
+                Modifier.size(width = if (index == active) 24.dp else 8.dp, height = 8.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(if (index == active) palette.pri else palette.s4),
+            )
+        }
+    }
+}
+
+@Composable
+private fun WelcomePage(onForward: () -> Unit) {
+    val palette = LocalAndpopPalette.current
+    val bob = androidx.compose.animation.core.rememberInfiniteTransition(label = "Welcome float")
+    val lift by bob.animateFloat(
+        0f, -8f,
+        androidx.compose.animation.core.infiniteRepeatable(
+            androidx.compose.animation.core.tween(2500),
+            androidx.compose.animation.core.RepeatMode.Reverse,
+        ),
+        label = "Welcome lift",
+    )
+    Column(
+        Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+            Box(
+                Modifier.size(240.dp).background(
+                    androidx.compose.ui.graphics.Brush.radialGradient(
+                        listOf(palette.pri.copy(alpha = 0.28f), androidx.compose.ui.graphics.Color.Transparent),
+                    ),
+                ),
+            )
+            androidx.compose.foundation.Image(
+                androidx.compose.ui.res.painterResource(R.drawable.amber_pro_2_case), null,
+                Modifier.size(width = 176.dp, height = 130.dp).offset(y = (28 + lift / 2).dp),
+            )
+            androidx.compose.foundation.Image(
+                androidx.compose.ui.res.painterResource(R.drawable.amber_pro_2_left), null,
+                Modifier.size(width = 64.dp, height = 86.dp).offset(x = (-104).dp, y = (-46 + lift).dp)
+                    .graphicsLayer { rotationZ = -8f },
+            )
+            androidx.compose.foundation.Image(
+                androidx.compose.ui.res.painterResource(R.drawable.amber_pro_2_right), null,
+                Modifier.size(width = 64.dp, height = 86.dp).offset(x = 104.dp, y = (-56 - lift).dp),
+            )
+        }
+        OnboardingDots(0)
+        Text(
+            stringResource(R.string.andpop_welcome_title),
+            Modifier.fillMaxWidth(),
+            style = AndpopType.display,
+            color = palette.on,
+            textAlign = TextAlign.Center,
+        )
+        Text(
+            stringResource(R.string.andpop_welcome_body),
+            Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 24.dp),
+            style = AndpopType.bodySmall,
+            color = palette.on2,
+            textAlign = TextAlign.Center,
+        )
+        androidx.compose.material3.Button(
+            onClick = onForward,
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                containerColor = palette.pri, contentColor = palette.onPri,
+            ),
+        ) {
+            Text(stringResource(R.string.andpop_get_started), style = AndpopType.button)
+        }
+        Spacer(Modifier.height(16.dp))
+    }
 }
