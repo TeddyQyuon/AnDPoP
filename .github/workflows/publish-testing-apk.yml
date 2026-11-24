@@ -1,4 +1,4 @@
-name: Publish AnDPoP 1.5 testing APK
+name: Publish AnDPoP 2.0 testing APK
 
 on:
   workflow_dispatch:
@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: andpop-1.5-testing-release
+  group: andpop-2.0-testing-release
   cancel-in-progress: false
 
 jobs:
@@ -43,30 +43,31 @@ jobs:
 
       - name: Prepare distributable
         run: |
-          cp app/build/outputs/apk/foss/debug/app-foss-debug.apk AnDPoP-1.5-testing.apk
-          sha256sum AnDPoP-1.5-testing.apk > AnDPoP-1.5-testing.apk.sha256
+          cp app/build/outputs/apk/foss/debug/app-foss-debug.apk AnDPoP-2.0-testing.apk
+          sha256sum AnDPoP-2.0-testing.apk > AnDPoP-2.0-testing.apk.sha256
 
       - name: Publish GitHub prerelease
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.5.0-testing
+          tag_name: v2.0.0-testing
           target_commitish: ${{ github.sha }}
-          name: AnDPoP 1.5.0 — Testing
+          name: AnDPoP 2.0.0 — Testing
           prerelease: true
           draft: false
           generate_release_notes: false
           body: |
-            Android testing build for AnDPoP 1.5.0.
+            Android testing build for AnDPoP 2.0.0, the UI/UX redesign described in docs/v2-ui.
 
-            - Six appearance palettes: three dark and three light.
-            - Glacier dark and Iris light defaults.
-            - Refined listening mode, device and battery screens.
-            - Profile-specific appearance preferences.
+            - Seven color themes (Wallpaper, Glacier, Iris, Guava, Sage, Apricot, Graphite) chosen once for light and dark.
+            - New dashboard: device card with battery, sliding listening-mode control, grouped controls and press-and-hold tiles.
+            - Redesigned Settings with live appearance previews, color swatches and connection chips.
+            - Shared 2.0 list, switch and top-bar styling on every detail screen.
+            - New launcher icon, themed icon and splash screen.
 
-            This APK is automatically built from the repository source and signed using a temporary Android debug key. It is not the manually uploaded APK. You may need to uninstall a prior test build before installing it because the signing certificate may differ. Uninstalling clears local app data.
+            This APK is built automatically from the repository source and signed with a temporary Android debug key. You may need to uninstall an earlier test build first because the signing certificate can differ; uninstalling clears local app data.
 
-            Features involving AirPods Bluetooth behavior require testing on a physical device; no Play Store publication is implied.
+            Features involving AirPods Bluetooth behavior require testing on a physical device. No Play Store publication is implied.
           files: |
-            AnDPoP-1.5-testing.apk
-            AnDPoP-1.5-testing.apk.sha256
+            AnDPoP-2.0-testing.apk
+            AnDPoP-2.0-testing.apk.sha256
           fail_on_unmatched_files: true
