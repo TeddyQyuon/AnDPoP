@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="popup_background">#1C1B1E</color>
-    <color name="popup_text">@color/white</color>
-    <color name="widget_background">#1C1B1E</color>
-    <color name="widget_text">@color/white</color>
-    <color name="colorBackground">#0B0B0B</color>
+    <color name="popup_background">#111B1D</color>
+    <color name="popup_text">#EDF3F4</color>
+    <color name="widget_background">#EB111B1D</color>
+    <color name="widget_text">#EDF3F4</color>
+    <color name="colorBackground">#0A1113</color>
+    <color name="andpop_splash_background">#0A1113</color>
 </resources>

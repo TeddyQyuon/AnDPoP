@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- AnDPoP 2.0 interface strings. -->
+<resources>
+    <!-- Color themes -->
+    <string name="andpop_color">Color</string>
+    <string name="andpop_color_applies">Applies to light and dark.</string>
+    <string name="andpop_color_wallpaper_hint">Uses colors from your wallpaper.</string>
+    <string name="andpop_theme_wallpaper">Wallpaper</string>
+    <string name="andpop_theme_glacier">Glacier</string>
+    <string name="andpop_theme_iris">Iris</string>
+    <string name="andpop_theme_guava">Guava</string>
+    <string name="andpop_theme_sage">Sage</string>
+    <string name="andpop_theme_apricot">Apricot</string>
+    <string name="andpop_theme_graphite">Graphite</string>
+
+    <!-- Dashboard -->
+    <string name="andpop_account">Account</string>
+    <string name="andpop_not_connected">Not connected</string>
+    <string name="andpop_reconnect">Reconnect</string>
+    <string name="andpop_connecting">Connecting…</string>
+    <string name="andpop_listening_mode">Listening mode</string>
+    <string name="andpop_press_and_hold">Press and hold</string>
+    <string name="andpop_about_airpods">About these AirPods</string>
+    <string name="andpop_all_device_settings">All device settings</string>
+    <string name="andpop_all_device_settings_detail">Audio, hearing health, calls, head gestures and more</string>
+    <string name="andpop_pair_intro">Pair them once in Android Bluetooth settings, then come back here.</string>
+    <string name="andpop_pair_step_1">Open the case lid with both AirPods inside.</string>
+    <string name="andpop_pair_step_2">Press and hold the button on the case until the light flashes white.</string>
+    <string name="andpop_pair_step_3">Choose your AirPods in Bluetooth settings.</string>
+    <string name="andpop_open_bluetooth_settings">Open Bluetooth settings</string>
+    <string name="andpop_last_reading_note">Battery shows the last reading.</string>
+
+    <!-- Battery details -->
+    <string name="andpop_not_charging">Not charging</string>
+    <string name="andpop_estimated_detail">Estimated from a nearby case broadcast</string>
+    <string name="andpop_battery_note">The case reports its level while the lid is open near your phone. ~ marks an estimate. Last-seen readings are kept until Bluetooth restarts.</string>
+
+    <!-- Settings -->
+    <string name="andpop_widget_and_popups">Widget and popups</string>
+    <string name="andpop_overlay_needed">Popups need “Display over other apps”.</string>
+    <string name="andpop_allow">Allow</string>
+    <string name="andpop_automatic_connection">Automatic connection</string>
+    <string name="andpop_connect_when_airpods">Connect when your AirPods are</string>
+    <string name="andpop_connect_when_phone">Connect when your phone is</string>
+    <string name="andpop_connect_note">AnDPoP takes over the audio connection from your other devices in these situations.</string>
+    <string name="andpop_advanced">Advanced</string>
+    <string name="andpop_help_and_about">Help and about</string>
+    <string name="andpop_privacy">Privacy</string>
+    <string name="andpop_app_version">App version</string>
+    <string name="andpop_phone_information">Phone information</string>
+    <string name="andpop_trademark">AnDPoP is not affiliated with Apple Inc. AirPods is a trademark of Apple Inc., registered in the U.S. and other countries.</string>
+
+    <!-- Privacy summary -->
+    <string name="andpop_privacy_title">Your data stays on your phone</string>
+    <string name="andpop_privacy_bluetooth_title">Bluetooth only</string>
+    <string name="andpop_privacy_bluetooth_body">AnDPoP talks to your AirPods over Bluetooth and keeps device details and settings on this phone.</string>
+    <string name="andpop_privacy_account_title">Account is optional</string>
+    <string name="andpop_privacy_account_body">If you create an account, your email address is used to sign in. You can delete the account at any time.</string>
+    <string name="andpop_privacy_tracking_title">No ads or tracking</string>
+    <string name="andpop_privacy_tracking_body">AnDPoP includes no ads, analytics or purchases.</string>
+
+    <!-- Onboarding -->
+    <string name="andpop_welcome_title">Your AirPods, at home on Android</string>
+    <string name="andpop_welcome_body">See each bud and the case, switch listening modes, and change how your AirPods respond.</string>
+    <string name="andpop_get_started">Get started</string>
+    <string name="andpop_privacy_permissions_note">Only Nearby devices access is required. You can change permissions later in Android settings.</string>
+
+    <!-- Notifications -->
+    <string name="andpop_channel_connection_problems">Connection problems</string>
+</resources>

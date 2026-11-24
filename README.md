@@ -2,7 +2,9 @@
 
 AnDPoP is an independent GPL-licensed fork of the official LibrePods v1.0.4 Android FOSS release. The dashboard shows left, right, and case battery side by side, provides model-aware listening controls, and presents a single battery reading for AirPods Max. The app has no in-app purchases. Supported features depend on the AirPods model, firmware, and Android Bluetooth stack.
 
-The device page groups battery readings, listening modes, AirPods controls, and firmware information. Battery details opens a frosted sheet. Settings → Appearance switches between System, Light, and Dark. The connection and battery-reading indicators reflect current Android service state.
+The device page groups battery readings, listening modes, AirPods controls, and firmware information. Battery details opens a sheet with each component's level and status. Settings → Appearance switches between System, Light, and Dark, and Settings → Color offers seven themes (Wallpaper, Glacier, Iris, Guava, Sage, Apricot and Graphite) for both. The connection and battery-reading indicators reflect current Android service state.
+
+Version 2.0 is a UI/UX redesign. The design, the interactive prototype and the implementation status are in [docs/v2-ui](docs/v2-ui/README.md).
 
 ## Try it on a Galaxy S26 Ultra
 
@@ -14,7 +16,7 @@ The device page groups battery readings, listening modes, AirPods controls, and 
 ## Build
 The Kotlin Compose dashboard previews for light, dark, and AirPods Max are in `AndpopDashboard.kt`.
 
-Open this directory in Android Studio with JDK 21 and install Android SDK Platform 37.0, NDK 30.0.14904198, and CMake 3.22.1. From this directory, run:
+Open this directory in Android Studio with JDK 21 and install Android SDK Platform 37.0, NDK 29.0.14206865, and CMake 3.22.1. From this directory, run:
 
 ```sh
 ./gradlew :app:assembleFossDebug

@@ -20,7 +20,9 @@ import androidx.compose.ui.tooling.preview.AndroidUiModes.UI_MODE_NIGHT_YES
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.Wallpapers.GREEN_DOMINATED_EXAMPLE
 import androidx.compose.ui.unit.dp
+import me.kavishdevar.librepods.presentation.theme.AndpopType
 import me.kavishdevar.librepods.presentation.theme.DesignSystem
+import me.kavishdevar.librepods.presentation.theme.LocalAndpopPalette
 import me.kavishdevar.librepods.presentation.theme.LibrePodsTheme
 import me.kavishdevar.librepods.presentation.theme.LocalDesignSystem
 import me.kavishdevar.librepods.presentation.theme.sectionHeader
@@ -42,13 +44,13 @@ fun StyledList(
             Box(
                 modifier = Modifier
                     .background(if (m3eEnabled) Color.Transparent else MaterialTheme.colorScheme.surfaceContainer)
-                    .padding(horizontal = 16.dp)
-                    .padding(top = 4.dp, bottom = if (m3eEnabled) 12.dp else 4.dp)
+                    .padding(horizontal = if (m3eEnabled) 8.dp else 16.dp)
+                    .padding(top = if (m3eEnabled) 10.dp else 4.dp, bottom = if (m3eEnabled) 10.dp else 4.dp)
             ) {
                 Text(
                     text = it,
-                    color = if (m3eEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.sectionHeader,
-                    style = MaterialTheme.typography.labelSmallEmphasized
+                    color = if (m3eEnabled) LocalAndpopPalette.current.on2 else MaterialTheme.colorScheme.sectionHeader,
+                    style = if (m3eEnabled) AndpopType.section else MaterialTheme.typography.labelSmallEmphasized
                 )
             }
         }
@@ -61,9 +63,9 @@ fun StyledList(
             if (m3eEnabled && description != null) {
                 Text(
                     text = description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onBackground.copy(0.8f),
-                    modifier = Modifier.padding(horizontal = 16.dp)
+                    style = AndpopType.supporting,
+                    color = LocalAndpopPalette.current.on2,
+                    modifier = Modifier.padding(horizontal = 8.dp)
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             }

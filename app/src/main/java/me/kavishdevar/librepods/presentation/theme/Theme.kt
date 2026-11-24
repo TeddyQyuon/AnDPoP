@@ -23,7 +23,10 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MotionScheme
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
@@ -59,10 +62,19 @@ private val AppleLightColorScheme = lightColorScheme(
 fun LibrePodsTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     m3eEnabled: Boolean = false,
-    tint: AndpopTint = if (darkTheme) AndpopTint.Glacier else AndpopTint.Iris,
+    tint: AndpopTint = AndpopTint.Default,
     content: @Composable () -> Unit
 ) {
-    val palette = androidx.compose.runtime.remember(tint, darkTheme) { andpopPalette(tint, darkTheme) }
+    val context = LocalContext.current
+    val palette = androidx.compose.runtime.remember(tint, darkTheme, context) {
+        if (tint == AndpopTint.Wallpaper) {
+            // Material You colors from the wallpaper (Android 12+; minSdk is 33).
+            val dynamic = if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+            andpopPalette(tint, darkTheme, dynamicTones(dynamic))
+        } else {
+            andpopPalette(tint, darkTheme)
+        }
+    }
     val colorScheme = when {
         m3eEnabled -> palette.scheme
         darkTheme -> AppleDarkColorScheme

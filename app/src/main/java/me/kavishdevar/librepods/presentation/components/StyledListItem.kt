@@ -67,7 +67,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import me.kavishdevar.librepods.R
+import androidx.compose.foundation.layout.size
+import me.kavishdevar.librepods.presentation.theme.AndpopIcons
+import me.kavishdevar.librepods.presentation.theme.AndpopType
 import me.kavishdevar.librepods.presentation.theme.DesignSystem
+import me.kavishdevar.librepods.presentation.theme.LocalAndpopPalette
 import me.kavishdevar.librepods.presentation.theme.LocalDesignSystem
 import me.kavishdevar.librepods.presentation.theme.sectionHeader
 
@@ -95,8 +99,8 @@ fun StyledListItem(
             ) {
                 Text(
                     text = it,
-                    color = if (m3eEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.sectionHeader,
-                    style = MaterialTheme.typography.labelSmallEmphasized
+                    color = if (m3eEnabled) LocalAndpopPalette.current.on2 else MaterialTheme.colorScheme.sectionHeader,
+                    style = if (m3eEnabled) AndpopType.section else MaterialTheme.typography.labelSmallEmphasized
                 )
             }
         }
@@ -330,19 +334,20 @@ private fun StyledListItemContent(
                 index == 0 -> RoundedCornerShape(
                     topStart = 24.dp,
                     topEnd = 24.dp,
-                    bottomStart = 8.dp,
-                    bottomEnd = 8.dp
+                    bottomStart = 6.dp,
+                    bottomEnd = 6.dp
                 )
 
                 index == count - 1 -> RoundedCornerShape(
-                    topStart = 8.dp,
-                    topEnd = 8.dp,
+                    topStart = 6.dp,
+                    topEnd = 6.dp,
                     bottomStart = 24.dp,
                     bottomEnd = 24.dp
                 )
 
-                else -> RoundedCornerShape(8.dp)
+                else -> RoundedCornerShape(6.dp)
             }
+            val palette = LocalAndpopPalette.current
             Column {
                 SegmentedListItem(
                     modifier = modifier.heightIn(min = 64.dp),
@@ -358,11 +363,13 @@ private fun StyledListItemContent(
                         if (trailingContent == null) {
                             if (onClick != null) {
                                 if (selected == true) {
-                                    Icon(Icons.Default.Check, contentDescription = null)
+                                    Icon(AndpopIcons.Check, contentDescription = null, tint = palette.pri)
                                 } else if (selected == null) {
                                     Icon(
-                                        Icons.AutoMirrored.Default.KeyboardArrowRight,
-                                        contentDescription = null
+                                        AndpopIcons.ChevronRight,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp),
+                                        tint = palette.on3
                                     )
                                 }
                             }
@@ -373,14 +380,15 @@ private fun StyledListItemContent(
                     supportingContent = {
                         if (description != null) Text(
                             description,
-                            style = MaterialTheme.typography.bodySmall,
+                            style = AndpopType.supporting,
+                            color = palette.on2,
                             modifier = Modifier.padding(bottom = 4.dp)
                         )
                     },
                     content = {
                         Text(
                             text = name,
-                            style = MaterialTheme.typography.labelMediumEmphasized,
+                            style = AndpopType.body,
                             modifier = Modifier.padding(
                                 top = 4.dp,
                                 bottom = if (description != null) 0.dp else 4.dp
@@ -389,14 +397,14 @@ private fun StyledListItemContent(
                     },
                     verticalAlignment = Alignment.CenterVertically,
                     colors = if (onClick == null) {
-                            ListItemDefaults.segmentedColors().run {
+                            ListItemDefaults.segmentedColors(containerColor = palette.s1).run {
                                 copy(
                                     disabledContentColor = contentColor,
                                     disabledSupportingContentColor = supportingContentColor,
                                     disabledTrailingContentColor = trailingContentColor
                                 )
                             }
-                        } else ListItemDefaults.segmentedColors(),
+                        } else ListItemDefaults.segmentedColors(containerColor = palette.s1),
                     enabled = onClick != null && enabled,
                     selected = selected ?: false
                 )

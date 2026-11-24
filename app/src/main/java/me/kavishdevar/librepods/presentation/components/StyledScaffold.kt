@@ -78,7 +78,12 @@ import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import me.kavishdevar.librepods.R
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.res.stringResource
+import me.kavishdevar.librepods.presentation.theme.AndpopIcons
+import me.kavishdevar.librepods.presentation.theme.AndpopType
 import me.kavishdevar.librepods.presentation.theme.DesignSystem
+import me.kavishdevar.librepods.presentation.theme.LocalAndpopPalette
 import me.kavishdevar.librepods.presentation.theme.LocalDesignSystem
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -116,13 +121,17 @@ fun StyledScaffold(
                                             onClick = onNavigateBack,
                                             modifier = Modifier
                                                 .minimumInteractiveComponentSize()
-                                                .size(IconButtonDefaults.mediumContainerSize(IconButtonDefaults.IconButtonWidthOption.Narrow)),
-                                            shape = IconButtonDefaults.mediumRoundShape
+                                                .size(40.dp),
+                                            shape = CircleShape,
+                                            colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                                containerColor = LocalAndpopPalette.current.s2,
+                                                contentColor = LocalAndpopPalette.current.on,
+                                            ),
                                         ) {
                                             Icon(
-                                                Icons.AutoMirrored.Default.ArrowBack,
-                                                contentDescription = "",
-                                                modifier = Modifier.size(IconButtonDefaults.mediumIconSize),
+                                                AndpopIcons.Back,
+                                                contentDescription = stringResource(R.string.back),
+                                                modifier = Modifier.size(22.dp),
                                             )
                                         }
                                     }
@@ -135,7 +144,8 @@ fun StyledScaffold(
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
                                         modifier = Modifier.padding(start = if (showBackButton) 8.dp else 12.dp, end = 12.dp),
-                                        style = MaterialTheme.typography.titleSmall
+                                        style = AndpopType.titleSmall,
+                                        color = LocalAndpopPalette.current.on,
                                     )
                                 }
                             },
