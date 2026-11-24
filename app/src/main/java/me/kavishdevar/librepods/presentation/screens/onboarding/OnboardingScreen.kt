@@ -36,6 +36,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.getValue
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
@@ -203,13 +208,11 @@ internal fun OnboardingDots(active: Int, count: Int = 3) {
 @Composable
 private fun WelcomePage(onForward: () -> Unit) {
     val palette = LocalAndpopPalette.current
-    val bob = androidx.compose.animation.core.rememberInfiniteTransition(label = "Welcome float")
+    val bob = rememberInfiniteTransition(label = "Welcome float")
     val lift by bob.animateFloat(
-        0f, -8f,
-        androidx.compose.animation.core.infiniteRepeatable(
-            androidx.compose.animation.core.tween(2500),
-            androidx.compose.animation.core.RepeatMode.Reverse,
-        ),
+        initialValue = 0f,
+        targetValue = -8f,
+        animationSpec = infiniteRepeatable(tween<Float>(2500), RepeatMode.Reverse),
         label = "Welcome lift",
     )
     Column(
