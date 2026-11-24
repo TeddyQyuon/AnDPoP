@@ -1,6 +1,21 @@
 # AnDPoP 2.0 UI/UX prototype
 
-**Status: prototype for review. No app code has changed.** This folder has the proposed redesign: the interactive prototype, screenshots and this spec. Once the design is approved, it will be ported to the existing Kotlin/Jetpack Compose app. Bluetooth, account and preference behavior stay native.
+**Status: approved, first implementation pass shipped in 2.0.0 (versionCode 8).** This folder has the redesign: the interactive prototype, screenshots and this spec. The Kotlin/Jetpack Compose app follows it; Bluetooth, account and preference behavior stay native.
+
+## Implementation status (2.0.0)
+
+| Area | In 2.0.0 | Still to do |
+| --- | --- | --- |
+| Color system | Seven themes from one tonal scale, one choice for light and dark, migration from `andpop_dark_tint` (decision 10). Tonal surfaces replace the glass panels. | |
+| Dashboard | Top bar with mark, account and settings buttons. Hero card with battery cells, refresh and Battery details. Sliding listening-mode control. Sound, AirPods controls, press-and-hold tiles, About. Disconnected state with Reconnect, pairing guide for first use. Restyled battery sheet. | Loading skeleton |
+| Settings | Live appearance previews, color swatches, grouped rows with icons, overlay-permission banner, volume slider, connection chips (decision 3), privacy summary, credits, app version, collapsible phone information, trademark notice. | Developer options (decision 4) |
+| Detail screens | Shared list, switch, header and top-bar styling, so every LibrePods screen uses the 2.0 colors, type and shapes. | Regrouped All device settings (decision 2), equalizer sliders (decision 9), segmented speed pickers |
+| First run | Welcome and privacy pages redesigned. | One welcome with account as a normal screen (decision 1), per-permission Allow buttons |
+| System surfaces | New launcher icon with themed layer and splash screen (decision 5). Popup and widget colors follow Glacier. Notification channel renamed. | Single notification (decision 6), Glance widgets (decision 7), popup and island layouts |
+| Type | Roboto Flex at standard width in four weights. | Bundled font file (decision 8) |
+| Play readiness | | `play` flavor, manifest permission review, remaining hard-coded strings |
+
+Verification: CI builds the FOSS APK and AAB and runs the instrumented tests on an Android 15 emulator. `ScreenshotTour` renders the dashboard in every theme, Settings and onboarding, and CI uploads the PNGs as the `ui-screenshots` artifact. Bluetooth behavior still needs a check on a phone with AirPods.
 
 | File | What it is |
 | --- | --- |
@@ -20,7 +35,7 @@ These sources describe the current app:
 - the v1.5 dashboard (`AndpopDashboard.kt`, `AndpopBattery.kt`, `AndpopListeningModes.kt`, `AndpopDeviceSettings.kt`);
 - the older LibrePods screens behind “More device controls” and Settings;
 - onboarding, the account flow, overlays, widgets and notifications;
-- the [v1.5 handoff](../v1.5-ui/IMPLEMENTATION.md).
+- the [v1.5 handoff](https://github.com/TeddyQyuon/AnDPoP/blob/f177fd3bea2aa4e9b8a748ad00d49e7c4806f12c/docs/v1.5-ui/IMPLEMENTATION.md) (removed from the tree in 2.0; kept in git history).
 
 The redesign keeps these from v1.5:
 - the single-column dashboard and its section order;
