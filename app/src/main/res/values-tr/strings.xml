@@ -41,9 +41,9 @@
     <string name="add_widget">Widget ekle</string>
     <string name="listening_mode_widget_description">Gürültü Kontrol Modunu doğrudan Ana Ekranınızdan kontrol edin.</string>
     <string name="island_connected_text">Bağlı</string>
-    <string name="island_connected_remote_text">Linux\'a bağlı</string>
+    <string name="island_connected_remote_text">Başka bir cihaza bağlandı</string>
     <string name="island_taking_over_text">Bağlı</string>
-    <string name="island_moved_to_remote_text">Linux\'a taşındı</string>
+    <string name="island_moved_to_remote_text">Başka bir cihaza taşındı</string>
     <string name="island_moved_to_other_device_text">%1$s cihazına taşındı</string>
     <string name="island_moved_to_other_device_reversed_text">Bildirimden yeniden bağlan</string>
     <string name="head_tracking">Kafa Takibi</string>
@@ -179,7 +179,6 @@
     <string name="custom_camera_package">Özel Kamera uygulama kimliği</string>
     <string name="custom_camera_package_set_success">Özel kamera uygulama kimliği başarıyla ayarlandı</string>
     <string name="app_listener_service_label">Kamera dinleyicisi</string>
-    <string name="app_listener_service_description">Kamera aktif olduğunda algılamak ve AirPods\'ta kamera kontrolünü etkinleştirmek için LibrePods dinleyici servisi.</string>
     <string name="open_source_licenses">Açık Kaynak Lisansları</string>
     <string name="hearing_test">İşitme Testini Güncelle</string>
     <string name="update_hearing_test">İşitme Testi Sonucunu Güncelle</string>

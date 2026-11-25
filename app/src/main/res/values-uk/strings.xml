@@ -41,9 +41,9 @@
     <string name="add_widget">Додати віджет</string>
     <string name="listening_mode_widget_description">Керуйте режимом шумоконтролю прямо з головного екрана.</string>
     <string name="island_connected_text">Підключено</string>
-    <string name="island_connected_remote_text">Підключено до Linux</string>
+    <string name="island_connected_remote_text">Підключено до іншого пристрою</string>
     <string name="island_taking_over_text">Підключено</string>
-    <string name="island_moved_to_remote_text">Переміщено до Linux</string>
+    <string name="island_moved_to_remote_text">Переміщено на інший пристрій</string>
     <string name="island_moved_to_other_device_text">Переміщено до %1$s</string>
     <string name="island_moved_to_other_device_reversed_text">Перепідключитися через повідомлення</string>
     <string name="head_tracking">Відстеження Голови</string>
@@ -179,7 +179,6 @@
     <string name="custom_camera_package">Власний ID програми камери</string>
     <string name="custom_camera_package_set_success">Власний ID програми камери встановлено успішно</string>
     <string name="app_listener_service_label">Слухач камери</string>
-    <string name="app_listener_service_description">Служба слухача LibrePods для виявлення, коли камера активна, щоб активувати керування камерою на AirPods.</string>
     <string name="open_source_licenses">Ліцензії Відкритого Коду</string>
     <string name="hearing_test">Оновити Тест Слуху</string>
     <string name="update_hearing_test">Оновити Результат Тесту Слуху</string>
