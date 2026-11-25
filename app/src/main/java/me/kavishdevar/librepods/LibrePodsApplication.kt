@@ -6,24 +6,21 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import io.github.libxposed.service.XposedService
 import io.github.libxposed.service.XposedServiceHelper
-import me.kavishdevar.librepods.billing.BillingManager
-import me.kavishdevar.librepods.billing.BillingProviderFactory
 import me.kavishdevar.librepods.utils.XposedServiceHolder
 import me.kavishdevar.librepods.utils.XposedState
 
 class LibrePodsApplication: Application(), XposedServiceHelper.OnServiceListener, DefaultLifecycleObserver {
 
     override fun onCreate() {
-        XposedServiceHelper.registerListener(this)
-        BillingManager.provider = BillingProviderFactory.create(this)
+        // Xposed integration is a FOSS-only feature. The Play build never looks for the framework.
+        if (!BuildConfig.PLAY_BUILD) XposedServiceHelper.registerListener(this)
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
 
         super<Application>.onCreate()
-
     }
 
     override fun onResume(owner: LifecycleOwner) {
-        BillingManager.provider.queryPurchases()
+        if (BuildConfig.PLAY_BUILD) return
         XposedState.isAvailable = XposedServiceHolder.service != null
         XposedState.bluetoothScopeEnabled = XposedServiceHolder.service?.scope?.contains("com.google.android.bluetooth") == true || XposedServiceHolder.service?.scope?.contains("com.android.bluetooth") == true
     }

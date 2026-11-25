@@ -37,7 +37,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import me.kavishdevar.librepods.BuildConfig
-import me.kavishdevar.librepods.billing.BillingManager
 import me.kavishdevar.librepods.bluetooth.AACPManager
 import me.kavishdevar.librepods.bluetooth.AACPManager.Companion.ControlCommandIdentifiers
 import me.kavishdevar.librepods.bluetooth.ATTCCCDHandles
@@ -95,13 +94,13 @@ data class AirPodsUiState(
     val transparencyData: ByteArray = byteArrayOf(),
     val hearingAidData: ByteArray = byteArrayOf(),
 
-    val isPremium: Boolean = false,
+    val isPremium: Boolean = true,
     val vendorIdHook: Boolean = false,
 
     val dynamicEndOfCharge: Boolean = false,
 
     val connectionSuccessful: Boolean = false,
-    val timeUntilFOSSPremiumExpiry: Long = 0L,
+    val isDemoMode: Boolean = false,
 
     val customEq: CustomEq = CustomEq(1, 50, 50, 50) // disabled
 )
@@ -120,6 +119,7 @@ val demoInstance = AirPodsInstance(
 
 val demoState = AirPodsUiState(
     deviceName = demoInstance.name,
+    instance = demoInstance,
 
     isLocallyConnected = true,
 
@@ -217,7 +217,6 @@ class AirPodsViewModel(
         loadATT()
         observeATT()
         observeSharedPreferences()
-        observeBilling()
         caseBatteryJob = viewModelScope.launch {
             service.caseBattery.collect { snapshot ->
                 if (!isDemoMode) _uiState.update { it.copy(caseBattery = snapshot) }
@@ -240,7 +239,6 @@ class AirPodsViewModel(
 
     private lateinit var broadcastReceiver: BroadcastReceiver
     private var settingsListener: SharedPreferences.OnSharedPreferenceChangeListener? = null
-    private var billingJob: kotlinx.coroutines.Job? = null
     private var caseBatteryJob: kotlinx.coroutines.Job? = null
 
 //    private val _cameraAction = MutableStateFlow(
@@ -262,7 +260,7 @@ class AirPodsViewModel(
         require(mid in 0..100)
         require(high in 0..100)
         val updatedEq = _uiState.value.customEq.copy(low = low, mid = mid, high = high)
-        service.aacpManager.sendCustomEqPacket(updatedEq)
+        if (!isDemoMode && isReady) service.aacpManager.sendCustomEqPacket(updatedEq)
         _uiState.update {
             it.copy(
                 customEq = updatedEq
@@ -271,10 +269,11 @@ class AirPodsViewModel(
     }
 
     fun setCustomEqEnabled(enabled: Boolean) {
-        service.aacpManager.sendCustomEqPacket(_uiState.value.customEq.copy(state = if (enabled) 2 else 1))
+        val updated = _uiState.value.customEq.copy(state = if (enabled) 2 else 1)
+        if (!isDemoMode && isReady) service.aacpManager.sendCustomEqPacket(updated)
         _uiState.update {
             it.copy(
-                customEq = it.customEq.copy(state = if (enabled) 2 else 1)
+                customEq = updated
             )
         }
     }
@@ -291,8 +290,6 @@ class AirPodsViewModel(
         listeners.clear()
         settingsListener?.let(sharedPreferences::unregisterOnSharedPreferenceChangeListener)
         settingsListener = null
-        billingJob?.cancel()
-        billingJob = null
         caseBatteryJob?.cancel()
         caseBatteryJob = null
         service.aacpManager.customEqCallback = null
@@ -306,37 +303,13 @@ class AirPodsViewModel(
         _uiState.update { it.copy(deviceName = name) }
     }
 
-    private fun observeBilling() {
-        if (isDemoMode) return
-        billingJob = viewModelScope.launch {
-            BillingManager.provider.isPremium.collect { premium ->
-                if (premium) {
-                    sharedPreferences.edit {
-                        remove("premium_expiry_time")
-                        if (BuildConfig.PLAY_BUILD) remove("foss_upgraded")
-                    }
-                    _uiState.update { it.copy(isPremium = true, timeUntilFOSSPremiumExpiry = 0L) }
-                } else {
-                    if (_uiState.value.timeUntilFOSSPremiumExpiry <= 0L) {
-                        setControlCommandBoolean(
-                            ControlCommandIdentifiers.CONVERSATION_DETECT_CONFIG,
-                            false
-                        )
-                        setHeadGesturesEnabled(false)
-                        _uiState.update { it.copy(isPremium = false) }
-                    }
-                }
-            }
-        }
-    }
-
     private fun observeSharedPreferences() {
         val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
             when (key) {
                 "name" -> loadName()
                 "off_listening_mode", "automatic_ear_detection", "automatic_connection_ctrl_cmd",
                 "head_gestures", "left_long_press_action", "right_long_press_action",
-                "dynamic_end_of_charge", "foss_upgraded", "premium_expiry_time" -> loadSharedPreferences()
+                "dynamic_end_of_charge" -> loadSharedPreferences()
             }
         }
         settingsListener = listener
@@ -397,7 +370,7 @@ class AirPodsViewModel(
     fun setControlCommandValue(
         identifier: ControlCommandIdentifiers, value: ByteArray
     ) {
-        if (!isDemoMode) controlRepo.setValue(identifier, value)
+        if (!isDemoMode && isReady) controlRepo.setValue(identifier, value)
         _uiState.update {
             it.copy(
                 controlStates = it.controlStates + (identifier to value)
@@ -536,59 +509,10 @@ class AirPodsViewModel(
                 connectionSuccessful = connectionSuccessful,
             )
         }
-
-        // faulty update on Play caused PLAY_BUILD to be false and resulted in use of FOSS billing in Play. since FOSS is not verified, we need to give 2 weeks to verify the purchase
-        if (BuildConfig.PLAY_BUILD) {
-            val fossUpgraded = sharedPreferences.getBoolean("foss_upgraded", false)
-            val expiryTime = sharedPreferences.getLong("premium_expiry_time", 0L)
-            val now = System.currentTimeMillis()
-
-            when {
-                // existing temporary premium
-                expiryTime > 0L -> {
-                    if (expiryTime <= now) {
-                        sharedPreferences.edit {
-                            remove("premium_expiry_time")
-                            remove("foss_upgraded")
-                        }
-
-                        _uiState.update {
-                            it.copy(
-                                timeUntilFOSSPremiumExpiry = 0L,
-                                isPremium = false
-                            )
-                        }
-                    } else {
-                        _uiState.update {
-                            it.copy(
-                                timeUntilFOSSPremiumExpiry = expiryTime - now,
-                                isPremium = true
-                            )
-                        }
-                    }
-                }
-
-                // First migration from accidental FOSS Play build
-                fossUpgraded && !_uiState.value.isPremium -> {
-                    val newExpiry = now + 28L * 24 * 60 * 60 * 1000
-
-                    sharedPreferences.edit {
-                        putLong("premium_expiry_time", newExpiry)
-                    }
-
-                    _uiState.update {
-                        it.copy(
-                            timeUntilFOSSPremiumExpiry = newExpiry - now,
-                            isPremium = true
-                        )
-                    }
-                }
-            }
-        }
     }
 
     fun setOffListeningMode(enabled: Boolean) {
-        sharedPreferences.edit { putBoolean("off_listening_mode", enabled) }
+        if (::sharedPreferences.isInitialized) sharedPreferences.edit { putBoolean("off_listening_mode", enabled) }
         setControlCommandBoolean(ControlCommandIdentifiers.ALLOW_OFF_OPTION, enabled)
         _uiState.update {
             it.copy(offListeningMode = enabled)
@@ -596,15 +520,15 @@ class AirPodsViewModel(
     }
 
     fun setHeadGesturesEnabled(enabled: Boolean) {
-        sharedPreferences.edit { putBoolean("head_gestures", enabled) }
+        if (::sharedPreferences.isInitialized) sharedPreferences.edit { putBoolean("head_gestures", enabled) }
         _uiState.update {
             it.copy(headGesturesEnabled = enabled)
         }
     }
 
     fun setDynamicEndOfCharge(enabled: Boolean) {
-        service.aacpManager.sendControlCommand(ControlCommandIdentifiers.DYNAMIC_END_OF_CHARGE.value, enabled)
-        sharedPreferences.edit { putBoolean("dynamic_end_of_charge", enabled) }
+        if (!isDemoMode && isReady) service.aacpManager.sendControlCommand(ControlCommandIdentifiers.DYNAMIC_END_OF_CHARGE.value, enabled)
+        if (::sharedPreferences.isInitialized) sharedPreferences.edit { putBoolean("dynamic_end_of_charge", enabled) }
         _uiState.update {
             it.copy(dynamicEndOfCharge = enabled)
         }
@@ -659,22 +583,23 @@ class AirPodsViewModel(
     }
 
     fun setName(name: String) {
-        service.setName(name)
+        if (!isDemoMode && isReady) service.setName(name)
+        if (::sharedPreferences.isInitialized) sharedPreferences.edit { putString("name", name) }
+        _uiState.update { it.copy(deviceName = name) }
     }
 
     fun startHeadTracking() {
-        service.startHeadTracking()
+        if (!isDemoMode && isReady) service.startHeadTracking()
         _uiState.update { it.copy(headTrackingActive = true) }
     }
 
     fun stopHeadTracking() {
-        service.stopHeadTracking()
+        if (!isDemoMode && isReady) service.stopHeadTracking()
         _uiState.update { it.copy(headTrackingActive = false) }
     }
 
     fun setATTCharacteristicValue(handle: ATTHandles, value: ByteArray) {
         when (handle) {
-            // ideally should be using a different viewmodel for ATT based things because there are a lot of values, and I am not going to add all to this state, but there's loudsoundreduction.
             ATTHandles.LOUD_SOUND_REDUCTION -> {
                 _uiState.value = _uiState.value.copy(loudSoundReductionEnabled = value[0].toInt() == 0x01)
             }
@@ -685,6 +610,7 @@ class AirPodsViewModel(
                 _uiState.value = _uiState.value.copy(transparencyData = value)
             }
         }
+        if (isDemoMode || !isReady) return
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 service.attManager.writeCharacteristic(handle, value)
@@ -740,7 +666,7 @@ class AirPodsViewModel(
     }
 
     fun setAutomaticEarDetectionEnabled(enabled: Boolean) {
-        sharedPreferences.edit { putBoolean("automatic_ear_detection", enabled) }
+        if (::sharedPreferences.isInitialized) sharedPreferences.edit { putBoolean("automatic_ear_detection", enabled) }
         setControlCommandBoolean(ControlCommandIdentifiers.EAR_DETECTION_CONFIG, enabled)
         _uiState.update {
             it.copy(
@@ -750,7 +676,7 @@ class AirPodsViewModel(
     }
 
     fun setAutomaticConnectionEnabled(enabled: Boolean) {
-        sharedPreferences.edit { putBoolean("automatic_connection_ctrl_cmd", enabled) }
+        if (::sharedPreferences.isInitialized) sharedPreferences.edit { putBoolean("automatic_connection_ctrl_cmd", enabled) }
         setControlCommandBoolean(ControlCommandIdentifiers.AUTOMATIC_CONNECTION_CONFIG, enabled)
         _uiState.update {
             it.copy(
@@ -759,18 +685,32 @@ class AirPodsViewModel(
         }
     }
 
-    fun activateDemoMode() {
-        isDemoMode = true
-        _uiState.update {demoState}
+    fun activateDemoMode() = setDemoMode(true)
+
+    fun setDemoMode(enabled: Boolean) {
+        isDemoMode = enabled
+        if (enabled) {
+            _uiState.update { demoState.copy(isDemoMode = true) }
+        } else if (isReady) {
+            _uiState.update { AirPodsUiState(isDemoMode = false) }
+            loadName()
+            loadInstance()
+            loadSharedPreferences()
+            loadCurrentStatus()
+            loadEq()
+            loadATT()
+        } else {
+            _uiState.update { AirPodsUiState(isDemoMode = false) }
+        }
     }
 
     fun sendPhoneMediaEQ(eq: FloatArray, phoneByte: Byte, mediaByte: Byte) {
-        service.aacpManager.sendPhoneMediaEQ(eq, phoneByte, mediaByte)
+        if (!isDemoMode && isReady) service.aacpManager.sendPhoneMediaEQ(eq, phoneByte, mediaByte)
     }
 
     fun setLongPressAction(side: String, action: StemAction) {
         val prefKey = if (side.lowercase() == "left") "left_long_press_action" else "right_long_press_action"
-        sharedPreferences.edit { putString(prefKey, action.name) }
+        if (::sharedPreferences.isInitialized) sharedPreferences.edit { putString(prefKey, action.name) }
         _uiState.update {
             if (side.lowercase() == "left") it.copy(leftAction = action) else it.copy(rightAction = action)
         }
@@ -794,21 +734,21 @@ class AirPodsViewModel(
             currentByte or modeBit
         }
         setControlCommandByte(ControlCommandIdentifiers.LISTENING_MODE_CONFIGS, newValue.toByte())
-        sharedPreferences.edit { putInt("long_press_byte", newValue) }
+        if (::sharedPreferences.isInitialized) sharedPreferences.edit { putInt("long_press_byte", newValue) }
     }
 
     fun disconnect() {
         if (isDemoMode) {
-            isDemoMode = false
-            _uiState.update {
-                it.copy(isLocallyConnected = false, battery = emptyList())
-            }
-        } else {
+            setDemoMode(false)
+        } else if (isReady) {
             service.disconnectAirPods()
-            if (appContext.checkSelfPermission("android.permission.BLUETOOTH_PRIVILEGED") != PackageManager.PERMISSION_GRANTED) {
+            if (::appContext.isInitialized &&
+                appContext.checkSelfPermission("android.permission.BLUETOOTH_PRIVILEGED") != PackageManager.PERMISSION_GRANTED
+            ) {
                 Toast.makeText(
-                    appContext, "App has disconnected, disconnect from Android Settings.",
-                    Toast.LENGTH_LONG
+                    appContext,
+                    appContext.getString(me.kavishdevar.librepods.R.string.andpop_disconnect_fallback_toast),
+                    Toast.LENGTH_LONG,
                 ).show()
             }
         }
