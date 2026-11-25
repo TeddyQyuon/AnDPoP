@@ -13,7 +13,7 @@
 | First run | Single welcome with "I already have an account", Account as a `Screen.Account` destination with predictive back (decision 1), privacy summary, per-permission Allow buttons & TalkBack fixes. | |
 | System surfaces | New radial-gradient launcher icon with themed layer and splash screen (decision 5). Single connected battery/mode notification + silent deferred background service notification (decision 6). Jetpack Glance battery & noise-control widgets (decision 7). Compose connection sheet popup & Dynamic Island overlays. Shared `ListeningModeCycle` QS tile and themed QS dialog. | |
 | Type | Bundled Roboto Flex variable font + OFL license (decision 8). | |
-| Play readiness | | `play` flavor, manifest permission review, remaining hard-coded strings (Phase 2) |
+| Play readiness | Added `play` product flavor (`PLAY_BUILD = true`, `src/play` no-op Xposed stubs, excluded `libl2c_fcr_hook.so`), stripped privileged permissions in `app/src/play/AndroidManifest.xml`, hid Developer options & Hearing Aid routes in `play`, scrubbed leftover branding, moved strings to resources, drafted Privacy Policy, Data Safety, Store Listing, Play Console guide, and generated Play Store graphics. | Hosted Privacy Policy & deletion URLs (`PrivacyLinks.kt`), upload keystore, Play Console submission, and physical AirPods verification |
 
 Screenshots of the built app, rendered by `ScreenshotTour` on the CI emulator (320 dp wide, so the battery cells use their stacked layout):
 
@@ -254,24 +254,24 @@ flowchart LR
 
 **UI** items are part of this redesign. **Code** items are outside the UI but block or risk publication. **Store** items are Play Console work.
 
-| | Item | Status in this proposal |
-| --- | --- | --- |
-| UI | In-app privacy summary that matches the Data safety form, including the optional account | Designed (Privacy, Settings) |
-| UI | In-app account deletion, plus a web deletion link for the listing | Designed (Account · signed in); the web page is still needed |
-| UI | Request permissions in context with a reason; nothing chained | Designed (Permissions) |
-| UI | Hide compatibility bypass, account service form, demo mode and Xposed options from Play users | Designed (Developer options) |
-| UI | Remove LibrePods purchase banner, “Unlock advanced features”, “Connected to Linux” and other leftover strings | Listed above |
-| UI | Edge-to-edge, predictive back and font scale up to 200% | Designed. The two-pane large-screen layout is specified but not drawn. |
-| UI | Trademark notice: “AnDPoP is not affiliated with Apple Inc.” | Designed (Settings footer, listing) |
-| Code | Add a `play` product flavor with `PLAY_BUILD = true`. Only `foss` exists today, so every Play-specific condition in the code is currently dead. | To do |
-| Code | Protected permissions in the manifest (`BLUETOOTH_PRIVILEGED`, `MODIFY_PHONE_STATE`, `LOCAL_MAC_ADDRESS`, `INTERACT_ACROSS_USERS`) and Xposed hooks. Expect review questions. Strip them from the Play flavor if they are not needed there. | To decide |
-| Code | Foreground service type `connectedDevice` needs the Play Console declaration and a short video | To do |
-| Code | Move hard-coded English strings (permissions, privacy, account, head tracking, troubleshooting) to resources | To do |
-| Code | Rename the notification channel that shows `BluetoothConnectionManager.aacpSocket?` | To do |
-| Store | Icon 512 px, feature graphic 1024 × 500, 4–8 phone screenshots | Drafted on the [store board](screens/26-play-store-assets.png); final exports come from the native build |
-| Store | Title without third-party marks: “AnDPoP”. Describe AirPods compatibility in the descriptions. | Drafted |
-| Store | Hosted privacy policy URL and account deletion URL | Needed from you |
-| Store | Data safety: email collected for account management, optional, not shared, encrypted in transit, deletable | Drafted |
+| | Item | Status |
+| --- | --- |
+| UI | In-app privacy summary that matches the Data safety form, including the optional account | Done (Privacy, Settings, `docs/play/DATA_SAFETY.md`) |
+| UI | In-app account deletion, plus a web deletion link for the listing | In-app deletion wired; web URL still needed (`PrivacyLinks.kt`) |
+| UI | Request permissions in context with a reason; nothing chained | Done (`PermissionsPage.kt`) |
+| UI | Hide compatibility bypass, account service form, demo mode and Xposed options from Play users | Done (`DeveloperOptionsScreen.kt`, gated by `!BuildConfig.PLAY_BUILD`) |
+| UI | Remove LibrePods purchase banner, “Unlock advanced features”, “Connected to Linux” and other leftover strings | Done (billing/PurchaseScreen removed; 13 locales scrubbed) |
+| UI | Edge-to-edge, predictive back and font scale up to 200% | Done (including `>= 840 dp` two-pane detail layout & 200% smoke test) |
+| UI | Trademark notice: “AnDPoP is not affiliated with Apple Inc.” | Done (Settings footer, `LISTING.md`) |
+| Code | Add a `play` product flavor with `PLAY_BUILD = true` | Done (`app/build.gradle.kts`, `app/src/play/`, `applicationId = "app.andpop.android"`) |
+| Code | Protected permissions in the manifest (`BLUETOOTH_PRIVILEGED`, `MODIFY_PHONE_STATE`, `LOCAL_MAC_ADDRESS`, `INTERACT_ACROSS_USERS`) and Xposed hooks | Stripped from `play` (`app/src/play/AndroidManifest.xml`, `packaging.jniLibs.excludes`); retained in `foss` only |
+| Code | Foreground service type `connectedDevice` needs the Play Console declaration and a short video | Declaration & 60s video script written (`docs/play/PLAY_CONSOLE.md`); video recording needed from you |
+| Code | Move hard-coded English strings (permissions, privacy, account, head tracking, troubleshooting) to resources | Done (`andpop_v2_strings.xml`, `andpop_strings.xml`, `andpop_dashboard_status.xml`) |
+| Code | Rename the notification channel that shows `BluetoothConnectionManager.aacpSocket?` | Done (`andpop_channel_status`, `andpop_channel_service`) |
+| Store | Icon 512 px, feature graphic 1024 × 500, 4–8 phone screenshots | Done (`docs/play/graphics/`: 512px icon, 1024×500 feature, 6× 1080×2340 screenshots) |
+| Store | Title without third-party marks: “AnDPoP”. Describe AirPods compatibility in the descriptions. | Done (`docs/play/LISTING.md`) |
+| Store | Hosted privacy policy URL and account deletion URL | Needed from you (hosted HTTPS URLs -> `PrivacyLinks.kt`) |
+| Store | Data safety: email collected for account management, optional, not shared, encrypted in transit, deletable | Done (`docs/play/DATA_SAFETY.md`) |
 
 ## Existing tests the port must keep passing
 

@@ -1,7 +1,7 @@
 # AnDPoP Play Release Progress
 
 **Last updated:** 2026-11-25  
-**Active branch:** `feature/play-phase-5-store` (ready for `feature/play-phase-6-handoff`)  
+**Active branch:** `feature/play-phase-6-handoff` (all Phases 0–6 complete; ready for user Play Console steps)  
 **Target comparison remote:** `https://github.com/TeddyQyuon/AndPoP_V_1.6.0.git`
 
 ---
@@ -39,8 +39,10 @@
   - [x] Refreshed `docs/v2-ui/app/app-01`..`12` reference screenshots from verified `foss` tour
   - [x] Created [LISTING.md](LISTING.md) (`AnDPoP` 6/30, short 66/80, full 2,080/4,000, release notes 400/500, category, tags, contact placeholders) and [PLAY_CONSOLE.md](PLAY_CONSOLE.md) (all questionnaires, FGS video script, Health Apps medical-device policy & `PLAY_BUILD` Hearing Aid exclusion, L2CAP hidden-API risk note)
   - [x] Generated and visually verified `docs/play/graphics/`: `icon-512.png` (`512x512`), `feature-graphic-1024x500.png` (`1024x500`), and 6 `1080x2340` phone screenshots (`phone-01`..`phone-06`) from real `play` tour captures
-- [ ] **Phase 6: Final Verification & Handoff** (`feature/play-phase-6-handoff`)
-  - [ ] `docs/play/RELEASE_CHECKLIST.md`, full verification pass, clean commit & push to `https://github.com/TeddyQyuon/AndPoP_V_1.6.0.git`
+- [x] **Phase 6: Final Verification & Handoff** (`feature/play-phase-6-handoff`)
+  - [x] Updated implementation status & Play readiness tables in [docs/v2-ui/README.md](../v2-ui/README.md)
+  - [x] Produced [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md) (`PASS` / `NEEDS-USER` matrix + ordered steps 1–8 for Play launch, including 12-tester / 14-day closed testing rule verification)
+  - [x] Final lint & git hygiene verification passed; all `feature/play-phase-*` branches and `main` prepared for push to `https://github.com/TeddyQyuon/AndPoP_V_1.6.0.git` (`antigravity`)
 
 ---
 
@@ -74,4 +76,4 @@
 ---
 
 ## Exact Next Step
-Branch `feature/play-phase-6-handoff` from `feature/play-phase-5-store`, update the `docs/v2-ui/README.md` implementation status table, write `docs/play/RELEASE_CHECKLIST.md`, run final verification, commit, and push all phase branches + `main` to `https://github.com/TeddyQyuon/AndPoP_V_1.6.0.git`.
+Follow **"What you must do yourself"** steps 1–8 in [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md): generate your external upload keystore, host `PRIVACY_POLICY.md` + web account deletion URL (updating `PrivacyLinks.kt`), run [DEVICE_TEST_PLAN.md](DEVICE_TEST_PLAN.md) on real hardware with AirPods, run the 14-day closed test, and submit the signed `app-play-release.aab` in Play Console.
