@@ -18,64 +18,68 @@
 
 package me.kavishdevar.librepods.presentation.screens
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import me.kavishdevar.librepods.R
-import me.kavishdevar.librepods.presentation.components.StyledList
-import me.kavishdevar.librepods.presentation.components.StyledListItem
-import me.kavishdevar.librepods.presentation.theme.DesignSystem
-import me.kavishdevar.librepods.presentation.theme.LocalDesignSystem
+import me.kavishdevar.librepods.presentation.components.AndpopDetailPage
+import me.kavishdevar.librepods.presentation.components.AndpopGroup
+import me.kavishdevar.librepods.presentation.components.AndpopRow
+import me.kavishdevar.librepods.presentation.components.InfoBanner
+import me.kavishdevar.librepods.presentation.theme.AndpopIcons
+import me.kavishdevar.librepods.presentation.theme.LocalAndpopPalette
 import me.kavishdevar.librepods.presentation.viewmodel.AirPodsViewModel
 
 @Composable
 fun VersionScreen(viewModel: AirPodsViewModel) {
     val state by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    val palette = LocalAndpopPalette.current
+    val versions = listOf(state.version1, state.version2, state.version3)
+    val dash = stringResource(R.string.andpop_value_unknown)
 
-    val m3eEnabled = LocalDesignSystem.current == DesignSystem.Material
-    val topPadding = if (m3eEnabled) 0.dp else WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 84.dp
-    val bottomPadding = if (m3eEnabled) 0.dp else WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 12.dp
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surfaceContainer)
-            .padding(horizontal = 16.dp)
+    AndpopDetailPage(
+        title = stringResource(R.string.andpop_firmware_title),
+        subtitle = stringResource(R.string.andpop_firmware_subtitle),
     ) {
-        Spacer(modifier = Modifier.height(topPadding))
-        StyledList(title = stringResource(R.string.version)) {
-            StyledListItem(
-                name = stringResource(R.string.version) + " 1",
-                description = state.version1,
-                enabled = false
-            )
-
-            StyledListItem(
-                name = stringResource(R.string.version) + " 2",
-                description = state.version2,
-                enabled = false
-            )
-
-            StyledListItem(
-                name = stringResource(R.string.version) + " 3",
-                description = state.version3,
-                enabled = false
-            )
+        Spacer(Modifier.height(16.dp))
+        AndpopGroup {
+            versions.forEachIndexed { index, version ->
+                row { shape ->
+                    val label = stringResource(R.string.andpop_firmware_version_n, index + 1)
+                    AndpopRow(
+                        shape = shape,
+                        title = label,
+                        value = version.ifBlank { dash },
+                        enabled = version.isNotBlank(),
+                        showChevron = false,
+                        onClick = { copyToClipboard(context, label, version) },
+                        trailing = {
+                            Icon(AndpopIcons.Copy, stringResource(R.string.andpop_copy_value, label), Modifier.size(18.dp), tint = palette.on3)
+                        },
+                    )
+                }
+            }
         }
-        Spacer(modifier = Modifier.height(bottomPadding))
+        InfoBanner(stringResource(R.string.andpop_firmware_note), Modifier.padding(top = 14.dp))
     }
+}
+
+internal fun copyToClipboard(context: Context, label: String, value: String) {
+    if (value.isBlank()) return
+    val clipboard = context.getSystemService(ClipboardManager::class.java) ?: return
+    // Android 13 and later (the minimum for AnDPoP) confirms the copy itself.
+    clipboard.setPrimaryClip(ClipData.newPlainText(label, value))
 }

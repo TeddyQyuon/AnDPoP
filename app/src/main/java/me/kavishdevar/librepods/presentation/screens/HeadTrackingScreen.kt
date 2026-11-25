@@ -16,42 +16,21 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-
-// this is absolutely unnecessary, why did I make this. a simple toggle would've sufficed
-
-@file:OptIn(ExperimentalEncodingApi::class)
-
 package me.kavishdevar.librepods.presentation.screens
 
-import android.graphics.Paint
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.togetherWith
+import android.content.Context
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.keyframes
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -59,7 +38,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -67,338 +45,191 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.kyant.backdrop.backdrops.layerBackdrop
-import com.kyant.backdrop.backdrops.rememberLayerBackdrop
-import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
+import me.kavishdevar.librepods.BuildConfig
 import me.kavishdevar.librepods.R
-import me.kavishdevar.librepods.presentation.components.StyledButton
-import me.kavishdevar.librepods.presentation.components.StyledToggle
-import me.kavishdevar.librepods.presentation.theme.DesignSystem
-import me.kavishdevar.librepods.presentation.theme.LocalDesignSystem
+import me.kavishdevar.librepods.presentation.components.AndpopCard
+import me.kavishdevar.librepods.presentation.components.AndpopDetailPage
+import me.kavishdevar.librepods.presentation.components.AndpopGroup
+import me.kavishdevar.librepods.presentation.components.AndpopSectionHeader
+import me.kavishdevar.librepods.presentation.components.AndpopSwitchRow
+import me.kavishdevar.librepods.presentation.components.AndpopTonalButton
+import me.kavishdevar.librepods.presentation.theme.AndpopIcons
+import me.kavishdevar.librepods.presentation.theme.AndpopType
+import me.kavishdevar.librepods.presentation.theme.LocalAndpopPalette
 import me.kavishdevar.librepods.presentation.viewmodel.AirPodsViewModel
 import me.kavishdevar.librepods.services.ServiceManager
 import me.kavishdevar.librepods.utils.HeadTracking
-import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.math.abs
 
-@ExperimentalHazeMaterialsApi
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
+/** Result of the head-gesture test shown under the head. */
+internal enum class HeadTestState { Idle, Listening, Yes, No, NoGesture }
+
+private const val HEAD_TEST_TIMEOUT_MS = 10_000L
+
 @Composable
-fun HeadTrackingScreen(viewModel: AirPodsViewModel, navigateToPurchase: () -> Unit) {
+fun HeadTrackingScreen(viewModel: AirPodsViewModel) {
     val state by viewModel.uiState.collectAsState()
+    val palette = LocalAndpopPalette.current
+    val context = LocalContext.current
+    val haptics = LocalHapticFeedback.current
+    val scope = rememberCoroutineScope()
+    val showPlot = remember {
+        !BuildConfig.PLAY_BUILD &&
+            context.getSharedPreferences("settings", Context.MODE_PRIVATE).getBoolean("dev_show_head_velocity_plot", false)
+    }
+    var test by remember { mutableStateOf(HeadTestState.Idle) }
+    val nod = remember { Animatable(0f) }
+    val shake = remember { Animatable(0f) }
+
+    // Head orientation only streams while head tracking is on, so it runs while this screen is open.
     DisposableEffect(Unit) {
         viewModel.startHeadTracking()
-        onDispose {
-            viewModel.stopHeadTracking()
+        onDispose { viewModel.stopHeadTracking() }
+    }
+
+    LaunchedEffect(test) {
+        when (test) {
+            HeadTestState.Yes -> nod.animateTo(0f, keyframes { durationMillis = 700; 12f at 150; -6f at 320; 10f at 480; 0f at 700 })
+            HeadTestState.No -> shake.animateTo(0f, keyframes { durationMillis = 700; -14f at 140; 14f at 300; -10f at 460; 0f at 700 })
+            else -> Unit
         }
     }
-    val isDarkTheme = isSystemInDarkTheme()
-    if (isDarkTheme) Color(0xFF1C1C1E) else Color(0xFFFFFFFF)
-    val textColor = if (isDarkTheme) Color.White else Color.Black
 
-    val backdrop = rememberLayerBackdrop()
-
-    val m3eEnabled = LocalDesignSystem.current == DesignSystem.Material
-    val topPadding = if (m3eEnabled) 0.dp else WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 84.dp
-    val bottomPadding = if (m3eEnabled) 0.dp else WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 12.dp
-
-    var gestureText by remember { mutableStateOf("") }
-    val coroutineScope = rememberCoroutineScope()
-
-    var lastClickTime by remember { mutableLongStateOf(0L) }
-    var shouldExplode by remember { mutableStateOf(false) }
-
-    val scrollState = rememberScrollState()
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surfaceContainer)
-            .verticalScroll(scrollState),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Spacer(modifier = Modifier.height(topPadding))
-
-        Column (
-            modifier = Modifier
-                .fillMaxWidth()
-                .layerBackdrop(backdrop)
-                .padding(top = 8.dp)
-                .padding(horizontal = 16.dp)
-        ) {
-
-            if (!state.isPremium) {
-                StyledButton(
-                    onClick = navigateToPurchase,
-                    backdrop = rememberLayerBackdrop(),
-                    modifier = Modifier.fillMaxWidth(),
-                    maxScale = 0.05f,
-                    surfaceColor = MaterialTheme.colorScheme.primary
-                ) {
-                    Text(
-                        stringResource(R.string.unlock_advanced_features),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                }
-                Spacer(modifier = Modifier.height(16.dp))
+    fun runTest() {
+        test = HeadTestState.Listening
+        scope.launch {
+            val accepted: Boolean? = if (state.isDemoMode) {
+                delay(1500)
+                true
+            } else {
+                withTimeoutOrNull(HEAD_TEST_TIMEOUT_MS) { ServiceManager.getService()?.testHeadGestures() }
             }
+            test = when (accepted) {
+                true -> HeadTestState.Yes
+                false -> HeadTestState.No
+                null -> HeadTestState.NoGesture
+            }
+            haptics.performHapticFeedback(if (accepted == null) HapticFeedbackType.Reject else HapticFeedbackType.Confirm)
+        }
+    }
 
-            StyledToggle(
-                label = "Head Gestures",
-                checked = state.headGesturesEnabled,
-                onCheckedChange = { viewModel.setHeadGesturesEnabled(it) },
-                enabled = state.isPremium || state.headGesturesEnabled,
-                description = stringResource(R.string.head_gestures_details),
-                header = true
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                "Velocity",
-                style = TextStyle(
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = textColor.copy(alpha = 0.6f),
-                    fontFamily = FontFamily.SansSerif
-                ),
-                modifier = Modifier.padding(start = 16.dp, bottom = 8.dp, top = 8.dp)
-            )
-            Plot()
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            LaunchedEffect(gestureText) {
-                if (gestureText.isNotEmpty()) {
-                    lastClickTime = System.currentTimeMillis()
-                    delay(3000)
-                    if (System.currentTimeMillis() - lastClickTime >= 3000) {
-                        shouldExplode = true
-                    }
-                }
+    AndpopDetailPage(title = stringResource(R.string.head_gestures)) {
+        AndpopGroup(Modifier.padding(top = 16.dp)) {
+            row { shape ->
+                AndpopSwitchRow(
+                    shape = shape,
+                    title = stringResource(R.string.head_gestures),
+                    supporting = stringResource(R.string.andpop_head_gestures_desc),
+                    icon = AndpopIcons.Head,
+                    iconChip = true,
+                    checked = state.headGesturesEnabled,
+                    onCheckedChange = viewModel::setHeadGesturesEnabled,
+                )
             }
         }
-        val gestureTextValue = stringResource(R.string.shake_your_head_or_nod)
-        StyledButton(
-            onClick = {
-                gestureText = gestureTextValue
-                coroutineScope.launch {
-                    val accepted = ServiceManager.getService()?.testHeadGestures() ?: false
-                    gestureText = if (accepted) "\"Yes\" gesture detected." else "\"No\" gesture detected."
-                }
+
+        AndpopSectionHeader(stringResource(R.string.andpop_try_it))
+        val detected = test == HeadTestState.Yes || test == HeadTestState.No
+        val headColor by animateColorAsState(if (detected) palette.success else palette.pri, label = "Head color")
+        AndpopCard {
+            Box(Modifier.fillMaxWidth().height(160.dp), contentAlignment = Alignment.Center) {
+                Icon(
+                    AndpopIcons.Head,
+                    contentDescription = null,
+                    modifier = Modifier.size(88.dp).graphicsLayer {
+                        rotationX = nod.value
+                        translationY = nod.value * 0.6f
+                        rotationZ = shake.value * 0.4f
+                        translationX = shake.value
+                    },
+                    tint = headColor,
+                )
+            }
+        }
+        val message = when (test) {
+            HeadTestState.Idle -> R.string.andpop_head_idle
+            HeadTestState.Listening -> R.string.andpop_head_listening
+            HeadTestState.Yes -> R.string.andpop_head_yes
+            HeadTestState.No -> R.string.andpop_head_no
+            HeadTestState.NoGesture -> R.string.andpop_head_none
+        }
+        Text(
+            stringResource(message),
+            Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 12.dp).semantics { liveRegion = LiveRegionMode.Polite },
+            color = when (test) {
+                HeadTestState.Yes, HeadTestState.No -> palette.success
+                HeadTestState.NoGesture -> palette.warning
+                else -> palette.on2
             },
-            backdrop = backdrop,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            maxScale = 0.05f
-        ) {
-            Text(
-                "Test Head Gestures",
-                style = TextStyle(
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    fontFamily = FontFamily.SansSerif,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                ),
-            )
-        }
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier.padding(top = 12.dp, bottom = 24.dp)
-        ) {
-            AnimatedContent(
-                targetState = gestureText,
-                transitionSpec = {
-                    (fadeIn(
-                        animationSpec = tween(300)
-                    ) + slideInVertically(
-                        initialOffsetY = { 40 },
-                        animationSpec = tween(300)
-                    )).togetherWith(fadeOut(animationSpec = tween(150)))
-                }
-            ) { text ->
-                if (shouldExplode) {
-                    LaunchedEffect(Unit) {
-                        CoroutineScope(coroutineScope.coroutineContext).launch {
-                            delay(750)
-                            gestureText = ""
-                        }
-                    }
-                    Text(
-                        text = text,
-                        style = TextStyle(
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Medium,
-                            fontFamily = FontFamily.SansSerif,
-                            textAlign = TextAlign.Center
-                        ),
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                } else {
-                    Text(
-                        text = text,
-                        style = TextStyle(
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Medium,
-                            fontFamily = FontFamily.SansSerif,
-                            color = textColor,
-                            textAlign = TextAlign.Center
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                    )
-                }
+            style = AndpopType.body,
+            textAlign = TextAlign.Center,
+        )
+        if (test == HeadTestState.Listening) {
+            Box(Modifier.fillMaxWidth().padding(bottom = 8.dp), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(Modifier.size(24.dp), color = palette.pri, strokeWidth = 2.5.dp)
             }
         }
-        Spacer(modifier = Modifier.height(bottomPadding))
+        AndpopTonalButton(
+            text = stringResource(if (detected || test == HeadTestState.NoGesture) R.string.andpop_head_test_again else R.string.andpop_head_test),
+            onClick = ::runTest,
+            enabled = test != HeadTestState.Listening && state.headGesturesEnabled,
+            icon = AndpopIcons.Head,
+        )
+
+        if (showPlot) {
+            AndpopSectionHeader(stringResource(R.string.andpop_head_velocity))
+            VelocityPlot()
+        }
     }
 }
 
+/** Raw head velocity, shown only when the developer option is on. */
 @Composable
-private fun Plot() {
+private fun VelocityPlot() {
+    val palette = LocalAndpopPalette.current
     val acceleration by HeadTracking.acceleration.collectAsState()
     val maxPoints = 100
     val points = remember { mutableStateListOf<Pair<Float, Float>>() }
-    val darkTheme = isSystemInDarkTheme()
-
     var maxAbs by remember { mutableFloatStateOf(1000f) }
 
     LaunchedEffect(acceleration) {
-        points.add(Pair(acceleration.horizontal, acceleration.vertical))
-        if (points.size > maxPoints) {
-            points.removeAt(0)
-        }
-
-        val currentMax = points.maxOf { maxOf(abs(it.first), abs(it.second)) }
-        maxAbs = maxOf(currentMax * 1.2f, 1000f)
+        points.add(acceleration.horizontal to acceleration.vertical)
+        if (points.size > maxPoints) points.removeAt(0)
+        maxAbs = maxOf(points.maxOf { maxOf(abs(it.first), abs(it.second)) } * 1.2f, 1000f)
     }
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(300.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        shape = RoundedCornerShape(28.dp)
-    ) {
-        val horizontalColor = MaterialTheme.colorScheme.primary
-        val verticalColor = MaterialTheme.colorScheme.onPrimary
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-        ) {
-            Canvas(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                val width = size.width
-                val height = size.height
-                val xScale = width / maxPoints
-                val yScale = (height - 40.dp.toPx()) / (maxAbs * 2)
-                val zeroY = height / 2
-
-                val gridColor = if (darkTheme) Color.White.copy(alpha = 0.1f) else Color.Black.copy(alpha = 0.1f)
-
-                for (i in 0..maxPoints step 10) {
-                    val x = i * xScale
-                    drawLine(
-                        color = gridColor,
-                        start = Offset(x, 0f),
-                        end = Offset(x, height),
-                        strokeWidth = 1.dp.toPx()
-                    )
-                }
-
-                val gridStep = maxAbs / 4
-                for (value in (-maxAbs.toInt()..maxAbs.toInt()) step gridStep.toInt()) {
-                    val y = zeroY - value * yScale
-                    drawLine(
-                        color = gridColor,
-                        start = Offset(0f, y),
-                        end = Offset(width, y),
-                        strokeWidth = 1.dp.toPx()
-                    )
-                }
-
-                drawLine(
-                    color = if (darkTheme) Color.White.copy(alpha = 0.3f) else Color.Black.copy(alpha = 0.3f),
-                    start = Offset(0f, zeroY),
-                    end = Offset(width, zeroY),
-                    strokeWidth = 1.5f.dp.toPx()
-                )
-
-                if (points.size > 1) {
-                    for (i in 0 until points.size - 1) {
-                        val x1 = i * xScale
-                        val x2 = (i + 1) * xScale
-
-                        drawLine(
-                            color = horizontalColor,
-                            start = Offset(x1, zeroY - points[i].first * yScale),
-                            end = Offset(x2, zeroY - points[i + 1].first * yScale),
-                            strokeWidth = 2.dp.toPx()
-                        )
-
-                        drawLine(
-                            color = verticalColor,
-                            start = Offset(x1, zeroY - points[i].second * yScale),
-                            end = Offset(x2, zeroY - points[i + 1].second * yScale),
-                            strokeWidth = 2.dp.toPx()
-                        )
-                    }
-                }
-
-                drawContext.canvas.nativeCanvas.apply {
-                    val paint = Paint().apply {
-                        color = if (darkTheme) android.graphics.Color.WHITE else android.graphics.Color.BLACK
-                        textSize = 12.sp.toPx()
-                        textAlign = Paint.Align.RIGHT
-                    }
-
-                    drawText("${maxAbs.toInt()}", 30.dp.toPx(), 20.dp.toPx(), paint)
-                    drawText("0", 30.dp.toPx(), height/2, paint)
-                    drawText("-${maxAbs.toInt()}", 30.dp.toPx(), height - 10.dp.toPx(), paint)
-                }
-
-                val legendY = 15.dp.toPx()
-                val textOffsetY = legendY + 5.dp.toPx() / 2
-
-                drawCircle(horizontalColor, 5.dp.toPx(), Offset(width - 150.dp.toPx(), legendY))
-                drawContext.canvas.nativeCanvas.apply {
-                    val paint = Paint().apply {
-                        color = if (darkTheme) android.graphics.Color.WHITE else android.graphics.Color.BLACK
-                        textSize = 12.sp.toPx()
-                        textAlign = Paint.Align.LEFT
-                    }
-                    drawText("Horizontal", width - 140.dp.toPx(), textOffsetY, paint)
-                }
-
-                drawCircle(verticalColor, 5.dp.toPx(), Offset(width - 70.dp.toPx(), legendY))
-                drawContext.canvas.nativeCanvas.apply {
-                    val paint = Paint().apply {
-                        color = if (darkTheme) android.graphics.Color.WHITE else android.graphics.Color.BLACK
-                        textSize = 12.sp.toPx()
-                        textAlign = Paint.Align.LEFT
-                    }
-                    drawText("Vertical", width - 60.dp.toPx(), textOffsetY, paint)
-                }
+    val horizontal = palette.pri
+    val vertical = palette.warning
+    val grid = palette.line
+    AndpopCard(Modifier.clip(RoundedCornerShape(24.dp))) {
+        Canvas(Modifier.fillMaxWidth().height(220.dp).padding(16.dp)) {
+            val xScale = size.width / maxPoints
+            val yScale = size.height / (maxAbs * 2)
+            val zeroY = size.height / 2
+            for (i in 0..maxPoints step 10) {
+                drawLine(grid, Offset(i * xScale, 0f), Offset(i * xScale, size.height), 1.dp.toPx())
+            }
+            drawLine(grid, Offset(0f, zeroY), Offset(size.width, zeroY), 1.5.dp.toPx())
+            for (i in 0 until points.size - 1) {
+                val x1 = i * xScale
+                val x2 = (i + 1) * xScale
+                drawLine(horizontal, Offset(x1, zeroY - points[i].first * yScale), Offset(x2, zeroY - points[i + 1].first * yScale), 2.dp.toPx())
+                drawLine(vertical, Offset(x1, zeroY - points[i].second * yScale), Offset(x2, zeroY - points[i + 1].second * yScale), 2.dp.toPx())
             }
         }
     }

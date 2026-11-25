@@ -18,57 +18,35 @@
 
 package me.kavishdevar.librepods.presentation.screens
 
+import android.content.ActivityNotFoundException
+import android.content.Context
 import android.content.Intent
+import android.text.format.Formatter
 import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Share
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -76,845 +54,281 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
-import com.kyant.backdrop.backdrops.layerBackdrop
-import com.kyant.backdrop.backdrops.rememberLayerBackdrop
-import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import me.kavishdevar.librepods.BuildConfig
 import me.kavishdevar.librepods.R
-import me.kavishdevar.librepods.utils.LogCollector
+import me.kavishdevar.librepods.presentation.components.AndpopCard
+import me.kavishdevar.librepods.presentation.components.AndpopDetailPage
+import me.kavishdevar.librepods.presentation.components.AndpopGroup
+import me.kavishdevar.librepods.presentation.components.AndpopPrimaryButton
+import me.kavishdevar.librepods.presentation.components.AndpopRow
+import me.kavishdevar.librepods.presentation.components.AndpopSectionHeader
+import me.kavishdevar.librepods.presentation.components.PillTone
+import me.kavishdevar.librepods.presentation.components.StatusPill
+import me.kavishdevar.librepods.presentation.theme.AndpopIcons
+import me.kavishdevar.librepods.presentation.theme.AndpopType
+import me.kavishdevar.librepods.presentation.theme.LocalAndpopPalette
+import me.kavishdevar.librepods.services.ServiceManager
+import me.kavishdevar.librepods.utils.LogRecorder
+import me.kavishdevar.librepods.utils.XposedState
 import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
-@Composable
-fun CustomIconButton(
-    onClick: () -> Unit,
-    content: @Composable () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .clickable(onClick = onClick)
-            .padding(8.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        content()
-    }
-}
+private enum class RecorderState { Idle, Recording, Saved }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalHazeMaterialsApi::class)
 @Composable
 fun TroubleshootingScreen() {
     val context = LocalContext.current
-    val scrollState = rememberScrollState()
-    val coroutineScope = rememberCoroutineScope()
+    val palette = LocalAndpopPalette.current
+    val scope = rememberCoroutineScope()
+    val snackbar = remember { SnackbarHostState() }
+    val recorder = remember { LogRecorder(context.applicationContext) }
+    val logs = remember { mutableStateListOf<File>() }
+    var recorderState by remember { mutableStateOf(RecorderState.Idle) }
+    var startedAt by remember { mutableLongStateOf(0L) }
+    var elapsed by remember { mutableLongStateOf(0L) }
+    var confirmDeleteAll by remember { mutableStateOf(false) }
 
-    val logCollector = remember { LogCollector(context) }
-    val savedLogs = remember { mutableStateListOf<File>() }
+    val savedText = stringResource(R.string.andpop_log_saved_toast)
+    val emptyText = stringResource(R.string.andpop_log_empty_toast)
+    val deletedText = stringResource(R.string.andpop_log_deleted)
+    val undoText = stringResource(R.string.andpop_undo)
 
-    var isCollectingLogs by remember { mutableStateOf(false) }
-    var showTroubleshootingSteps by remember { mutableStateOf(false) }
-    var currentStep by remember { mutableIntStateOf(0) }
-    var logContent by remember { mutableStateOf("") }
-    var selectedLogFile by remember { mutableStateOf<File?>(null) }
-    var showDeleteDialog by remember { mutableStateOf(false) }
-    var showDeleteAllDialog by remember { mutableStateOf(false) }
-    var isLoadingLogContent by remember { mutableStateOf(false) }
-    var logContentLoaded by remember { mutableStateOf(false) }
+    suspend fun reload() {
+        val found = withContext(Dispatchers.IO) { LogRecorder.savedLogs(context) }
+        logs.clear()
+        logs.addAll(found)
+    }
 
-    LaunchedEffect(isCollectingLogs) {
-        while (isCollectingLogs) {
-            delay(250)
-            delay(250)
+    LaunchedEffect(Unit) { reload() }
+    LaunchedEffect(recorderState) {
+        while (recorderState == RecorderState.Recording) {
+            elapsed = System.currentTimeMillis() - startedAt
+            delay(500)
+        }
+    }
+    DisposableEffect(Unit) {
+        onDispose {
+            if (recorder.isRecording) scope.launch { recorder.stopAndSave(null) }
         }
     }
 
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
-    var showBottomSheet by remember { mutableStateOf(false) }
-
-    val backgroundColor = if (isSystemInDarkTheme()) Color(0xFF1C1C1E) else Color(0xFFFFFFFF)
-    val textColor = if (isSystemInDarkTheme()) Color.White else Color.Black
-    val accentColor = if (isSystemInDarkTheme()) Color(0xFF007AFF) else Color(0xFF3C6DF5)
-    val buttonBgColor = if (isSystemInDarkTheme()) Color(0xFF333333) else Color(0xFFDDDDDD)
-
-    var instructionText by remember { mutableStateOf("") }
-    val isDarkTheme = isSystemInDarkTheme()
-
-    LaunchedEffect(Unit) {
-        withContext(Dispatchers.IO) {
-            val logsDir = File(context.filesDir, "logs")
-            if (logsDir.exists()) {
-                savedLogs.clear()
-                savedLogs.addAll(logsDir.listFiles()?.filter { it.name.endsWith(".txt") }
-                    ?.sortedByDescending { it.lastModified() } ?: emptyList())
+    fun deleteWithUndo(file: File) {
+        val bytes = runCatching { file.readBytes() }.getOrNull()
+        file.delete()
+        logs.remove(file)
+        scope.launch {
+            val result = snackbar.showSnackbar(deletedText, actionLabel = undoText, duration = SnackbarDuration.Short)
+            if (result == SnackbarResult.ActionPerformed && bytes != null) {
+                withContext(Dispatchers.IO) { file.writeBytes(bytes) }
+                reload()
             }
         }
     }
 
-    val saveLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("text/plain")
-    ) { uri ->
-        if (uri != null) {
-            coroutineScope.launch(Dispatchers.IO) {
-                try {
-                    context.contentResolver.openOutputStream(uri)?.use { outputStream ->
-                        outputStream.write(logContent.toByteArray())
-                    }
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(context, "Log saved successfully", Toast.LENGTH_SHORT).show()
-                    }
-                } catch (e: Exception) {
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(
-                            context,
-                            "Failed to save log: ${e.localizedMessage}",
-                            Toast.LENGTH_SHORT
-                        ).show()
+    Box {
+        AndpopDetailPage(
+            title = stringResource(R.string.troubleshooting),
+            subtitle = stringResource(R.string.andpop_troubleshoot_subtitle),
+        ) {
+            AndpopSectionHeader(stringResource(R.string.andpop_record_log))
+            val steps = listOf(
+                R.string.andpop_log_step1_title to R.string.andpop_log_step1_body,
+                R.string.andpop_log_step2_title to R.string.andpop_log_step2_body,
+                R.string.andpop_log_step3_title to R.string.andpop_log_step3_body,
+            )
+            AndpopCard {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    steps.forEachIndexed { index, (title, body) ->
+                        val done = when (recorderState) {
+                            RecorderState.Idle -> false
+                            RecorderState.Recording -> index == 0
+                            RecorderState.Saved -> true
+                        }
+                        val current = when (recorderState) {
+                            RecorderState.Idle -> index == 0
+                            RecorderState.Recording -> index == 1
+                            RecorderState.Saved -> false
+                        }
+                        RecorderStep(index + 1, title, body, done, current)
                     }
                 }
             }
-        }
-    }
+            if (recorderState == RecorderState.Recording) {
+                AndpopPrimaryButton(
+                    stringResource(R.string.andpop_log_stop),
+                    icon = AndpopIcons.Stop,
+                    modifier = Modifier.padding(top = 14.dp),
+                    onClick = {
+                        scope.launch {
+                            val file = recorder.stopAndSave(ServiceManager.getService()?.airpodsInstance?.model?.displayName)
+                            recorderState = if (file != null) RecorderState.Saved else RecorderState.Idle
+                            Toast.makeText(context, if (file != null) savedText else emptyText, Toast.LENGTH_SHORT).show()
+                            reload()
+                        }
+                    },
+                )
+                Box(Modifier.fillMaxWidth().padding(top = 10.dp).semantics { liveRegion = LiveRegionMode.Polite }, contentAlignment = Alignment.Center) {
+                    StatusPill(stringResource(R.string.andpop_log_recording, formatElapsed(elapsed)), PillTone.Error, pulsing = true)
+                }
+            } else {
+                AndpopPrimaryButton(
+                    stringResource(R.string.andpop_log_start),
+                    icon = AndpopIcons.Play,
+                    modifier = Modifier.padding(top = 14.dp),
+                    onClick = {
+                        recorder.start(scope)
+                        if (recorder.isRecording) {
+                            startedAt = System.currentTimeMillis()
+                            elapsed = 0
+                            recorderState = RecorderState.Recording
+                        }
+                    },
+                )
+            }
 
-    LaunchedEffect(currentStep) {
-        instructionText = when (currentStep) {
-            0 -> "First, let's ensure Xposed module is properly configured. Tap the button below to check Xposed scope settings."
-            1 -> "Please put your AirPods in the case and close it, so they disconnect completely."
-            2 -> "Preparing to collect logs... Please wait."
-            3 -> "Now, open the AirPods case and connect your AirPods. Logs are being collected. Connection will be detected automatically, or you can manually stop logging when you're done."
-            4 -> "Log collection complete! You can now save or share the logs."
-            else -> ""
-        }
-    }
-
-    fun openLogBottomSheet(file: File) {
-        selectedLogFile = file
-        logContent = ""
-        isLoadingLogContent = false
-        logContentLoaded = false
-        showBottomSheet = true
-    }
-
-    val backdrop = rememberLayerBackdrop()
-
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        val topPadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 84.dp
-        val bottomPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 12.dp
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .layerBackdrop(backdrop)
-                .verticalScroll(scrollState)
-                .background(MaterialTheme.colorScheme.surfaceContainer)
-                .padding(horizontal = 16.dp)
-        ) {
-            Spacer(modifier = Modifier.height(topPadding))
-
-            Text(
-                text = stringResource(R.string.saved_logs),
-                style = TextStyle(
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = textColor.copy(alpha = 0.6f),
-                    fontFamily = FontFamily.SansSerif
-                ),
-                modifier = Modifier.padding(16.dp, bottom = 4.dp, top = 8.dp)
-            )
-
-            Spacer(modifier = Modifier.height(2.dp))
-
-            if (savedLogs.isEmpty()) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            backgroundColor,
-                            RoundedCornerShape(28.dp)
-                        )
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
+            AndpopSectionHeader(stringResource(R.string.andpop_saved_logs)) {
+                if (logs.isNotEmpty()) {
+                    TextButton(onClick = { confirmDeleteAll = true }) {
+                        Text(stringResource(R.string.andpop_delete_all), color = palette.pri, style = AndpopType.label)
+                    }
+                }
+            }
+            if (logs.isEmpty()) {
+                AndpopCard {
                     Text(
-                        text = stringResource(R.string.no_logs_found),
-                        fontSize = 16.sp,
-                        color = textColor
+                        stringResource(R.string.andpop_no_saved_logs),
+                        Modifier.fillMaxWidth().padding(22.dp),
+                        color = palette.on2,
+                        style = AndpopType.body,
+                        textAlign = TextAlign.Center,
                     )
                 }
             } else {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            backgroundColor,
-                            RoundedCornerShape(28.dp)
-                        )
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Total Logs: ${savedLogs.size}",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = textColor
-                        )
-
-                        if (savedLogs.size > 1) {
-                            TextButton(
-                                onClick = { showDeleteAllDialog = true },
-                                colors = ButtonDefaults.textButtonColors(
-                                    contentColor = MaterialTheme.colorScheme.error
-                                )
-                            ) {
-                                Text("Delete All")
-                            }
-                        }
-                    }
-
-                    savedLogs.forEach { logFile ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp)
-                                .clickable {
-                                    openLogBottomSheet(logFile)
+                AndpopGroup {
+                    logs.forEach { file ->
+                        row { shape ->
+                            AndpopRow(
+                                shape = shape,
+                                title = file.name,
+                                supporting = Formatter.formatShortFileSize(context, file.length()),
+                                icon = AndpopIcons.Document,
+                                showChevron = false,
+                                trailing = {
+                                    IconButton(onClick = { shareLog(context, file) }) {
+                                        Icon(AndpopIcons.Share, stringResource(R.string.andpop_share_log), tint = palette.on2)
+                                    }
+                                    IconButton(onClick = { deleteWithUndo(file) }) {
+                                        Icon(AndpopIcons.Trash, stringResource(R.string.andpop_delete_log), tint = palette.on2)
+                                    }
                                 },
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = logFile.name,
-                                    fontSize = 16.sp,
-                                    color = textColor,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-
-                                Text(
-                                    text = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.US)
-                                        .format(Date(logFile.lastModified())),
-                                    fontSize = 14.sp,
-                                    color = textColor.copy(alpha = 0.6f)
-                                )
-                            }
-
-                            CustomIconButton(
-                                onClick = {
-                                    selectedLogFile = logFile
-                                    showDeleteDialog = true
-                                }
-                            ) {
-                                Icon(
-                                    Icons.Default.Delete,
-                                    contentDescription = "Delete",
-                                    tint = MaterialTheme.colorScheme.error
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            AnimatedVisibility(
-                visible = !showTroubleshootingSteps,
-                enter = fadeIn(animationSpec = tween(300)),
-                exit = fadeOut(animationSpec = tween(300))
-            ) {
-                Button(
-                    onClick = { showTroubleshootingSteps = true },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = buttonBgColor,
-                        contentColor = textColor
-                    ),
-                    enabled = !isCollectingLogs
-                ) {
-                    Text(stringResource(R.string.collect_logs))
-                }
-            }
-
-            AnimatedVisibility(
-                visible = showTroubleshootingSteps,
-                enter = fadeIn(animationSpec = tween(300)) +
-                    slideInVertically(animationSpec = tween(300)) { it / 2 },
-                exit = fadeOut(animationSpec = tween(300)) +
-                    slideOutVertically(animationSpec = tween(300)) { it / 2 }
-            ) {
-                Column {
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        text = stringResource(R.string.troubleshooting_steps),
-                        style = TextStyle(
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Light,
-                            color = textColor.copy(alpha = 0.6f),
-                            fontFamily = FontFamily.SansSerif
-                        ),
-                        modifier = Modifier.padding(16.dp, bottom = 2.dp, top = 8.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(2.dp))
-
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(
-                                backgroundColor,
-                                RoundedCornerShape(28.dp)
                             )
-                            .padding(16.dp)
-                    ) {
-                        val textAlpha = animateFloatAsState(
-                            targetValue = 1f,
-                            animationSpec = tween(durationMillis = 300),
-                            label = "textAlpha"
-                        )
-
-                        Text(
-                            text = instructionText,
-                            fontSize = 16.sp,
-                            color = textColor.copy(alpha = textAlpha.value),
-                            lineHeight = 22.sp
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        when (currentStep) {
-                            0 -> {
-                                Button(
-                                    onClick = {
-                                        coroutineScope.launch {
-                                            logCollector.openXposedSettings(context)
-                                            delay(2000)
-                                            currentStep = 1
-                                        }
-                                    },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(10.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = buttonBgColor,
-                                        contentColor = textColor
-                                    )
-                                ) {
-                                    Text("Open Xposed Settings")
-                                }
-                            }
-
-                            1 -> {
-                                Button(
-                                    onClick = {
-                                        currentStep = 2
-                                        isCollectingLogs = true
-
-                                        coroutineScope.launch {
-                                            try {
-                                                logCollector.clearLogs()
-
-                                                logCollector.addLogMarker(LogCollector.LogMarkerType.START)
-
-                                                logCollector.killBluetoothService()
-
-                                                withContext(Dispatchers.Main) {
-                                                    delay(500)
-                                                    currentStep = 3
-                                                }
-
-                                                val timestamp = SimpleDateFormat(
-                                                    "yyyyMMdd_HHmmss",
-                                                    Locale.US
-                                                ).format(Date())
-
-                                                logContent =
-                                                    logCollector.startLogCollection(
-                                                        listener = { /* Removed live log display */ },
-                                                        connectionDetectedCallback = {
-                                                            launch {
-                                                                delay(5000)
-                                                                withContext(Dispatchers.Main) {
-                                                                    if (isCollectingLogs) {
-                                                                        logCollector.stopLogCollection()
-                                                                        currentStep = 4
-                                                                        isCollectingLogs =
-                                                                            false
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    )
-
-                                                val logFile =
-                                                    logCollector.saveLogToInternalStorage(
-                                                        "airpods_log_$timestamp.txt",
-                                                        logContent
-                                                    )
-                                                logFile?.let {
-                                                    withContext(Dispatchers.Main) {
-                                                        savedLogs.add(0, it)
-                                                        selectedLogFile = it
-                                                        Toast.makeText(
-                                                            context,
-                                                            "Log saved: ${it.name}",
-                                                            Toast.LENGTH_SHORT
-                                                        ).show()
-                                                    }
-                                                }
-                                            } catch (e: Exception) {
-                                                withContext(Dispatchers.Main) {
-                                                    Toast.makeText(
-                                                        context,
-                                                        "Error collecting logs: ${e.message}",
-                                                        Toast.LENGTH_SHORT
-                                                    ).show()
-                                                    isCollectingLogs = false
-                                                    currentStep = 0
-                                                }
-                                            }
-                                        }
-                                    },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(10.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = buttonBgColor,
-                                        contentColor = textColor
-                                    )
-                                ) {
-                                    Text("Continue")
-                                }
-                            }
-
-                            2, 3 -> {
-                                Column(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    CircularProgressIndicator(
-                                        color = accentColor
-                                    )
-
-                                    Spacer(modifier = Modifier.height(8.dp))
-
-                                    Text(
-                                        text = if (currentStep == 2) "Preparing..." else "Collecting logs...",
-                                        fontSize = 14.sp,
-                                        color = textColor
-                                    )
-
-                                    if (currentStep == 3) {
-                                        Spacer(modifier = Modifier.height(16.dp))
-
-                                        Button(
-                                            onClick = {
-                                                coroutineScope.launch {
-                                                    logCollector.addLogMarker(
-                                                        LogCollector.LogMarkerType.CUSTOM,
-                                                        "Manual stop requested by user"
-                                                    )
-                                                    delay(1000)
-                                                    logCollector.stopLogCollection()
-                                                    delay(500)
-
-                                                    withContext(Dispatchers.Main) {
-                                                        currentStep = 4
-                                                        isCollectingLogs = false
-                                                        Toast.makeText(
-                                                            context,
-                                                            "Log collection stopped",
-                                                            Toast.LENGTH_SHORT
-                                                        ).show()
-                                                    }
-                                                }
-                                            },
-                                            shape = RoundedCornerShape(10.dp),
-                                            colors = ButtonDefaults.buttonColors(
-                                                containerColor = buttonBgColor,
-                                                contentColor = textColor
-                                            ),
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                        ) {
-                                            Text("Stop Collection")
-                                        }
-                                    }
-                                }
-                            }
-
-                            4 -> {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.Center
-                                ) {
-                                    Button(
-                                        onClick = {
-                                            selectedLogFile?.let { file ->
-                                                val fileUri = FileProvider.getUriForFile(
-                                                    context,
-                                                    "${context.packageName}.provider",
-                                                    file
-                                                )
-                                                val shareIntent =
-                                                    Intent(Intent.ACTION_SEND).apply {
-                                                        type = "text/plain"
-                                                        putExtra(
-                                                            Intent.EXTRA_STREAM,
-                                                            fileUri
-                                                        )
-                                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                                    }
-                                                context.startActivity(
-                                                    Intent.createChooser(
-                                                        shareIntent,
-                                                        "Share log file"
-                                                    )
-                                                )
-                                            }
-                                        },
-                                        shape = RoundedCornerShape(10.dp),
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = buttonBgColor,
-                                            contentColor = textColor
-                                        ),
-                                        modifier = Modifier.width(150.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Share,
-                                            contentDescription = "Share"
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text("Share")
-                                    }
-
-                                    Spacer(modifier = Modifier.width(16.dp))
-
-                                    Button(
-                                        onClick = {
-                                            selectedLogFile?.let { file ->
-                                                saveLauncher.launch(
-                                                    file.absolutePath
-                                                )
-                                            }
-                                        },
-                                        shape = RoundedCornerShape(10.dp),
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = buttonBgColor,
-                                            contentColor = textColor
-                                        ),
-                                        modifier = Modifier.width(150.dp)
-                                    ) {
-                                        Icon(
-                                            painter = painterResource(id = R.drawable.ic_save),
-                                            contentDescription = "Save"
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text("Save")
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.height(16.dp))
-
-                                Button(
-                                    onClick = {
-                                        currentStep = 0
-                                        showTroubleshootingSteps = false
-                                    },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(10.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = buttonBgColor,
-                                        contentColor = textColor
-                                    )
-                                ) {
-                                    Text("Done")
-                                }
-                            }
                         }
                     }
                 }
             }
 
-            if (showDeleteDialog && selectedLogFile != null) {
-                AlertDialog(
-                    onDismissRequest = { showDeleteDialog = false },
-                    title = { Text("Delete Log File") },
-                    text = {
-                        Text("Are you sure you want to delete this log file? This action cannot be undone.")
-                    },
-                    confirmButton = {
-                        TextButton(
-                            onClick = {
-                                selectedLogFile?.let { file ->
-                                    if (file.delete()) {
-                                        savedLogs.remove(file)
-                                        Toast.makeText(
-                                            context,
-                                            "Log file deleted",
-                                            Toast.LENGTH_SHORT
-                                        )
-                                            .show()
-                                    } else {
-                                        Toast.makeText(
-                                            context,
-                                            "Failed to delete log file",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                }
-                                showDeleteDialog = false
-                            }
-                        ) {
-                            Text("Delete", color = MaterialTheme.colorScheme.error)
-                        }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { showDeleteDialog = false }) {
-                            Text("Cancel")
-                        }
-                    }
-                )
-            }
-
-            if (showDeleteAllDialog) {
-                AlertDialog(
-                    onDismissRequest = { showDeleteAllDialog = false },
-                    title = { Text("Delete All Logs") },
-                    text = {
-                        Text("Are you sure you want to delete all log files? This action cannot be undone and will remove ${savedLogs.size} log files.")
-                    },
-                    confirmButton = {
-                        TextButton(
-                            onClick = {
-                                coroutineScope.launch(Dispatchers.IO) {
-                                    var deletedCount = 0
-                                    savedLogs.forEach { file ->
-                                        if (file.delete()) {
-                                            deletedCount++
-                                        }
-                                    }
-                                    withContext(Dispatchers.Main) {
-                                        if (deletedCount > 0) {
-                                            savedLogs.clear()
-                                            Toast.makeText(
-                                                context,
-                                                "Deleted $deletedCount log files",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        } else {
-                                            Toast.makeText(
-                                                context,
-                                                "Failed to delete log files",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
-                                    }
-                                }
-                                showDeleteAllDialog = false
-                            }
-                        ) {
-                            Text("Delete All", color = MaterialTheme.colorScheme.error)
-                        }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { showDeleteAllDialog = false }) {
-                            Text("Cancel")
-                        }
-                    }
-                )
-            }
-
-            Spacer(modifier = Modifier.height(bottomPadding))
-        }
-
-        if (showBottomSheet) {
-            ModalBottomSheet(
-                onDismissRequest = { showBottomSheet = false },
-                sheetState = sheetState,
-                containerColor = if (isDarkTheme) Color(0xFF1C1C1E) else Color(0xFFF2F2F7),
-                shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-                tonalElevation = 8.dp
-            ) {
-                LaunchedEffect(selectedLogFile) {
-                    if (!logContentLoaded) {
-                        delay(300)
-                        withContext(Dispatchers.IO) {
-                            isLoadingLogContent = true
-                            logContent = try {
-                                selectedLogFile?.readText() ?: ""
-                            } catch (e: Exception) {
-                                "Error loading log content: ${e.message}"
-                            }
-                            isLoadingLogContent = false
-                            logContentLoaded = true
-                        }
-                    }
+            AndpopSectionHeader(stringResource(R.string.andpop_common_fixes))
+            AndpopGroup {
+                listOf(
+                    R.string.andpop_fix1_title to R.string.andpop_fix1_body,
+                    R.string.andpop_fix2_title to R.string.andpop_fix2_body,
+                    R.string.andpop_fix3_title to R.string.andpop_fix3_body,
+                ).forEach { (title, body) ->
+                    row { shape -> AndpopRow(shape = shape, title = stringResource(title), supporting = stringResource(body)) }
                 }
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp)
-                        .padding(bottom = 32.dp)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 12.dp),
-                    ) {
-                        Text(
-                            text = selectedLogFile?.name ?: "Log Content",
-                            style = TextStyle(
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 20.sp,
-                                fontFamily = FontFamily.SansSerif
-                            ),
-                            color = textColor
+                // Xposed steps only make sense when the framework is installed (FOSS builds only).
+                if (!BuildConfig.PLAY_BUILD && XposedState.isAvailable) {
+                    row { shape ->
+                        AndpopRow(
+                            shape = shape,
+                            title = stringResource(R.string.andpop_fix_xposed_title),
+                            supporting = stringResource(R.string.andpop_fix_xposed_body),
                         )
-                        Text(
-                            text = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.US)
-                                .format(Date(selectedLogFile?.lastModified() ?: 0)),
-                            fontSize = 14.sp,
-                            color = textColor.copy(alpha = 0.7f),
-                            fontFamily = FontFamily.SansSerif
-                        )
-                    }
-
-                    if (isLoadingLogContent) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(300.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator(color = accentColor)
-                        }
-                    } else {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(300.dp)
-                                .background(
-                                    color = Color.Black,
-                                    shape = RoundedCornerShape(8.dp)
-                                )
-                        ) {
-                            val horizontalScrollState = rememberScrollState()
-                            val verticalScrollState = rememberScrollState()
-
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(8.dp)
-                                    .horizontalScroll(horizontalScrollState)
-                                    .verticalScroll(verticalScrollState)
-                            ) {
-                                Text(
-                                    text = logContent,
-                                    fontSize = 14.sp,
-                                    color = Color.LightGray,
-                                    lineHeight = 20.sp,
-                                    fontFamily = FontFamily.Monospace,
-                                    softWrap = false
-                                )
-                            }
-                        }
-                    }
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Button(
-                            onClick = {
-                                selectedLogFile?.let { file ->
-                                    val fileUri = FileProvider.getUriForFile(
-                                        context,
-                                        "${context.packageName}.provider",
-                                        file
-                                    )
-                                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                        type = "text/plain"
-                                        putExtra(Intent.EXTRA_STREAM, fileUri)
-                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                    }
-                                    context.startActivity(
-                                        Intent.createChooser(
-                                            shareIntent,
-                                            "Share log file"
-                                        )
-                                    )
-                                }
-                            },
-                            shape = RoundedCornerShape(10.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = buttonBgColor,
-                                contentColor = textColor
-                            ),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Share,
-                                contentDescription = "Share"
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Share")
-                        }
-
-                        Button(
-                            onClick = {
-                                selectedLogFile?.let { file ->
-                                    saveLauncher.launch(file.absolutePath)
-                                }
-                            },
-                            shape = RoundedCornerShape(10.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = buttonBgColor,
-                                contentColor = textColor
-                            ),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_save),
-                                contentDescription = "Save"
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Save")
-                        }
                     }
                 }
             }
         }
+        SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(16.dp))
     }
 
-    DisposableEffect(Unit) {
-        onDispose {
-            logCollector.stopLogCollection()
+    if (confirmDeleteAll) {
+        AlertDialog(
+            onDismissRequest = { confirmDeleteAll = false },
+            containerColor = palette.s2,
+            icon = { Icon(AndpopIcons.Trash, null, tint = palette.error) },
+            title = { Text(stringResource(R.string.andpop_delete_all_title), style = AndpopType.title) },
+            text = { Text(stringResource(R.string.andpop_delete_all_body), color = palette.on2, style = AndpopType.bodySmall) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmDeleteAll = false
+                    scope.launch {
+                        withContext(Dispatchers.IO) { LogRecorder.savedLogs(context).forEach { it.delete() } }
+                        reload()
+                    }
+                }) { Text(stringResource(R.string.andpop_delete_all), color = palette.error) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDeleteAll = false }) { Text(stringResource(android.R.string.cancel)) }
+            },
+        )
+    }
+}
+
+@Composable
+private fun RecorderStep(number: Int, @StringRes title: Int, @StringRes body: Int, done: Boolean, current: Boolean) {
+    val palette = LocalAndpopPalette.current
+    Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+        Box(
+            Modifier.size(28.dp).clip(CircleShape).background(
+                when {
+                    done -> palette.success
+                    current -> palette.pri
+                    else -> palette.s3
+                },
+            ),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (done) {
+                Icon(AndpopIcons.Check, null, Modifier.size(16.dp), tint = palette.bg)
+            } else {
+                Text(number.toString(), color = if (current) palette.onPri else palette.on2, style = AndpopType.label)
+            }
         }
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(stringResource(title), color = palette.on, style = AndpopType.titleSmall)
+            Text(stringResource(body), color = palette.on2, style = AndpopType.bodySmall)
+        }
+    }
+}
+
+private fun formatElapsed(ms: Long): String {
+    val seconds = ms / 1000
+    return "%02d:%02d".format(seconds / 60, seconds % 60)
+}
+
+private fun shareLog(context: Context, file: File) {
+    val uri = FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
+    val send = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_STREAM, uri)
+        putExtra(Intent.EXTRA_SUBJECT, file.name)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+    try {
+        context.startActivity(Intent.createChooser(send, context.getString(R.string.andpop_share_log)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    } catch (_: ActivityNotFoundException) {
+        Toast.makeText(context, context.getString(R.string.andpop_share_unavailable), Toast.LENGTH_SHORT).show()
     }
 }

@@ -16,218 +16,165 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-@file:OptIn(ExperimentalStdlibApi::class, ExperimentalEncodingApi::class)
-
 package me.kavishdevar.librepods.presentation.screens
 
-import android.util.Log
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
+import androidx.annotation.StringRes
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.keyframes
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import com.kyant.backdrop.backdrops.rememberLayerBackdrop
-import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
+import kotlinx.coroutines.delay
 import me.kavishdevar.librepods.R
 import me.kavishdevar.librepods.bluetooth.AACPManager
+import me.kavishdevar.librepods.data.Capability
 import me.kavishdevar.librepods.data.StemAction
-import me.kavishdevar.librepods.presentation.components.ListItemOrientation
-import me.kavishdevar.librepods.presentation.components.StyledButton
-import me.kavishdevar.librepods.presentation.components.StyledList
-import me.kavishdevar.librepods.presentation.components.StyledListItem
-import me.kavishdevar.librepods.presentation.theme.DesignSystem
-import me.kavishdevar.librepods.presentation.theme.LocalDesignSystem
+import me.kavishdevar.librepods.presentation.components.AndpopCheckboxRow
+import me.kavishdevar.librepods.presentation.components.AndpopDetailPage
+import me.kavishdevar.librepods.presentation.components.AndpopFootnote
+import me.kavishdevar.librepods.presentation.components.AndpopGroup
+import me.kavishdevar.librepods.presentation.components.AndpopRadioRow
+import me.kavishdevar.librepods.presentation.components.AndpopSectionHeader
+import me.kavishdevar.librepods.presentation.theme.AndpopIcons
+import me.kavishdevar.librepods.presentation.theme.LocalAndpopPalette
 import me.kavishdevar.librepods.presentation.viewmodel.AirPodsViewModel
-import kotlin.experimental.and
-import kotlin.io.encoding.ExperimentalEncodingApi
 
-@ExperimentalHazeMaterialsApi
-@OptIn(ExperimentalMaterial3Api::class)
+/** A listening mode that press and hold can cycle through, with its bit in LISTENING_MODE_CONFIGS. */
+internal enum class CycleMode(val bit: Int, @param:StringRes val label: Int, @param:StringRes val description: Int) {
+    Off(0x01, R.string.off, R.string.listening_mode_off_description),
+    Transparency(0x04, R.string.transparency, R.string.listening_mode_transparency_description),
+    Adaptive(0x08, R.string.adaptive, R.string.listening_mode_adaptive_description),
+    NoiseCancellation(0x02, R.string.noise_cancellation, R.string.listening_mode_noise_cancellation_description),
+}
+
+private fun CycleMode.icon(): ImageVector = when (this) {
+    CycleMode.Off -> AndpopIcons.ModeOff
+    CycleMode.Transparency -> AndpopIcons.ModeTransparency
+    CycleMode.Adaptive -> AndpopIcons.ModeAdaptive
+    CycleMode.NoiseCancellation -> AndpopIcons.ModeNoiseCancellation
+}
+
+/** True when unchecking [mode] would leave fewer than two modes in the cycle. */
+internal fun isCycleModeLocked(modesByte: Int, mode: CycleMode): Boolean =
+    (modesByte and mode.bit) != 0 && Integer.bitCount(modesByte and 0x0F) <= 2
+
 @Composable
-fun LongPress(viewModel: AirPodsViewModel, name: String, navigateToPurchase: () -> Unit) {
+fun LongPress(viewModel: AirPodsViewModel, name: String) {
     val state by viewModel.uiState.collectAsState()
+    val palette = LocalAndpopPalette.current
+    val haptics = LocalHapticFeedback.current
+    val left = name.equals("left", ignoreCase = true)
+    val action = if (left) state.leftAction else state.rightAction
+    val modesByte = state.controlStates[AACPManager.Companion.ControlCommandIdentifiers.LISTENING_MODE_CONFIGS]
+        ?.getOrNull(0)?.toInt()?.and(0xFF) ?: 0
+    val modes = CycleMode.entries.filter { mode ->
+        when (mode) {
+            CycleMode.Off -> state.offListeningMode
+            CycleMode.Adaptive -> state.capabilities.isEmpty() || Capability.ADAPTIVE_AUDIO in state.capabilities
+            else -> true
+        }
+    }
 
-    val modesByte = state.controlStates[AACPManager.Companion.ControlCommandIdentifiers.LISTENING_MODE_CONFIGS]?.get(0) ?: 0
+    // Unchecking one of the last two modes shakes its checkbox and turns the rule red.
+    var rejectedMode by remember { mutableStateOf<CycleMode?>(null) }
+    var rejections by remember { mutableIntStateOf(0) }
+    val shake = remember { Animatable(0f) }
+    LaunchedEffect(rejections) {
+        if (rejections == 0) return@LaunchedEffect
+        shake.snapTo(0f)
+        shake.animateTo(0f, keyframes {
+            durationMillis = 360
+            -8f at 50
+            8f at 110
+            -6f at 170
+            6f at 230
+            -3f at 290
+        })
+        delay(1200)
+        rejectedMode = null
+    }
+    val ruleColor by animateColorAsState(if (rejectedMode != null) palette.error else palette.on2, label = "Cycle rule color")
 
-    Log.d("PressAndHoldSettingsScreen", "Current modes state: ${modesByte.toString(2)}")
-    Log.d("PressAndHoldSettingsScreen", "Off mode: ${(modesByte and 0x01) != 0.toByte()}")
-    Log.d("PressAndHoldSettingsScreen", "Transparency mode: ${(modesByte and 0x04) != 0.toByte()}")
-    Log.d("PressAndHoldSettingsScreen", "Noise Cancellation mode: ${(modesByte and 0x02) != 0.toByte()}")
-    Log.d("PressAndHoldSettingsScreen", "Adaptive mode: ${(modesByte and 0x08) != 0.toByte()}")
-
-    val longPressAction = if (name.lowercase() == "left") state.leftAction else state.rightAction
-
-    val m3eEnabled = LocalDesignSystem.current == DesignSystem.Material
-    val topPadding = if (m3eEnabled) 0.dp else WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 84.dp
-    val bottomPadding = if (m3eEnabled) 0.dp else WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 12.dp
-
-    val scrollState = rememberScrollState()
-
-    Column (
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surfaceContainer)
-            .verticalScroll(scrollState)
-            .padding(top = 8.dp)
-            .padding(horizontal = 16.dp)
+    AndpopDetailPage(
+        title = stringResource(if (left) R.string.andpop_left_bud else R.string.andpop_right_bud),
+        subtitle = stringResource(R.string.andpop_press_hold_subtitle),
     ) {
-        Spacer(modifier = Modifier.height(topPadding))
-
-        StyledList {
-            StyledListItem(
-                name = stringResource(R.string.listening_mode),
-                selected = longPressAction == StemAction.CYCLE_NOISE_CONTROL_MODES,
-                onClick = {
-                    viewModel.setLongPressAction(
-                        name,
-                        StemAction.CYCLE_NOISE_CONTROL_MODES
-                    )
-                }
-            )
-
-            StyledListItem(
-                name = stringResource(R.string.digital_assistant),
-                selected = longPressAction == StemAction.DIGITAL_ASSISTANT,
-                onClick = {
-                    viewModel.setLongPressAction(
-                        name,
-                        StemAction.DIGITAL_ASSISTANT
-                    )
-                },
-                enabled = state.isPremium
-            )
-        }
-
-        if (!state.isPremium) {
-            Spacer(modifier = Modifier.height(24.dp))
-            StyledButton(
-                onClick = navigateToPurchase,
-                backdrop = rememberLayerBackdrop(),
-                modifier = Modifier.fillMaxWidth(),
-                maxScale = 0.05f,
-                surfaceColor = MaterialTheme.colorScheme.primary
-            ) {
-                Text(
-                    stringResource(R.string.unlock_advanced_features),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimary
+        Spacer(Modifier.height(16.dp))
+        AndpopGroup(Modifier.selectableGroup()) {
+            row { shape ->
+                AndpopRadioRow(
+                    shape = shape,
+                    title = stringResource(R.string.andpop_switch_listening_mode),
+                    icon = AndpopIcons.Layers,
+                    selected = action == StemAction.CYCLE_NOISE_CONTROL_MODES,
+                    onClick = { viewModel.setLongPressAction(name, StemAction.CYCLE_NOISE_CONTROL_MODES) },
                 )
             }
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-
-        if (longPressAction == StemAction.CYCLE_NOISE_CONTROL_MODES) {
-            Spacer(modifier = Modifier.height(32.dp))
-
-            val currentByte = state.controlStates[AACPManager.Companion.ControlCommandIdentifiers.LISTENING_MODE_CONFIGS]?.get(0)?.toInt() ?: 0
-
-            StyledList(
-                title = stringResource(R.string.listening_mode),
-                description = stringResource(R.string.press_and_hold_listening_mode_description)
-            ) {
-                if (state.offListeningMode) {
-                    StyledListItem(
-                        name = stringResource(R.string.off),
-                        description = stringResource(R.string.listening_mode_off_description),
-                        selected = (currentByte and 0x01) != 0,
-                        onClick = {
-                            viewModel.toggleListeningMode(0x01)
-                        },
-                        orientation = ListItemOrientation.Vertical,
-                        leadingContent = {
-                            Icon(
-                                painter = painterResource(R.drawable.noise_cancellation),
-                                contentDescription = "Icon",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier
-                                    .height(42.dp)
-                                    .wrapContentWidth()
-                            )
-                        }
-                    )
-                }
-
-                StyledListItem(
-                    name = stringResource(R.string.transparency),
-                    description = stringResource(R.string.listening_mode_transparency_description),
-                    selected = (currentByte and 0x04) != 0,
-                    onClick = {
-                        viewModel.toggleListeningMode(0x04)
-                    },
-                    orientation = ListItemOrientation.Vertical,
-                    leadingContent = {
-                        Icon(
-                            painter = painterResource(R.drawable.transparency),
-                            contentDescription = "Icon",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier
-                                .height(42.dp)
-                                .wrapContentWidth()
-                        )
-                    }
-                )
-
-                StyledListItem(
-                    name = stringResource(R.string.adaptive),
-                    description = stringResource(R.string.listening_mode_adaptive_description),
-                    selected = (currentByte and 0x08) != 0,
-                    onClick = {
-                        viewModel.toggleListeningMode(0x08)
-                    },
-                    orientation = ListItemOrientation.Vertical,
-                    leadingContent = {
-                        Icon(
-                            painter = painterResource(R.drawable.adaptive),
-                            contentDescription = "Icon",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier
-                                .height(42.dp)
-                                .wrapContentWidth()
-                        )
-                    }
-                )
-
-                StyledListItem(
-                    name = stringResource(R.string.noise_cancellation),
-                    description = stringResource(R.string.listening_mode_noise_cancellation_description),
-                    selected = (currentByte and 0x02) != 0,
-                    onClick = {
-                        viewModel.toggleListeningMode(0x02)
-                    },
-                    orientation = ListItemOrientation.Vertical,
-                    leadingContent = {
-                        Icon(
-                            painter = painterResource(R.drawable.noise_cancellation),
-                            contentDescription = "Icon",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier
-                                .height(42.dp)
-                                .wrapContentWidth()
-                        )
-                    }
+            row { shape ->
+                AndpopRadioRow(
+                    shape = shape,
+                    title = stringResource(R.string.digital_assistant),
+                    supporting = stringResource(R.string.andpop_digital_assistant_desc),
+                    icon = AndpopIcons.Sparkle,
+                    selected = action == StemAction.DIGITAL_ASSISTANT,
+                    onClick = { viewModel.setLongPressAction(name, StemAction.DIGITAL_ASSISTANT) },
                 )
             }
         }
-        Spacer(modifier = Modifier.height(bottomPadding))
+
+        if (action == StemAction.CYCLE_NOISE_CONTROL_MODES) {
+            AndpopSectionHeader(stringResource(R.string.andpop_cycle_between))
+            AndpopGroup {
+                modes.forEach { mode ->
+                    row { shape ->
+                        val checked = (modesByte and mode.bit) != 0
+                        val locked = isCycleModeLocked(modesByte, mode)
+                        AndpopCheckboxRow(
+                            shape = shape,
+                            title = stringResource(mode.label),
+                            supporting = stringResource(mode.description),
+                            icon = mode.icon(),
+                            checked = checked,
+                            locked = locked,
+                            checkboxModifier = if (rejectedMode == mode) Modifier.offset(x = shake.value.dp) else Modifier,
+                            onClick = {
+                                if (locked) {
+                                    rejectedMode = mode
+                                    rejections++
+                                    haptics.performHapticFeedback(HapticFeedbackType.Reject)
+                                } else {
+                                    viewModel.toggleListeningMode(mode.bit)
+                                    haptics.performHapticFeedback(if (checked) HapticFeedbackType.ToggleOff else HapticFeedbackType.ToggleOn)
+                                }
+                            },
+                        )
+                    }
+                }
+            }
+            AndpopFootnote(
+                stringResource(R.string.andpop_cycle_two_rule),
+                Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                color = ruleColor,
+            )
+        }
     }
 }

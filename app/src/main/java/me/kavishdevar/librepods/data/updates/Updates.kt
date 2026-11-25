@@ -2,34 +2,18 @@ package me.kavishdevar.librepods.data.updates
 
 import androidx.compose.runtime.Composable
 import me.kavishdevar.librepods.R
-import me.kavishdevar.librepods.presentation.screens.AirPodsSettingsScreenPreviewMaterial
-import me.kavishdevar.librepods.presentation.screens.EqualizerScreenPreviewApple
-import me.kavishdevar.librepods.presentation.screens.EqualizerScreenPreviewMaterial
-import me.kavishdevar.librepods.presentation.theme.DesignSystem
-import me.kavishdevar.librepods.presentation.theme.LocalDesignSystem
+import me.kavishdevar.librepods.presentation.screens.EqualizerScreen
+import me.kavishdevar.librepods.presentation.viewmodel.demoState
 
-val update1_0_0 = listOf(
-        UpdateItem(
-            titleRes = R.string.material3e,
-            descriptionRes = R.string.update_m3e_description,
-            demoComposeable = @Composable {
-                AirPodsSettingsScreenPreviewMaterial()
-            }
-        ),
-        UpdateItem(
-            titleRes = R.string.equalizer,
-            descriptionRes = R.string.update_equalizer_description,
-            demoComposeable = @Composable {
-                when (LocalDesignSystem.current) {
-                    DesignSystem.Apple -> {
-                        EqualizerScreenPreviewApple()
-                    }
-                    DesignSystem.Material -> {
-                        EqualizerScreenPreviewMaterial()
-                    }
-                }
-            }
-        ),
-    )
+/** What's new in AnDPoP 2.0, shown by the release notes screen. */
+val update2_0_0 = listOf(
+    UpdateItem(
+        titleRes = R.string.andpop_release_2_title,
+        descriptionRes = R.string.andpop_release_2_body,
+        demoComposeable = @Composable {
+            EqualizerScreen(state = demoState, setCustomEqEnabled = {}, setCustomEq = { _, _, _ -> })
+        },
+    ),
+)
 
-val updates = update1_0_0
+val updates = update2_0_0
