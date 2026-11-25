@@ -154,7 +154,7 @@ fun StyledInputField(
                                     }
                                 ) {
                                     Text(
-                                        text = "􀁡",
+                                        text = "×",
                                         style = TextStyle(
                                             fontSize = 16.sp,
                                             fontFamily = FontFamily.SansSerif,

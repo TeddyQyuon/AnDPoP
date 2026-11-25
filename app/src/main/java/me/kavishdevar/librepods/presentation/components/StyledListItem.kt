@@ -200,7 +200,7 @@ private fun StyledListItemContent(
                             )
 
                             Text(
-                                text = "􀆅",
+                                text = "✓",
                                 style = TextStyle(
                                     fontSize = 20.sp,
                                     fontFamily = FontFamily.SansSerif,
@@ -210,7 +210,7 @@ private fun StyledListItemContent(
                             )
                         } else {
                             Text(
-                                text = "􀯻",
+                                text = "›",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurface.copy(0.6f),
                                 modifier = Modifier

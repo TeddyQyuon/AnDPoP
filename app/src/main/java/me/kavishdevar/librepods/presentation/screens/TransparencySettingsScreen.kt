@@ -18,348 +18,204 @@
 
 package me.kavishdevar.librepods.presentation.screens
 
-// import me.kavishdevar.librepods.utils.RadareOffsetFinder
-import android.annotation.SuppressLint
-import android.util.Log
-import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import me.kavishdevar.librepods.R
 import me.kavishdevar.librepods.data.TransparencySettings
 import me.kavishdevar.librepods.data.parseTransparencySettingsResponse
 import me.kavishdevar.librepods.data.sendTransparencySettings
-import me.kavishdevar.librepods.presentation.components.StyledSlider
-import me.kavishdevar.librepods.presentation.components.StyledToggle
-import me.kavishdevar.librepods.presentation.theme.DesignSystem
-import me.kavishdevar.librepods.presentation.theme.LocalDesignSystem
+import me.kavishdevar.librepods.presentation.components.AndpopCard
+import me.kavishdevar.librepods.presentation.components.AndpopDetailPage
+import me.kavishdevar.librepods.presentation.components.AndpopGroup
+import me.kavishdevar.librepods.presentation.components.AndpopSectionHeader
+import me.kavishdevar.librepods.presentation.components.AndpopSliderRow
+import me.kavishdevar.librepods.presentation.components.AndpopSwitchRow
+import me.kavishdevar.librepods.presentation.components.InfoBanner
+import me.kavishdevar.librepods.presentation.theme.AndpopIcons
 import me.kavishdevar.librepods.presentation.viewmodel.AirPodsViewModel
 import kotlin.io.encoding.ExperimentalEncodingApi
+import kotlin.math.roundToInt
 
-private const val TAG = "TransparencySettings"
-
-@SuppressLint("DefaultLocale")
 @ExperimentalHazeMaterialsApi
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalEncodingApi::class)
+@OptIn(ExperimentalEncodingApi::class)
 @Composable
 fun TransparencySettingsScreen(viewModel: AirPodsViewModel) {
-    val isDarkTheme = isSystemInDarkTheme()
-    val textColor = if (isDarkTheme) Color.White else Color.Black
-    val verticalScrollState = rememberScrollState()
-
-    val trackColor = if (isDarkTheme) Color(0xFFB3B3B3) else Color(0xFF929491)
-    val activeTrackColor = if (isDarkTheme) Color(0xFF007AFF) else Color(0xFF3C6DF5)
-    val thumbColor = if (isDarkTheme) Color(0xFFFFFFFF) else Color(0xFFFFFFFF)
-
     val state by viewModel.uiState.collectAsState()
 
-    val m3eEnabled = LocalDesignSystem.current == DesignSystem.Material
-    val topPadding = if (m3eEnabled) 0.dp else WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 84.dp
-    val bottomPadding = if (m3eEnabled) 0.dp else WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 12.dp
+    val enabled = rememberSaveable { mutableStateOf(false) }
+    val amplification = rememberSaveable { mutableFloatStateOf(0.5f) }
+    val balance = rememberSaveable { mutableFloatStateOf(0.5f) }
+    val tone = rememberSaveable { mutableFloatStateOf(0.5f) }
+    val ambientNoiseReduction = rememberSaveable { mutableFloatStateOf(0.0f) }
+    val conversationBoost = rememberSaveable { mutableStateOf(false) }
+    val eq = rememberSaveable(
+        saver = Saver(
+            save = { it.value.toList() },
+            restore = { mutableStateOf(it.toFloatArray()) },
+        ),
+    ) { mutableStateOf(FloatArray(8)) }
+    val initialized = rememberSaveable { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surfaceContainer)
-            .verticalScroll(verticalScrollState)
-            .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+    LaunchedEffect(state.transparencyData) {
+        val parsed = parseTransparencySettingsResponse(data = state.transparencyData) ?: return@LaunchedEffect
+        enabled.value = parsed.enabled
+        amplification.floatValue = parsed.netAmplification
+        balance.floatValue = parsed.balance
+        tone.floatValue = parsed.leftTone
+        ambientNoiseReduction.floatValue = parsed.leftAmbientNoiseReduction
+        conversationBoost.value = parsed.leftConversationBoost
+        if (!eq.value.contentEquals(parsed.leftEQ)) {
+            eq.value = parsed.leftEQ.copyOf()
+        }
+        initialized.value = true
+    }
+
+    LaunchedEffect(
+        enabled.value,
+        amplification.floatValue,
+        balance.floatValue,
+        tone.floatValue,
+        conversationBoost.value,
+        ambientNoiseReduction.floatValue,
+        eq.value,
     ) {
-        Spacer(modifier = Modifier.height(topPadding))
-        val backgroundColor = if (isDarkTheme) Color(0xFF1C1C1E) else Color(0xFFFFFFFF)
+        if (!initialized.value) return@LaunchedEffect
+        val settings = TransparencySettings(
+            enabled = enabled.value,
+            leftEQ = eq.value,
+            rightEQ = eq.value,
+            leftAmplification = amplification.floatValue + if (balance.floatValue < 0) -balance.floatValue else 0f,
+            rightAmplification = amplification.floatValue + if (balance.floatValue > 0) balance.floatValue else 0f,
+            leftTone = tone.floatValue,
+            rightTone = tone.floatValue,
+            leftConversationBoost = conversationBoost.value,
+            rightConversationBoost = conversationBoost.value,
+            leftAmbientNoiseReduction = ambientNoiseReduction.floatValue,
+            rightAmbientNoiseReduction = ambientNoiseReduction.floatValue,
+            netAmplification = amplification.floatValue,
+            balance = balance.floatValue,
+        )
+        sendTransparencySettings(viewModel::setATTCharacteristicValue, settings)
+    }
 
-        val enabled = rememberSaveable { mutableStateOf(false) }
-        val amplificationSliderValue = rememberSaveable { mutableFloatStateOf(0.5f) }
-        val balanceSliderValue = rememberSaveable { mutableFloatStateOf(0.5f) }
-        val toneSliderValue = rememberSaveable { mutableFloatStateOf(0.5f) }
-        val ambientNoiseReductionSliderValue = rememberSaveable { mutableFloatStateOf(0.0f) }
-        val conversationBoostEnabled = rememberSaveable { mutableStateOf(false) }
-        val eq = rememberSaveable(
-            saver = Saver(
-                save = { it.value.toList() },
-                restore = { mutableStateOf(it.toFloatArray()) }
+    AndpopDetailPage(
+        title = stringResource(R.string.customize_transparency_mode),
+        subtitle = stringResource(R.string.andpop_transparency_subtitle),
+    ) {
+        if (!state.vendorIdHook) {
+            InfoBanner(
+                text = stringResource(R.string.act_as_an_apple_device_description),
+                icon = AndpopIcons.Info,
             )
-        ) { mutableStateOf(FloatArray(8)) }
-        val phoneMediaEQ = rememberSaveable(
-            saver = Saver(
-                save = { it.value.toList() },
-                restore = { mutableStateOf(it.toFloatArray()) }
-            )
-        ) { mutableStateOf(FloatArray(8) { 0.5f }) }
+            return@AndpopDetailPage
+        }
 
-        val initialized = rememberSaveable { mutableStateOf(false) }
-
-        val transparencySettings = remember {
-            mutableStateOf(
-                TransparencySettings(
-                    enabled = enabled.value,
-                    leftEQ = eq.value,
-                    rightEQ = eq.value,
-                    leftAmplification = amplificationSliderValue.floatValue + (0.5f - balanceSliderValue.floatValue) * amplificationSliderValue.floatValue * 2,
-                    rightAmplification = amplificationSliderValue.floatValue + (balanceSliderValue.floatValue - 0.5f) * amplificationSliderValue.floatValue * 2,
-                    leftTone = toneSliderValue.floatValue,
-                    rightTone = toneSliderValue.floatValue,
-                    leftConversationBoost = conversationBoostEnabled.value,
-                    rightConversationBoost = conversationBoostEnabled.value,
-                    leftAmbientNoiseReduction = ambientNoiseReductionSliderValue.floatValue,
-                    rightAmbientNoiseReduction = ambientNoiseReductionSliderValue.floatValue,
-                    netAmplification = amplificationSliderValue.floatValue,
-                    balance = balanceSliderValue.floatValue
+        AndpopGroup {
+            row { shape ->
+                AndpopSwitchRow(
+                    shape = shape,
+                    title = stringResource(R.string.transparency_mode),
+                    supporting = stringResource(R.string.customize_transparency_mode_description),
+                    checked = enabled.value,
+                    onCheckedChange = { enabled.value = it },
+                    icon = AndpopIcons.ModeTransparency,
                 )
-            )
-        }
-
-        LaunchedEffect(
-            enabled.value,
-            amplificationSliderValue.floatValue,
-            balanceSliderValue.floatValue,
-            toneSliderValue.floatValue,
-            conversationBoostEnabled.value,
-            ambientNoiseReductionSliderValue.floatValue,
-            eq.value
-        ) {
-            if (!initialized.value) return@LaunchedEffect
-            transparencySettings.value = TransparencySettings(
-                enabled = enabled.value,
-                leftEQ = eq.value,
-                rightEQ = eq.value,
-                leftAmplification = amplificationSliderValue.floatValue + if (balanceSliderValue.floatValue < 0) -balanceSliderValue.floatValue else 0f,
-                rightAmplification = amplificationSliderValue.floatValue + if (balanceSliderValue.floatValue > 0) balanceSliderValue.floatValue else 0f,
-                leftTone = toneSliderValue.floatValue,
-                rightTone = toneSliderValue.floatValue,
-                leftConversationBoost = conversationBoostEnabled.value,
-                rightConversationBoost = conversationBoostEnabled.value,
-                leftAmbientNoiseReduction = ambientNoiseReductionSliderValue.floatValue,
-                rightAmbientNoiseReduction = ambientNoiseReductionSliderValue.floatValue,
-                netAmplification = amplificationSliderValue.floatValue,
-                balance = balanceSliderValue.floatValue
-            )
-            Log.d("TransparencySettings", "Updated settings: ${transparencySettings.value}")
-            sendTransparencySettings(viewModel::setATTCharacteristicValue, transparencySettings.value)
-        }
-
-        LaunchedEffect(state.transparencyData) {
-            val parsedSettings = parseTransparencySettingsResponse(data = state.transparencyData) ?: return@LaunchedEffect
-            Log.d(TAG, "Initial transparency settings: $parsedSettings")
-            enabled.value = parsedSettings.enabled
-            amplificationSliderValue.floatValue = parsedSettings.netAmplification
-            balanceSliderValue.floatValue = parsedSettings.balance
-            toneSliderValue.floatValue = parsedSettings.leftTone
-            ambientNoiseReductionSliderValue.floatValue =
-                parsedSettings.leftAmbientNoiseReduction
-            conversationBoostEnabled.value = parsedSettings.leftConversationBoost
-            if (!eq.value.contentEquals(parsedSettings.leftEQ)) {
-                eq.value = parsedSettings.leftEQ.copyOf()
             }
-            initialized.value = true
         }
 
-        if (state.vendorIdHook) {
-            StyledToggle(
-                label = stringResource(R.string.transparency_mode),
-                checked = enabled.value,
-                description = stringResource(R.string.customize_transparency_mode_description),
-                onCheckedChange = { enabled.value = it }
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            StyledSlider(
-                label = stringResource(R.string.amplification),
-                valueRange = -1f..1f,
-                value = amplificationSliderValue.floatValue,
-                onValueChange = {
-                    amplificationSliderValue.floatValue = it
-                },
-                startIcon = "􀊥",
-                endIcon = "􀊩",
-                independent = true
-            )
+        Spacer(Modifier.height(12.dp))
 
-            StyledSlider(
-                label = stringResource(R.string.balance),
+        val ampPercent = (((amplification.floatValue + 1f) / 2f) * 100f).roundToInt().coerceIn(0, 100)
+        val balanceDelta = (balance.floatValue * 100f).roundToInt().coerceIn(-100, 100)
+        val balanceText = when {
+            balanceDelta == 0 -> stringResource(R.string.andpop_balance_centered)
+            balanceDelta < 0 -> stringResource(R.string.andpop_balance_left, -balanceDelta)
+            else -> stringResource(R.string.andpop_balance_right, balanceDelta)
+        }
+        val toneText = stringResource(R.string.andpop_eq_step, (tone.floatValue * 100f).roundToInt().coerceIn(-100, 100))
+        val nrPercent = (ambientNoiseReduction.floatValue * 100f).roundToInt().coerceIn(0, 100)
+
+        AndpopCard {
+            AndpopSliderRow(
+                title = stringResource(R.string.amplification),
+                valueText = stringResource(R.string.andpop_percent_value, ampPercent),
+                value = amplification.floatValue,
+                onValueChange = { amplification.floatValue = it },
                 valueRange = -1f..1f,
-                value = balanceSliderValue.floatValue,
-                onValueChange = {
-                    balanceSliderValue.floatValue = it
-                },
-                snapPoints = listOf(-1f, 0f, 1f),
+                startIcon = AndpopIcons.SpeakerLow,
+                endIcon = AndpopIcons.SpeakerHigh,
+            )
+            AndpopSliderRow(
+                title = stringResource(R.string.balance),
+                valueText = balanceText,
+                value = balance.floatValue,
+                onValueChange = { balance.floatValue = it },
+                valueRange = -1f..1f,
                 startLabel = stringResource(R.string.left),
                 endLabel = stringResource(R.string.right),
-                independent = true,
             )
-
-            StyledSlider(
-                label = stringResource(R.string.tone),
+            AndpopSliderRow(
+                title = stringResource(R.string.tone),
+                valueText = toneText,
+                value = tone.floatValue,
+                onValueChange = { tone.floatValue = it },
                 valueRange = -1f..1f,
-                value = toneSliderValue.floatValue,
-                onValueChange = {
-                    toneSliderValue.floatValue = it
-                },
                 startLabel = stringResource(R.string.darker),
                 endLabel = stringResource(R.string.brighter),
-                independent = true,
             )
-
-            StyledSlider(
-                label = stringResource(R.string.ambient_noise_reduction),
+            AndpopSliderRow(
+                title = stringResource(R.string.ambient_noise_reduction),
+                valueText = stringResource(R.string.andpop_percent_value, nrPercent),
+                value = ambientNoiseReduction.floatValue,
+                onValueChange = { ambientNoiseReduction.floatValue = it },
                 valueRange = 0f..1f,
-                value = ambientNoiseReductionSliderValue.floatValue,
-                onValueChange = {
-                    ambientNoiseReductionSliderValue.floatValue = it
-                },
                 startLabel = stringResource(R.string.less),
                 endLabel = stringResource(R.string.more),
-                independent = true,
             )
-
-            StyledToggle(
-                label = stringResource(R.string.conversation_boost),
-                checked = conversationBoostEnabled.value,
-                description = stringResource(R.string.conversation_boost_description),
-                onCheckedChange = { conversationBoostEnabled.value = it }
-            )
-
-            Text(
-                text = stringResource(R.string.equalizer),
-                style = TextStyle(
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = textColor.copy(alpha = 0.6f),
-                    fontFamily = FontFamily.SansSerif
-                ),
-                modifier = Modifier.padding(16.dp, bottom = 4.dp)
-            )
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(backgroundColor, RoundedCornerShape(28.dp))
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                for (i in 0 until 8) {
-                    val eqValue = remember(eq.value[i]) { mutableFloatStateOf(eq.value[i]) }
-                    Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(38.dp)
-                    ) {
-                        Text(
-                            text = String.format("%.2f", eqValue.floatValue),
-                            fontSize = 12.sp,
-                            color = textColor,
-                            modifier = Modifier.padding(bottom = 4.dp)
-                        )
-
-                        Slider(
-                            value = eqValue.floatValue,
-                            onValueChange = { newVal ->
-                                eqValue.floatValue = newVal
-                                val newEQ = eq.value.copyOf()
-                                newEQ[i] = eqValue.floatValue
-                                eq.value = newEQ
-                            },
-                            valueRange = 0f..100f,
-                            modifier = Modifier
-                                .fillMaxWidth(0.9f)
-                                .height(36.dp),
-                            colors = SliderDefaults.colors(
-                                thumbColor = thumbColor,
-                                activeTrackColor = activeTrackColor,
-                                inactiveTrackColor = trackColor
-                            ),
-                            thumb = {
-                                Box(
-                                    modifier = Modifier
-                                        .size(24.dp)
-                                        .shadow(4.dp, CircleShape)
-                                        .background(thumbColor, CircleShape)
-                                )
-                            },
-                            track = {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(12.dp),
-                                    contentAlignment = Alignment.CenterStart
-                                )
-                                {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(4.dp)
-                                            .background(trackColor, RoundedCornerShape(4.dp))
-                                    )
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth(eqValue.floatValue / 100f)
-                                            .height(4.dp)
-                                            .background(
-                                                activeTrackColor,
-                                                RoundedCornerShape(4.dp)
-                                            )
-                                    )
-                                }
-                            }
-                        )
-
-                        Text(
-                            text = stringResource(R.string.band_label, i + 1),
-                            fontSize = 12.sp,
-                            color = textColor,
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
         }
 
-        Spacer(modifier = Modifier.height(bottomPadding))
+        Spacer(Modifier.height(12.dp))
+
+        AndpopGroup {
+            row { shape ->
+                AndpopSwitchRow(
+                    shape = shape,
+                    title = stringResource(R.string.conversation_boost),
+                    supporting = stringResource(R.string.andpop_conversation_boost_desc),
+                    checked = conversationBoost.value,
+                    onCheckedChange = { conversationBoost.value = it },
+                    icon = AndpopIcons.Chat,
+                )
+            }
+        }
+
+        AndpopSectionHeader(stringResource(R.string.equalizer))
+        AndpopCard {
+            for (i in 0 until 8) {
+                AndpopSliderRow(
+                    title = stringResource(R.string.band_label, i + 1),
+                    valueText = stringResource(R.string.andpop_percent_value, eq.value[i].roundToInt().coerceIn(0, 100)),
+                    value = eq.value[i],
+                    onValueChange = { newVal ->
+                        val updated = eq.value.copyOf()
+                        updated[i] = newVal
+                        eq.value = updated
+                    },
+                    valueRange = 0f..100f,
+                )
+            }
+        }
     }
 }

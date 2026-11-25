@@ -68,9 +68,10 @@ import me.kavishdevar.librepods.bluetooth.ATTHandles
 import me.kavishdevar.librepods.data.HearingAidSettings
 import me.kavishdevar.librepods.data.parseHearingAidSettingsResponse
 import me.kavishdevar.librepods.data.sendHearingAidSettings
-import me.kavishdevar.librepods.presentation.theme.DesignSystem
+import me.kavishdevar.librepods.presentation.components.AndpopPageHeader
+import me.kavishdevar.librepods.presentation.theme.AndpopType
 import me.kavishdevar.librepods.presentation.theme.LibrePodsTheme
-import me.kavishdevar.librepods.presentation.theme.LocalDesignSystem
+import me.kavishdevar.librepods.presentation.theme.LocalAndpopPalette
 import me.kavishdevar.librepods.presentation.viewmodel.AirPodsUiState
 import me.kavishdevar.librepods.presentation.viewmodel.AirPodsViewModel
 import me.kavishdevar.librepods.presentation.viewmodel.demoState
@@ -80,19 +81,17 @@ private const val TAG = "UpdateHearingTestScreen"
 @Composable
 fun UpdateHearingTestRoute(viewModel: AirPodsViewModel) {
     val state by viewModel.uiState.collectAsState()
-    val m3eEnabled = LocalDesignSystem.current == DesignSystem.Material
-    val topPadding = if (m3eEnabled) 0.dp else WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 84.dp
-    val bottomPadding = if (m3eEnabled) 0.dp else WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 12.dp
+    val palette = LocalAndpopPalette.current
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .background(palette.bg)
     ) {
         UpdateHearingTestScreen(
             state = state,
-            topPadding = topPadding,
-            bottomPadding = bottomPadding,
+            topPadding = 0.dp,
+            bottomPadding = 24.dp,
             setATTCharacteristicValue = viewModel::setATTCharacteristicValue
         )
     }
@@ -106,19 +105,22 @@ fun UpdateHearingTestScreen(
     setATTCharacteristicValue: (ATTHandles, ByteArray) -> Unit
 ) {
     val verticalScrollState = rememberScrollState()
+    val palette = LocalAndpopPalette.current
 
     Column(
         modifier = Modifier
             .verticalScroll(verticalScrollState)
             .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(topPadding))
+        AndpopPageHeader(title = stringResource(R.string.update_hearing_test))
 
         Text(
             text = stringResource(R.string.hearing_test_value_instruction),
-            style = MaterialTheme.typography.labelMedium,
+            style = AndpopType.bodySmall,
+            color = palette.on2,
             textAlign = TextAlign.Center,
         )
         val tone = rememberSaveable { mutableFloatStateOf(0.5f) }

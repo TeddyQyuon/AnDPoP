@@ -18,226 +18,170 @@
 
 package me.kavishdevar.librepods.presentation.screens
 
-import android.annotation.SuppressLint
 import android.util.Log
-import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.kyant.backdrop.backdrops.layerBackdrop
-import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import me.kavishdevar.librepods.R
 import me.kavishdevar.librepods.bluetooth.AACPManager
 import me.kavishdevar.librepods.data.parseTransparencySettingsResponse
 import me.kavishdevar.librepods.data.sendTransparencySettings
-import me.kavishdevar.librepods.presentation.components.ConfirmationDialog
-import me.kavishdevar.librepods.presentation.components.StyledList
-import me.kavishdevar.librepods.presentation.components.StyledListItem
-import me.kavishdevar.librepods.presentation.components.StyledToggle
-import me.kavishdevar.librepods.presentation.theme.DesignSystem
-import me.kavishdevar.librepods.presentation.theme.LocalDesignSystem
+import me.kavishdevar.librepods.presentation.components.AndpopDetailPage
+import me.kavishdevar.librepods.presentation.components.AndpopFootnote
+import me.kavishdevar.librepods.presentation.components.AndpopGroup
+import me.kavishdevar.librepods.presentation.components.AndpopRow
+import me.kavishdevar.librepods.presentation.components.AndpopSwitchRow
+import me.kavishdevar.librepods.presentation.theme.AndpopIcons
+import me.kavishdevar.librepods.presentation.theme.AndpopType
+import me.kavishdevar.librepods.presentation.theme.LocalAndpopPalette
 import me.kavishdevar.librepods.presentation.viewmodel.AirPodsViewModel
 import kotlin.io.encoding.ExperimentalEncodingApi
 
-private const val TAG = "AccessibilitySettings"
+private const val TAG = "HearingAidScreen"
 
-@SuppressLint("DefaultLocale")
 @ExperimentalHazeMaterialsApi
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalEncodingApi::class)
+@OptIn(ExperimentalEncodingApi::class)
 @Composable
-fun HearingAidScreen(viewModel: AirPodsViewModel, onNavigateHearingAidAdjustments: () -> Unit, onNavigateHearingTest: () -> Unit) {
-    val verticalScrollState  = rememberScrollState()
-    val backdrop = rememberLayerBackdrop()
-
-    val showDialog = remember { mutableStateOf(false) }
-    val initialLoad = remember { mutableStateOf(true) }
-
+fun HearingAidScreen(
+    viewModel: AirPodsViewModel,
+    onNavigateHearingAidAdjustments: () -> Unit,
+    onNavigateHearingTest: () -> Unit,
+) {
+    val palette = LocalAndpopPalette.current
     val state by viewModel.uiState.collectAsState()
+    val scope = rememberCoroutineScope()
 
-    val hearingAidEnabled = remember {
-        val aidStatus = state.controlStates[AACPManager.Companion.ControlCommandIdentifiers.HEARING_AID]
-        val assistStatus = state.controlStates[AACPManager.Companion.ControlCommandIdentifiers.HEARING_ASSIST_CONFIG]
-        mutableStateOf((aidStatus?.getOrNull(1) == 0x01.toByte()) && (assistStatus?.getOrNull(0) == 0x01.toByte()))
+    val reportedEnabled =
+        (state.controlStates[AACPManager.Companion.ControlCommandIdentifiers.HEARING_AID]?.getOrNull(1) == 0x01.toByte()) &&
+            (state.controlStates[AACPManager.Companion.ControlCommandIdentifiers.HEARING_ASSIST_CONFIG]?.getOrNull(0) == 0x01.toByte())
+
+    var hearingAidEnabled by rememberSaveable { mutableStateOf(reportedEnabled) }
+    var showEnableDialog by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(reportedEnabled) {
+        hearingAidEnabled = reportedEnabled
     }
 
-
-    val m3eEnabled = LocalDesignSystem.current == DesignSystem.Material
-    val topPadding = if (m3eEnabled) 0.dp else WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 84.dp
-    val bottomPadding = if (m3eEnabled) 0.dp else WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 12.dp
-
-    Column(
-        modifier = Modifier
-            .layerBackdrop(backdrop)
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surfaceContainer)
-            .verticalScroll(verticalScrollState)
-            .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+    AndpopDetailPage(
+        title = stringResource(R.string.hearing_aid),
+        subtitle = stringResource(R.string.hearing_aid_description),
     ) {
-        Spacer(modifier = Modifier.height(topPadding))
-
-//            val mediaAssistEnabled = remember { mutableStateOf(false) }
-//            val adjustMediaEnabled = remember { mutableStateOf(false) }
-//            val adjustPhoneEnabled = remember { mutableStateOf(false) }
-
-        LaunchedEffect(hearingAidEnabled.value) {
-            if (hearingAidEnabled.value && !initialLoad.value) {
-                showDialog.value = true
-            } else if (!hearingAidEnabled.value && !initialLoad.value) {
-                viewModel.setControlCommandValue(AACPManager.Companion.ControlCommandIdentifiers.HEARING_AID, byteArrayOf(0x01, 0x02))
-                viewModel.setControlCommandByte(AACPManager.Companion.ControlCommandIdentifiers.HEARING_ASSIST_CONFIG, 0x02.toByte())
-                hearingAidEnabled.value = false
+        AndpopGroup {
+            row { shape ->
+                AndpopSwitchRow(
+                    shape = shape,
+                    title = stringResource(R.string.hearing_aid),
+                    checked = hearingAidEnabled,
+                    onCheckedChange = { checked ->
+                        if (checked) {
+                            showEnableDialog = true
+                        } else {
+                            hearingAidEnabled = false
+                            viewModel.setControlCommandValue(
+                                AACPManager.Companion.ControlCommandIdentifiers.HEARING_AID,
+                                byteArrayOf(0x01, 0x02),
+                            )
+                            viewModel.setControlCommandByte(
+                                AACPManager.Companion.ControlCommandIdentifiers.HEARING_ASSIST_CONFIG,
+                                0x02.toByte(),
+                            )
+                        }
+                    },
+                    icon = AndpopIcons.Hearing,
+                )
             }
-            initialLoad.value = false
+            row { shape ->
+                AndpopRow(
+                    shape = shape,
+                    title = stringResource(R.string.adjustments),
+                    supporting = stringResource(R.string.andpop_hearing_adjust_desc),
+                    icon = AndpopIcons.Tune,
+                    onClick = onNavigateHearingAidAdjustments,
+                )
+            }
         }
 
-//            fun onAdjustPhoneChange(value: Boolean) {
-//                // TODO
-//            }
+        Spacer(Modifier.height(14.dp))
 
-//            fun onAdjustMediaChange(value: Boolean) {
-//                // TODO
-//            }
-
-        StyledList (title = stringResource(R.string.hearing_aid)) {
-            StyledToggle(
-                label = stringResource(R.string.hearing_aid),
-                checked = hearingAidEnabled.value,
-                onCheckedChange = { hearingAidEnabled.value = it },
-            )
-            StyledListItem(
-                name = stringResource(R.string.adjustments),
-                onClick = onNavigateHearingAidAdjustments,
-            )
+        AndpopGroup {
+            row { shape ->
+                AndpopRow(
+                    shape = shape,
+                    title = stringResource(R.string.update_hearing_test),
+                    supporting = stringResource(R.string.andpop_hearing_test_desc),
+                    icon = AndpopIcons.Document,
+                    onClick = onNavigateHearingTest,
+                )
+            }
         }
 
-        Text(
-            text = stringResource(R.string.hearing_aid_description),
-            style = TextStyle(
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Light,
-                color = (if (isSystemInDarkTheme()) Color.White else Color.Black).copy(alpha = 0.6f),
-                fontFamily = FontFamily.SansSerif
-            ),
-            modifier = Modifier.padding(horizontal = 16.dp)
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-
-        StyledListItem(
-            name = stringResource(R.string.update_hearing_test),
-            onClick = onNavigateHearingTest,
-        )
-
-        // not implemented yet
-
-        // StyledToggle(
-        //     titleRes = stringResource(R.string.media_assist),
-        //     label = stringResource(R.string.media_assist),
-        //     checkedState = mediaAssistEnabled,
-        //     independent = true,
-        //     descriptionRes = stringResource(R.string.media_assist_description)
-        // )
-
-        // Spacer(modifier = Modifier.height(8.dp))
-
-        // Column (
-        //     modifier = Modifier
-        //         .fillMaxWidth()
-        //         .background(backgroundColor, RoundedCornerShape(28.dp))
-        // ) {
-        //     StyledToggle(
-        //         label = stringResource(R.string.adjust_media),
-        //         checkedState = adjustMediaEnabled,
-        //         onCheckedChange = { onAdjustMediaChange(it) },
-        //         independent = false
-        //     )
-        //     HorizontalDivider(
-        //         thickness = 1.dp,
-        //         color = Color(0x40888888),
-        //         modifier = Modifier
-        //             .padding(horizontal = 12.dp)
-        //     )
-
-        //     StyledToggle(
-        //         label = stringResource(R.string.adjust_calls),
-        //         checkedState = adjustPhoneEnabled,
-        //         onCheckedChange = { onAdjustPhoneChange(it) },
-        //         independent = false
-        //     )
-        // }
-        Spacer(modifier = Modifier.height(bottomPadding))
+        AndpopFootnote(stringResource(R.string.feature_availability_disclaimer))
     }
 
-    ConfirmationDialog(
-        showDialog = showDialog,
-        title = "Enable Hearing Aid",
-        message = "Enabling Hearing Aid will disable Headphone Accommodation and Customized Transparency Mode.",
-        confirmText = "Enable",
-        dismissText = "Cancel",
-        onConfirm = {
-            showDialog.value = false
-            val enrolled = state.controlStates[AACPManager.Companion.ControlCommandIdentifiers.HEARING_AID]?.getOrNull(0) == 0x01.toByte()
-            if (!enrolled) {
-                viewModel.setControlCommandValue(AACPManager.Companion.ControlCommandIdentifiers.HEARING_AID, byteArrayOf(0x01, 0x01))
-            } else {
-                viewModel.setControlCommandValue(AACPManager.Companion.ControlCommandIdentifiers.HEARING_AID, byteArrayOf(0x01, 0x01))
-            }
-            viewModel.setControlCommandByte(AACPManager.Companion.ControlCommandIdentifiers.HEARING_ASSIST_CONFIG, 0x01.toByte())
-            hearingAidEnabled.value = true
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    if (state.hearingAidData.isEmpty()) {
-                        Log.w(TAG, "read failed")
-                        return@launch
-                    }
-                    val parsed = parseTransparencySettingsResponse(state.hearingAidData)
-                    if (parsed == null) {
-                        Log.w(TAG, "transparency parse failed")
-                        return@launch
-                    }
-                    val disabledSettings = parsed.copy(enabled = false)
-                    sendTransparencySettings(viewModel::setATTCharacteristicValue, disabledSettings)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error disabling transparency: ${e.message}")
+    if (showEnableDialog) {
+        AlertDialog(
+            onDismissRequest = { showEnableDialog = false },
+            containerColor = palette.s2,
+            icon = { Icon(AndpopIcons.Hearing, null, tint = palette.pri) },
+            title = {
+                Text(stringResource(R.string.andpop_hearing_enable_title), color = palette.on, style = AndpopType.title)
+            },
+            text = {
+                Text(stringResource(R.string.andpop_hearing_enable_body), color = palette.on2, style = AndpopType.bodySmall)
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showEnableDialog = false
+                        hearingAidEnabled = true
+                        viewModel.setControlCommandValue(
+                            AACPManager.Companion.ControlCommandIdentifiers.HEARING_AID,
+                            byteArrayOf(0x01, 0x01),
+                        )
+                        viewModel.setControlCommandByte(
+                            AACPManager.Companion.ControlCommandIdentifiers.HEARING_ASSIST_CONFIG,
+                            0x01.toByte(),
+                        )
+                        scope.launch(Dispatchers.IO) {
+                            try {
+                                val data = state.hearingAidData
+                                if (data.isEmpty()) {
+                                    Log.w(TAG, "hearingAidData empty when disabling transparency")
+                                    return@launch
+                                }
+                                val parsed = parseTransparencySettingsResponse(data) ?: return@launch
+                                sendTransparencySettings(viewModel::setATTCharacteristicValue, parsed.copy(enabled = false))
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Error disabling transparency: ${e.message}")
+                            }
+                        }
+                    },
+                ) {
+                    Text(stringResource(R.string.andpop_enable), color = palette.pri)
                 }
-            }
-        },
-        onDismiss = {
-            hearingAidEnabled.value = false
-            showDialog.value = false
-        },
-         backdrop = backdrop
-    )
+            },
+            dismissButton = {
+                TextButton(onClick = { showEnableDialog = false }) {
+                    Text(stringResource(android.R.string.cancel), color = palette.on2)
+                }
+            },
+        )
+    }
 }

@@ -25,8 +25,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.res.stringResource
 import me.kavishdevar.librepods.R
-import me.kavishdevar.librepods.presentation.theme.DesignSystem
-import me.kavishdevar.librepods.presentation.theme.LocalDesignSystem
 import kotlin.io.encoding.ExperimentalEncodingApi
 
 @Composable
@@ -37,19 +35,11 @@ fun AboutCard(
     version: String?,
     navigateToVersion: () -> Unit
 ) {
-    val serialNumbers = when (LocalDesignSystem.current) {
-        DesignSystem.Apple -> listOf(
-            serialNumbers[0],
-            "􀀛 ${serialNumbers[1]}",
-            "􀀧 ${serialNumbers[2]}"
-        )
-
-        DesignSystem.Material -> listOf(
-            serialNumbers[0],
-            stringResource(R.string.left) + " " + serialNumbers[1],
-            stringResource(R.string.right) + " " + serialNumbers[2],
-        )
-    }
+    val labels = listOf(
+        serialNumbers[0],
+        "${stringResource(R.string.left)} ${serialNumbers[1]}",
+        "${stringResource(R.string.right)} ${serialNumbers[2]}",
+    )
 
     val serialNumber = remember { mutableIntStateOf(0) }
 
@@ -66,8 +56,8 @@ fun AboutCard(
 
         StyledListItem (
             name = stringResource(R.string.serial_number),
-            description = serialNumbers[serialNumber.intValue],
-            onClick = { serialNumber.intValue = (serialNumber.intValue + 1) % serialNumbers.size }
+            description = labels[serialNumber.intValue],
+            onClick = { serialNumber.intValue = (serialNumber.intValue + 1) % labels.size }
         )
 
         StyledListItem(

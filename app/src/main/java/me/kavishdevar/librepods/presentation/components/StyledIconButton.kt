@@ -430,7 +430,7 @@ fun StyledIconButtonPreview() {
             RoundedCornerShape(28.dp)
         ), contentAlignment = Alignment.Center) {
         StyledIconButton(
-            icon = "􀍟",
+            icon = "S",
             onClick = { }
         )
     }
