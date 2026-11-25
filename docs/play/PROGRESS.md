@@ -1,7 +1,7 @@
 # AnDPoP Play Release Progress
 
 **Last updated:** 2026-11-25  
-**Active branch:** `feature/play-phase-1-ui` (ready for `feature/play-phase-2-policy`)  
+**Active branch:** `feature/play-phase-2-policy` (ready for `feature/play-phase-3-quality`)  
 **Target comparison remote:** `https://github.com/TeddyQyuon/AndPoP_V_1.6.0.git`
 
 ---
@@ -22,12 +22,12 @@
   - [x] 1.8 System surfaces: single informative connected notification + silent deferred FGS notification (Decision 6), Jetpack Glance 1.1.1 widgets (Decision 7), Compose `PopupWindow` & `IslandWindow` overlays, shared `ListeningModeCycle` QS tile & themed QS dialog
   - [x] 1.9 Large-screen two-pane layout (`>= 840 dp`)
   - [x] 1.10 Updated implementation status table in `docs/v2-ui/README.md`
-- [ ] **Phase 2: Play Build & Policy Compliance** (`feature/play-phase-2-policy`)
-  - [ ] `play` flavor (`PLAY_BUILD = true`), clean `src/foss` vs `src/play` Xposed split, reviewer `"Try demo mode"` entry
-  - [ ] Play manifest (`tools:node="remove"` for privileged permissions), exported hardening, API 37 `disconnect()` guard, `network_security_config.xml`
-  - [ ] `PRIVACY_POLICY.md`, `DATA_SAFETY.md`
-  - [ ] Localization cleanup (`values-it` `app_name`, Linux/LibrePods scrub across 12 locales, `MissingTranslation` suppressions)
-  - [ ] Backup rules exclusions (`settings.xml`, `packet_logs.xml`, `logs/`) & ProGuard/R8 release hardening
+- [x] **Phase 2: Play Build & Policy Compliance** (`feature/play-phase-2-policy`)
+  - [x] Added `play` flavor (`PLAY_BUILD = true`, `applicationId = "app.andpop.android"`) and clean `src/foss` vs `src/play` Xposed source-set split excluding `libl2c_fcr_hook.so` and `META-INF/xposed/*`
+  - [x] Hardened manifest (`tools:node="remove"` for privileged permissions in `play`, removed unused legacy `BLUETOOTH`/`BLUETOOTH_ADMIN`/`BLUETOOTH_ADVERTISE`, `AirPodsService` `exported="false"`, `RECEIVER_NOT_EXPORTED`, API 37 `disconnect()` guard, `BootReceiver` guard, `network_security_config.xml`)
+  - [x] Drafted [PRIVACY_POLICY.md](PRIVACY_POLICY.md) (with web deletion HTML) and [DATA_SAFETY.md](DATA_SAFETY.md); updated [AUDIT.md](AUDIT.md) with permission justification & 12-locale translation plan
+  - [x] Scrubbed localization branding (`values-it` `app_name`, `Linux` remote island strings across 13 locales, `ja`/`ko` LibrePods strings, `MissingTranslation` suppressions on `andpop_*` files)
+  - [x] Excluded `settings.xml`, `packet_logs.xml`, and `logs/` from `backup_rules.xml` & `data_extraction_rules.xml`; hardened `proguard-rules.pro` (`NativeBridge` keep + stripping `Log.v/d/i`)
 - [ ] **Phase 3: Quality** (`feature/play-phase-3-quality`)
   - [ ] Zero lint errors on `:app:lintFossDebug` & `:app:lintPlayRelease`
   - [ ] Existing 15 + new Play readiness instrumented tests passing on `Pixel_8_Pro` emulator for both `foss` and `play`
@@ -60,10 +60,10 @@
 
 ---
 
-## Last Build & Test Results (Phase 1 Complete)
-- `:app:assembleFossDebug` — **PASS** (`BUILD SUCCESSFUL in 1m 54s`, with bundled `roboto_flex.ttf`, Jetpack Glance `1.1.1`, Compose overlays, and notification/QS system surfaces)
+## Last Build & Test Results (Phase 2 Complete)
+- `:app:assembleFossDebug`, `:app:assemblePlayDebug`, `:app:assembleFossRelease`, `:app:assemblePlayRelease` — **PASS** (`BUILD SUCCESSFUL in 4m 26s`)
 
 ---
 
 ## Exact Next Step
-Branch `feature/play-phase-2-policy` from `feature/play-phase-1-ui` and execute **Phase 2** (`play` flavor + `src/foss`/`src/play` Xposed split, manifest/API-37/BootReceiver hardening, backup exclusions, R8 rules, localization scrub, `PRIVACY_POLICY.md`, and `DATA_SAFETY.md`).
+Branch `feature/play-phase-3-quality` from `feature/play-phase-2-policy` and run `:app:lintFossDebug :app:lintPlayRelease`, add `PlayReadinessRegressionTest.kt`, boot `Pixel_8_Pro`, run full instrumented suites on both flavors, and smoke-test the R8 Play release APK.

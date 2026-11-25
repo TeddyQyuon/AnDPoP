@@ -177,3 +177,26 @@ A second pass checked the first audit against the code and current Android and P
 | Root log capture | `LogCollector` ran `su -c logcat` and `killall com.android.bluetooth`. | Root features are not allowed in the Play build. | Replaced by a non-root recorder that captures only AnDPoP's own process log. |
 | Billing leftovers | `observeBilling()` in two view models disabled Conversation Awareness and head gestures whenever the billing provider reported "not premium"; a `PLAY_BUILD` branch in `loadSharedPreferences()` could expire "premium". | Would have broken features in a Play build. | Removed with the billing code (Phase 1). |
 | Accessibility screen side effect | Opening Accessibility sent a phone/media EQ packet with default values every time, although the controls for it are commented out. | Could reset an EQ setting on the AirPods. | Removed with the screen rewrite. |
+
+
+---
+
+## 11. Play Flavor Permissions & Localization Plan (Phase 2)
+
+### 11.1 Play Manifest Permission Justification (`app/src/play/AndroidManifest.xml`)
+The `play` flavor removes legacy pre-API-31 Bluetooth permissions from `main` (`BLUETOOTH`, `BLUETOOTH_ADMIN`, `BLUETOOTH_ADVERTISE`) and removes all four `Signature|Privileged` permissions via `tools:node="remove"` (`BLUETOOTH_PRIVILEGED`, `MODIFY_PHONE_STATE`, `LOCAL_MAC_ADDRESS`, `INTERACT_ACROSS_USERS`).
+
+Kept permissions in `play`:
+1. `BLUETOOTH_CONNECT`, `BLUETOOTH_SCAN` (`neverForLocation`): Core AirPods L2CAP AACP connection and local BLE proximity battery monitoring.
+2. `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_CONNECTED_DEVICE`: Active companion headset status monitoring while AirPods are connected (`connectedDevice`).
+3. `POST_NOTIFICATIONS`: Optional active battery/mode status notification + silent deferred foreground notification.
+4. `RECEIVE_BOOT_COMPLETED`: Restores background monitoring only after onboarding is complete and `BLUETOOTH_CONNECT` is granted.
+5. `SYSTEM_ALERT_WINDOW`: Optional user-enabled connection popup & Dynamic Island overlays.
+6. `READ_PHONE_STATE`, `ANSWER_PHONE_CALLS`: Optional call-ringing detection & nod/shake call controls when user grants Phone permission in context.
+7. `MODIFY_AUDIO_SETTINGS`: Conversation Awareness media volume attenuation (`AudioManager`).
+8. `INTERNET`: Optional HTTPS account sign-in/recovery/deletion (`SupabaseAccountClient`, `cleartextTrafficPermitted="false"`).
+
+### 11.2 12-Locale Translation Plan (`andpop_*` Strings)
+- Inherited locales: `de`, `es`, `fr`, `it`, `ja`, `ko`, `pt`, `tr`, `uk`, `vi`, `zh-rCN`, `zh-rTW`.
+- Phase 2 fixed the Italian `app_name` `"LibrePods"` override, updated all 13 `island_*_remote_text` strings away from `"Linux"`, replaced accidental `"LibrePods"` strings in `ja`/`ko`, and added `tools:ignore="MissingTranslation"` on `andpop_strings.xml`, `andpop_dashboard_status.xml`, and `andpop_v2_strings.xml`.
+- **Pre-production localization rollout:** Because Android automatically falls back to default `values/` English for untranslated `andpop_*` keys while keeping translated device strings, ship v2.0.0 closed testing in English for new 2.0 copy, then crowd-translate/verify `andpop_v2_strings.xml` (~180 user-facing strings) into the 12 supported locales before general production rollout, keeping `"AirPods"` and `"AnDPoP"` untranslated.
