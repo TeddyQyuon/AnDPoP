@@ -135,7 +135,8 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
-    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.test:runner:1.7.0")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
     debugImplementation(libs.androidx.compose.ui.tooling)
     implementation(libs.androidx.compose.foundation.layout)
@@ -152,4 +153,17 @@ dependencies {
     implementation(libs.androidx.navigationevent)
     implementation(libs.androidx.glance.appwidget)
     implementation(libs.androidx.glance.material3)
+}
+
+configurations.matching { it.name.contains("AndroidTest") }.configureEach {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "androidx.concurrent" &&
+            (requested.name == "concurrent-futures" || requested.name == "concurrent-futures-ktx")
+        ) {
+            useVersion("1.1.0")
+        }
+        if (requested.group == "com.google.errorprone" && requested.name == "error_prone_annotations") {
+            useVersion("2.15.0")
+        }
+    }
 }

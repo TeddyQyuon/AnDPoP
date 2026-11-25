@@ -25,12 +25,15 @@ import me.kavishdevar.librepods.data.BatteryStatus
 import me.kavishdevar.librepods.data.CaseBatteryReading
 import me.kavishdevar.librepods.presentation.screens.AppSettingsScreen
 import me.kavishdevar.librepods.presentation.screens.DashboardContent
+import me.kavishdevar.librepods.presentation.screens.EqualizerScreen
+import me.kavishdevar.librepods.presentation.screens.LongPress
 import me.kavishdevar.librepods.presentation.screens.onboarding.OnboardingScreen
 import me.kavishdevar.librepods.presentation.theme.AndpopAppearance
 import me.kavishdevar.librepods.presentation.theme.AndpopTint
 import me.kavishdevar.librepods.presentation.theme.LibrePodsTheme
 import me.kavishdevar.librepods.presentation.theme.LocalAndpopAppearance
 import me.kavishdevar.librepods.presentation.viewmodel.AirPodsUiState
+import me.kavishdevar.librepods.presentation.viewmodel.AirPodsViewModel
 import me.kavishdevar.librepods.presentation.viewmodel.demoInstance
 import me.kavishdevar.librepods.presentation.viewmodel.demoState
 import org.junit.Rule
@@ -167,5 +170,25 @@ class ScreenshotTour {
     @Test fun onboardingPages() {
         compose.setContent { OnboardingScreen {} }
         save("app-12-onboarding-welcome")
+    }
+
+    @Test fun detailScreensForStore() {
+        var page by mutableStateOf(0)
+        val demoModel = AirPodsViewModel().apply { setDemoMode(true) }
+        compose.setContent {
+            LibrePodsTheme(darkTheme = true, m3eEnabled = true, tint = AndpopTint.Glacier) {
+                when (page) {
+                    0 -> LongPress(viewModel = demoModel, name = "Left")
+                    else -> EqualizerScreen(
+                        state = demoState,
+                        setCustomEqEnabled = {},
+                        setCustomEq = { _, _, _ -> },
+                    )
+                }
+            }
+        }
+        save("app-13-press-and-hold-left")
+        compose.runOnIdle { page = 1 }
+        save("app-14-equalizer-custom")
     }
 }

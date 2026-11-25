@@ -1,7 +1,7 @@
 # AnDPoP Play Release Progress
 
 **Last updated:** 2026-11-25  
-**Active branch:** `feature/play-phase-2-policy` (ready for `feature/play-phase-3-quality`)  
+**Active branch:** `feature/play-phase-3-quality` (ready for `feature/play-phase-4-signing`)  
 **Target comparison remote:** `https://github.com/TeddyQyuon/AndPoP_V_1.6.0.git`
 
 ---
@@ -28,10 +28,10 @@
   - [x] Drafted [PRIVACY_POLICY.md](PRIVACY_POLICY.md) (with web deletion HTML) and [DATA_SAFETY.md](DATA_SAFETY.md); updated [AUDIT.md](AUDIT.md) with permission justification & 12-locale translation plan
   - [x] Scrubbed localization branding (`values-it` `app_name`, `Linux` remote island strings across 13 locales, `ja`/`ko` LibrePods strings, `MissingTranslation` suppressions on `andpop_*` files)
   - [x] Excluded `settings.xml`, `packet_logs.xml`, and `logs/` from `backup_rules.xml` & `data_extraction_rules.xml`; hardened `proguard-rules.pro` (`NativeBridge` keep + stripping `Log.v/d/i`)
-- [ ] **Phase 3: Quality** (`feature/play-phase-3-quality`)
-  - [ ] Zero lint errors on `:app:lintFossDebug` & `:app:lintPlayRelease`
-  - [ ] Existing 15 + new Play readiness instrumented tests passing on `Pixel_8_Pro` emulator for both `foss` and `play`
-  - [ ] R8 release APK smoke test + 200% font scale check + `DEVICE_TEST_PLAN.md`
+- [x] **Phase 3: Quality** (`feature/play-phase-3-quality`)
+  - [x] Zero lint errors on `:app:lintFossDebug` & `:app:lintPlayRelease` (fixed `LocalResources` in `AppSettingsScreen.kt`, explicit `setPackage` in `AirPodsService.kt`, and `tools:ignore` for `tools:node="remove"` entries in `app/src/play/AndroidManifest.xml`)
+  - [x] Existing 16 + 6 new Play readiness tests (`22/22` passed on `Pixel_8_Pro` API 37 for both `foss` and `play` with `espresso-core:3.7.0` / `runner:1.7.0` scoped to `androidTest`)
+  - [x] R8 `playRelease` smoke test passed (caught and fixed `RoomDatabase` `WorkDatabase_Impl.<init>()` stripping via `app/proguard-rules.pro`; verified `100%` and `200%` font scale renders with 0 crashes) + created [DEVICE_TEST_PLAN.md](DEVICE_TEST_PLAN.md)
 - [ ] **Phase 4: Signing & Release Bundle** (`feature/play-phase-4-signing`)
   - [ ] Updated `docs/ANDROID_RELEASE.md` (keytool, `local.properties`, Play App Signing, versionCode strategy)
   - [ ] Verified `:app:bundlePlayRelease` & `:app:bundleFossRelease` + 16 KB check
@@ -50,6 +50,7 @@
 | 2026-11-25 | Autonomous execution through Phases 0–6 authorized; bundle local `RobotoFlex-Regular.ttf` from Android Studio layoutlib (`OFL-1.1`), add Glance `1.1.1` for widgets, remove legacy `PurchaseScreen`/billing code | User prompt + Plan |
 | 2026-11-25 | Keep `applicationId = "app.andpop.android"` across both `foss` and `play` flavors; never commit secrets/keystores or alter `local.properties` | Plan / `AGENTS.md` |
 | 2026-11-25 | Push final verified work and branches only to `https://github.com/TeddyQyuon/AndPoP_V_1.6.0.git` (remote `antigravity`), never to `origin` | User prompt |
+| 2026-11-25 | Pin `espresso-core:3.7.0` and `runner:1.7.0` in `androidTestImplementation` (with `AndroidTest`-only `androidx.concurrent:1.1.0` & `error_prone_annotations:2.15.0` alignment) so instrumentation passes on API 37 without altering production APK dependencies | Execution plan |
 
 ---
 
@@ -60,10 +61,13 @@
 
 ---
 
-## Last Build & Test Results (Phase 2 Complete)
-- `:app:assembleFossDebug`, `:app:assemblePlayDebug`, `:app:assembleFossRelease`, `:app:assemblePlayRelease` — **PASS** (`BUILD SUCCESSFUL in 4m 26s`)
+## Last Build & Test Results (Phase 3 Complete)
+- `:app:lintFossDebug` & `:app:lintPlayRelease` — **PASS** (`0 errors`)
+- `:app:connectedFossDebugAndroidTest` — **PASS** (`22/22` tests on `Pixel_8_Pro(AVD) - 17`, 14 screenshot PNGs generated)
+- `:app:connectedPlayDebugAndroidTest` — **PASS** (`22/22` tests on `Pixel_8_Pro(AVD) - 17`, 14 screenshot PNGs generated)
+- `:app:assemblePlayRelease`, `:app:assembleFossRelease` — **PASS**; debug-signed R8 `playRelease` emulator smoke test (100% & 200% font scale) — **PASS** (`0` crashes)
 
 ---
 
 ## Exact Next Step
-Branch `feature/play-phase-3-quality` from `feature/play-phase-2-policy` and run `:app:lintFossDebug :app:lintPlayRelease`, add `PlayReadinessRegressionTest.kt`, boot `Pixel_8_Pro`, run full instrumented suites on both flavors, and smoke-test the R8 Play release APK.
+Branch `feature/play-phase-4-signing` from `feature/play-phase-3-quality`, update `docs/ANDROID_RELEASE.md`, build `:app:bundlePlayRelease` & `:app:bundleFossRelease`, and verify 16 KB page-size alignment and stripped Xposed/hook binaries.

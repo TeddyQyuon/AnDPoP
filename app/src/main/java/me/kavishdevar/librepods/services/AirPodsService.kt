@@ -2301,11 +2301,12 @@ class AirPodsService : Service(), SharedPreferences.OnSharedPreferenceChangeList
                 val uuid = ParcelUuid.fromString("74ec2172-0bad-4d01-8f77-997b2be0722a")
 
                 if (BluetoothDevice.ACTION_ACL_CONNECTED == action) {
-                    if (bluetoothDevice.uuids?.contains(uuid) == true) {
-                        val intent = Intent(AirPodsNotifications.AIRPODS_CONNECTION_DETECTED)
-                        intent.putExtra("name", name)
-                        intent.putExtra("device", bluetoothDevice)
-                        context?.sendBroadcast(intent)
+                    if (bluetoothDevice.uuids?.contains(uuid) == true && context != null) {
+                        val broadcastIntent = Intent(AirPodsNotifications.AIRPODS_CONNECTION_DETECTED)
+                        broadcastIntent.setPackage(context.packageName)
+                        broadcastIntent.putExtra("name", name)
+                        broadcastIntent.putExtra("device", bluetoothDevice)
+                        context.sendBroadcast(broadcastIntent)
                     } /* else {
                         bluetoothDevice.fetchUuidsWithSdp()
                     } */
@@ -2315,7 +2316,9 @@ class AirPodsService : Service(), SharedPreferences.OnSharedPreferenceChangeList
                     val matchedByMac = savedMac.isNotEmpty() && bluetoothDevice.address == savedMac
                     val matchedByUuid = bluetoothDevice.uuids?.contains(uuid) == true
                     if (matchedByUuid || matchedByMac) {
-                        val intent = Intent(AirPodsNotifications.AIRPODS_CONNECTION_DETECTED)
+                        val intent = Intent(AirPodsNotifications.AIRPODS_CONNECTION_DETECTED).apply {
+                            context?.packageName?.let(::setPackage)
+                        }
                         intent.putExtra("name", name)
                         intent.putExtra("device", bluetoothDevice)
                         context?.sendBroadcast(intent)

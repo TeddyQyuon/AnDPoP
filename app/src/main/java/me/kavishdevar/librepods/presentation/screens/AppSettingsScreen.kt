@@ -77,6 +77,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontFamily
@@ -123,6 +124,7 @@ fun AppSettingsScreen(
     navigateToDeveloperOptions: () -> Unit = {},
 ) {
     val context = LocalContext.current
+    val resources = LocalResources.current
     val palette = LocalAndpopPalette.current
     val state by viewModel.uiState.collectAsState()
     val prefs = remember { context.getSharedPreferences("settings", Context.MODE_PRIVATE) }
@@ -310,18 +312,18 @@ fun AppSettingsScreen(
                     onClick = if (!BuildConfig.PLAY_BUILD) {
                         {
                             if (devOptionsEnabled) {
-                                Toast.makeText(context, context.getString(R.string.andpop_developer_already_toast), Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, resources.getString(R.string.andpop_developer_already_toast), Toast.LENGTH_SHORT).show()
                             } else {
                                 devTapCount++
                                 if (devTapCount >= 7) {
                                     devTapCount = 0
                                     devOptionsEnabled = true
                                     prefs.edit { putBoolean("developer_options_enabled", true) }
-                                    Toast.makeText(context, context.getString(R.string.andpop_developer_enabled_toast), Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, resources.getString(R.string.andpop_developer_enabled_toast), Toast.LENGTH_SHORT).show()
                                 } else if (devTapCount >= 3) {
                                     Toast.makeText(
                                         context,
-                                        context.getString(R.string.andpop_developer_countdown_toast, 7 - devTapCount),
+                                        resources.getString(R.string.andpop_developer_countdown_toast, 7 - devTapCount),
                                         Toast.LENGTH_SHORT,
                                     ).show()
                                 }

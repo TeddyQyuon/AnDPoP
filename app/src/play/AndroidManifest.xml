@@ -5,15 +5,19 @@
     <!-- Privileged/system permissions are unavailable to Google Play apps. -->
     <uses-permission
         android:name="android.permission.BLUETOOTH_PRIVILEGED"
+        tools:ignore="ProtectedPermissions"
         tools:node="remove" />
     <uses-permission
         android:name="android.permission.MODIFY_PHONE_STATE"
+        tools:ignore="ProtectedPermissions,PermissionImpliesUnsupportedChromeOsHardware"
         tools:node="remove" />
     <uses-permission
         android:name="android.permission.LOCAL_MAC_ADDRESS"
+        tools:ignore="ProtectedPermissions"
         tools:node="remove" />
     <uses-permission
         android:name="android.permission.INTERACT_ACROSS_USERS"
+        tools:ignore="ProtectedPermissions"
         tools:node="remove" />
 
 </manifest>
