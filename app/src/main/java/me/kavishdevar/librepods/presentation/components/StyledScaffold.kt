@@ -20,6 +20,7 @@ package me.kavishdevar.librepods.presentation.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -54,12 +55,17 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -80,6 +86,7 @@ import dev.chrisbanes.haze.rememberHazeState
 import me.kavishdevar.librepods.R
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import me.kavishdevar.librepods.presentation.theme.AndpopIcons
 import me.kavishdevar.librepods.presentation.theme.AndpopType
 import me.kavishdevar.librepods.presentation.theme.DesignSystem
@@ -100,6 +107,7 @@ fun StyledScaffold(
 ) {
     val isDarkTheme = isSystemInDarkTheme()
     val hazeState = rememberHazeState(blurEnabled = true)
+    val largeTitles = remember { LargeTitleRegistry() }
 
     when (LocalDesignSystem.current) {
         DesignSystem.Material -> {
@@ -112,6 +120,11 @@ fun StyledScaffold(
                         enter = fadeIn() + slideInVertically(initialOffsetY = { -it }),
                         exit = fadeOut() + slideOutVertically(targetOffsetY = { -it })
                     ) {
+                        val titleAlpha by animateFloatAsState(
+                            if (largeTitles.largeTitleShowing) 0f else 1f,
+                            tween(220),
+                            label = "Top bar title",
+                        )
                         TopAppBar(
                             navigationIcon = {
                                 if (showBackButton) {
@@ -143,7 +156,10 @@ fun StyledScaffold(
                                         text = it,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
-                                        modifier = Modifier.padding(start = if (showBackButton) 8.dp else 12.dp, end = 12.dp),
+                                        modifier = Modifier
+                                            .padding(start = if (showBackButton) 8.dp else 12.dp, end = 12.dp)
+                                            .alpha(titleAlpha)
+                                            .then(if (titleAlpha < 0.5f) Modifier.clearAndSetSemantics {} else Modifier),
                                         style = AndpopType.titleSmall,
                                         color = LocalAndpopPalette.current.on,
                                     )
@@ -164,9 +180,12 @@ fun StyledScaffold(
                     modifier = modifier
                         .then(if (visible) Modifier.padding(paddingValues) else Modifier)
                         .fillMaxSize()
+                        .onGloballyPositioned { largeTitles.contentTop = it.positionInWindow().y }
                         .hazeSource(hazeState)
                 ) {
-                    content()
+                    CompositionLocalProvider(LocalLargeTitleRegistry provides largeTitles) {
+                        content()
+                    }
                 }
             }
         }

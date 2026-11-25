@@ -15,6 +15,7 @@ target_compile_options(bluetooth_socket PRIVATE
 target_link_options(bluetooth_socket PRIVATE
         -Wl,--strip-all
         -Wl,--gc-sections
+        -Wl,-z,max-page-size=16384
 )
 
 target_link_libraries(bluetooth_socket
@@ -54,4 +55,8 @@ target_compile_definitions(l2c_fcr_hook PRIVATE
 target_link_libraries(l2c_fcr_hook
         android
         log
+)
+
+target_link_options(l2c_fcr_hook PRIVATE
+        -Wl,-z,max-page-size=16384
 )

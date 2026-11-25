@@ -427,4 +427,79 @@ internal object AndpopIcons {
         Part("M6.2 17.8L17.8 6.2"),
         )
     }
+
+    val Bell: ImageVector by lazy {
+        icon(
+        "bell",
+        Part("M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15zM10 20.5h4"),
+        )
+    }
+
+    val SpeakerLow: ImageVector by lazy {
+        icon(
+        "speakerLo",
+        Part("M4.5 9.5h3l4-3.5v12l-4-3.5h-3z"),
+        Part("M15 10a3 3 0 0 1 0 4"),
+        )
+    }
+
+    val Eye: ImageVector by lazy {
+        icon(
+        "eye",
+        Part("M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"),
+        Part("M9,12a3,3 0 1,0 6,0a3,3 0 1,0 -6,0z"),
+        )
+    }
+
+    val EyeOff: ImageVector by lazy {
+        icon(
+        "eyeOff",
+        Part("M4 4l16 16M10 6a9.5 9.5 0 0 1 2-.5c6 0 9.5 6.5 9.5 6.5a17 17 0 0 1-2.7 3.6M6.4 7.6A16.6 16.6 0 0 0 2.5 12S6 18.5 12 18.5a9 9 0 0 0 4.2-1M9.9 10a3 3 0 0 0 4.1 4.1"),
+        )
+    }
+
+    val Play: ImageVector by lazy {
+        icon(
+        "play",
+        Part("M8 5.5v13l10.5-6.5z"),
+        )
+    }
+
+    val Stop: ImageVector by lazy {
+        icon(
+        "stop",
+        Part("M9,6.5H15A2.5,2.5 0 0 1 17.5,9V15A2.5,2.5 0 0 1 15,17.5H9A2.5,2.5 0 0 1 6.5,15V9A2.5,2.5 0 0 1 9,6.5Z"),
+        )
+    }
+
+    val Plus: ImageVector by lazy {
+        icon(
+        "plus",
+        Part("M12 5v14M5 12h14"),
+        )
+    }
+
+    val Minus: ImageVector by lazy {
+        icon(
+        "minus",
+        Part("M5 12h14"),
+        )
+    }
+
+    val CaseIcon: ImageVector by lazy {
+        icon(
+        "caseI",
+        Part("M8,6H16A4.5,4.5 0 0 1 20.5,10.5V14.5A4.5,4.5 0 0 1 16,19H8A4.5,4.5 0 0 1 3.5,14.5V10.5A4.5,4.5 0 0 1 8,6Z"),
+        Part("M3.8 10.5h16.4M12 14.2v.2"),
+        )
+    }
+
+    val Headphones: ImageVector by lazy {
+        icon(
+        "headphones",
+        Part("M4 14.5V12a8 8 0 0 1 16 0v2.5"),
+        Part("M5.5,13.5H6A2,2 0 0 1 8,15.5V18.5A2,2 0 0 1 6,20.5H5.5A2,2 0 0 1 3.5,18.5V15.5A2,2 0 0 1 5.5,13.5Z"),
+        Part("M18,13.5H18.5A2,2 0 0 1 20.5,15.5V18.5A2,2 0 0 1 18.5,20.5H18A2,2 0 0 1 16,18.5V15.5A2,2 0 0 1 18,13.5Z"),
+        )
+    }
 }
