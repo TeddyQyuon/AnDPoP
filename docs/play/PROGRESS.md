@@ -1,7 +1,7 @@
 # AnDPoP Play Release Progress
 
 **Last updated:** 2026-11-25  
-**Active branch:** `feature/play-phase-4-signing` (ready for `feature/play-phase-5-store`)  
+**Active branch:** `feature/play-phase-5-store` (ready for `feature/play-phase-6-handoff`)  
 **Target comparison remote:** `https://github.com/TeddyQyuon/AndPoP_V_1.6.0.git`
 
 ---
@@ -35,8 +35,10 @@
 - [x] **Phase 4: Signing & Release Bundle** (`feature/play-phase-4-signing`)
   - [x] Updated [ANDROID_RELEASE.md](../ANDROID_RELEASE.md) (`keytool` upload key outside repo, `local.properties` properties, Play App Signing, `:app:bundlePlayRelease` & `:app:bundleFossRelease`, `jarsigner`/`apksigner`, monotonic `versionCode`)
   - [x] Built `:app:bundlePlayRelease` (`9,752,358` bytes, unsigned pending user upload key) & `:app:bundleFossRelease` (`10,297,073` bytes); verified `0` Xposed entries, `0x4000` (16 KB) `LOAD` alignment via `llvm-readelf -l` on all 4 `.so` libraries in `app-play-release.aab`, and `zipalign -c -P 16 -v 4` `Verification successful` on both release APKs
-- [ ] **Phase 5: Store Listing & Graphics** (`feature/play-phase-5-store`)
-  - [ ] `docs/play/LISTING.md`, `docs/play/PLAY_CONSOLE.md`, `docs/play/graphics/` (512px icon, 1024x500 feature graphic, emulator phone screenshots)
+- [x] **Phase 5: Store Listing & Graphics** (`feature/play-phase-5-store`)
+  - [x] Refreshed `docs/v2-ui/app/app-01`..`12` reference screenshots from verified `foss` tour
+  - [x] Created [LISTING.md](LISTING.md) (`AnDPoP` 6/30, short 66/80, full 2,080/4,000, release notes 400/500, category, tags, contact placeholders) and [PLAY_CONSOLE.md](PLAY_CONSOLE.md) (all questionnaires, FGS video script, Health Apps medical-device policy & `PLAY_BUILD` Hearing Aid exclusion, L2CAP hidden-API risk note)
+  - [x] Generated and visually verified `docs/play/graphics/`: `icon-512.png` (`512x512`), `feature-graphic-1024x500.png` (`1024x500`), and 6 `1080x2340` phone screenshots (`phone-01`..`phone-06`) from real `play` tour captures
 - [ ] **Phase 6: Final Verification & Handoff** (`feature/play-phase-6-handoff`)
   - [ ] `docs/play/RELEASE_CHECKLIST.md`, full verification pass, clean commit & push to `https://github.com/TeddyQyuon/AndPoP_V_1.6.0.git`
 
@@ -72,4 +74,4 @@
 ---
 
 ## Exact Next Step
-Branch `feature/play-phase-5-store` from `feature/play-phase-4-signing`, refresh `docs/v2-ui/app/` screenshots, author `docs/play/LISTING.md` and `docs/play/PLAY_CONSOLE.md`, and generate `docs/play/graphics/` assets (`icon-512.png`, `feature-graphic-1024x500.png`, 6 `1080x2340` phone screenshots).
+Branch `feature/play-phase-6-handoff` from `feature/play-phase-5-store`, update the `docs/v2-ui/README.md` implementation status table, write `docs/play/RELEASE_CHECKLIST.md`, run final verification, commit, and push all phase branches + `main` to `https://github.com/TeddyQyuon/AndPoP_V_1.6.0.git`.
