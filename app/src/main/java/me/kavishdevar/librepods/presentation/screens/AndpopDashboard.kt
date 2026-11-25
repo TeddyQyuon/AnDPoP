@@ -353,7 +353,7 @@ private fun DashboardTopBar(
                 }
             } else {
                 Box(Modifier.size(40.dp).clip(CircleShape).background(palette.s2), contentAlignment = Alignment.Center) {
-                    Icon(AndpopIcons.Person, accountLabel, Modifier.size(22.dp), tint = palette.on)
+                    Icon(AndpopIcons.Person, null, Modifier.size(22.dp), tint = palette.on)
                 }
             }
         }

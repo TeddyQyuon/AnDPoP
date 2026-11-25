@@ -21,12 +21,14 @@ package me.kavishdevar.librepods.utils
 import android.content.SharedPreferences
 import android.os.Build
 import androidx.core.content.edit
+import me.kavishdevar.librepods.BuildConfig
 
 fun isSupported(sharedPreferences: SharedPreferences): Boolean {
     if (Build.VERSION.SDK_INT >= 37) return true
 
-    val isBypassFlagActive = sharedPreferences.getBoolean("bypass_device_check.v2", false)
-    if (isBypassFlagActive) return true
+    if (!BuildConfig.PLAY_BUILD && sharedPreferences.getBoolean("bypass_device_check.v2", false)) {
+        return true
+    }
 
     val isPixel = Build.MANUFACTURER.lowercase() == "google"
     val isOppoFamily = Build.MANUFACTURER.lowercase() in listOf("oneplus", "oppo", "realme")
@@ -40,9 +42,9 @@ fun isSupported(sharedPreferences: SharedPreferences): Boolean {
 }
 
 fun bypassDeviceCheck(sharedPreferences: SharedPreferences) {
-    sharedPreferences.edit{ putBoolean("bypass_device_check.v2", true) }
+    sharedPreferences.edit { putBoolean("bypass_device_check.v2", true) }
 }
 
 fun removeDeviceCheckBypass(sharedPreferences: SharedPreferences) {
-    sharedPreferences.edit{ putBoolean("bypass_device_check.v2", false) }
+    sharedPreferences.edit { putBoolean("bypass_device_check.v2", false) }
 }
