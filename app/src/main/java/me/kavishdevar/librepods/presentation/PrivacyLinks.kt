@@ -11,11 +11,11 @@ import me.kavishdevar.librepods.R
 
 /**
  * External policy links required for Google Play release.
- * Hosted via GitHub Pages from docs/ on main (antigravity repository).
+ * Hosted via GitHub Pages from docs/ on main (TeddyQyuon/AnDPoP repository).
  */
 internal object PrivacyLinks {
-    const val PRIVACY_POLICY_URL: String = "https://teddyqyuon.github.io/AndPoP_V_1.6.0/privacy.html"
-    const val ACCOUNT_DELETION_URL: String = "https://teddyqyuon.github.io/AndPoP_V_1.6.0/delete-account.html"
+    const val PRIVACY_POLICY_URL: String = "https://teddyqyuon.github.io/AnDPoP/privacy.html"
+    const val ACCOUNT_DELETION_URL: String = "https://teddyqyuon.github.io/AnDPoP/delete-account.html"
 
     fun openPrivacyPolicy(context: Context) {
         openExternalUrl(context, PRIVACY_POLICY_URL)

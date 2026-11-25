@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-11-25  
 **Active branch:** `feature/play-phase-7-hosted-pages` (all Phases 0–7 complete; ready for Play Console submission)  
-**Target comparison remote:** `https://github.com/TeddyQyuon/AndPoP_V_1.6.0.git`
+**Target primary remote:** `https://github.com/TeddyQyuon/AnDPoP.git` (`origin`)
 
 ---
 
@@ -42,10 +42,10 @@
 - [x] **Phase 6: Final Verification & Handoff** (`feature/play-phase-6-handoff`)
   - [x] Updated implementation status & Play readiness tables in [docs/v2-ui/README.md](../v2-ui/README.md)
   - [x] Produced [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md) (`PASS` / `NEEDS-USER` matrix + ordered steps 1–8 for Play launch, including 12-tester / 14-day closed testing rule verification)
-  - [x] Final lint & git hygiene verification passed; all `feature/play-phase-*` branches and `main` pushed to `https://github.com/TeddyQyuon/AndPoP_V_1.6.0.git` (`antigravity`)
+  - [x] Final lint & git hygiene verification passed; all `feature/play-phase-*` branches and `main` pushed to `origin` (`https://github.com/TeddyQyuon/AnDPoP.git`)
 - [x] **Phase 7: Hosted Legal Pages & Live URL Wiring** (`feature/play-phase-7-hosted-pages`)
   - [x] Added static GitHub Pages portal under `docs/` (`.nojekyll`, `index.html`, `privacy.html`, `delete-account.html` with live Supabase `delete_my_andpop_account` RPC web form)
-  - [x] Wired `https://teddyqyuon.github.io/AndPoP_V_1.6.0/privacy.html` & `.../delete-account.html` into `PrivacyLinks.kt`, `LISTING.md`, `PRIVACY_POLICY.md`, `DATA_SAFETY.md`, `PLAY_CONSOLE.md`, and `PlayReadinessRegressionTest.kt` (`privacyAndDeletionLinksUseHttps`)
+  - [x] Wired `https://teddyqyuon.github.io/AnDPoP/privacy.html` & `.../delete-account.html` into `PrivacyLinks.kt`, `LISTING.md`, `PRIVACY_POLICY.md`, `DATA_SAFETY.md`, `PLAY_CONSOLE.md`, and `PlayReadinessRegressionTest.kt` (`privacyAndDeletionLinksUseHttps`)
 
 ---
 
@@ -56,22 +56,22 @@
 | 2026-11-25 | Decisions 1–10 in `docs/v2-ui/README.md` approved | `PLAY_RELEASE_PROMPT.md` |
 | 2026-11-25 | Autonomous execution through Phases 0–6 authorized; bundle local `RobotoFlex-Regular.ttf` from Android Studio layoutlib (`OFL-1.1`), add Glance `1.1.1` for widgets, remove legacy `PurchaseScreen`/billing code | User prompt + Plan |
 | 2026-11-25 | Keep `applicationId = "app.andpop.android"` across both `foss` and `play` flavors; never commit secrets/keystores or alter `local.properties` | Plan / `AGENTS.md` |
-| 2026-11-25 | Push final verified work and branches only to `https://github.com/TeddyQyuon/AndPoP_V_1.6.0.git` (remote `antigravity`), never to `origin` | User prompt |
+| 2026-11-25 | Push final verified work and branches to `https://github.com/TeddyQyuon/AnDPoP.git` (`origin`, with `main` as default branch) | User prompt |
 | 2026-11-25 | Pin `espresso-core:3.7.0` and `runner:1.7.0` in `androidTestImplementation` (with `AndroidTest`-only `androidx.concurrent:1.1.0` & `error_prone_annotations:2.15.0` alignment) so instrumentation passes on API 37 without altering production APK dependencies | Execution plan |
 
 ---
 
 ## Open Questions / User Action Items (Deferred to Release Checklist)
-- Enable **GitHub Pages** (`Settings -> Pages -> Deploy from a branch: main / /docs`) so the wired `teddyqyuon.github.io/AndPoP_V_1.6.0/` URLs serve live, and add your public support contact email in `LISTING.md`.
+- Enable **GitHub Pages** (`Settings -> Pages -> Deploy from a branch: main / /docs`) on `TeddyQyuon/AnDPoP` so the wired `teddyqyuon.github.io/AnDPoP/` URLs serve live, and add your public support contact email in `LISTING.md`.
 - Generate upload keystore via `keytool` and populate local `local.properties` before uploading to Play Console.
 - Run physical Galaxy S26 Ultra + AirPods Pro 2 / AirPods Max checks (`docs/play/DEVICE_TEST_PLAN.md`) and record the `<= 60s` `connectedDevice` demo video.
 
 ---
 
 ## Last Build & Test Results (Phase 7 Complete)
-- `:app:bundlePlayRelease` — **PASS** (`9,752,453` bytes; `jarsigner`: unsigned pending upload keystore; `0` Xposed/hook entries; `llvm-readelf -l`: all 4 `.so` libs `0x4000`)
-- `:app:bundleFossRelease` — **PASS** (`10,297,346` bytes)
-- `zipalign -c -P 16 -v 4` on `app-play-release-unsigned.apk` (`8,451,480` bytes) — **Verification successful**
+- `:app:bundlePlayRelease` — **PASS** (`9,752,354` bytes; `jarsigner`: unsigned pending upload keystore; `0` Xposed/hook entries; `llvm-readelf -l`: all 4 `.so` libs `0x4000`)
+- `:app:bundleFossRelease` — **PASS** (`10,297,291` bytes)
+- `zipalign -c -P 16 -v 4` on `app-play-release-unsigned.apk` (`8,451,480` bytes, pre-URL update) — **Verification successful**
 - `:app:lintFossDebug` & `:app:lintPlayRelease` — **PASS** (`0 errors`)
 - `:app:connectedPlayDebugAndroidTest` — **PASS** (`23/23` tests on `Pixel_8_Pro(AVD) - 17`, including `privacyAndDeletionLinksUseHttps`)
 - `:app:connectedFossDebugAndroidTest` (Phase 3) — **PASS** (`22/22` tests on `Pixel_8_Pro(AVD) - 17`, 14 screenshot PNGs generated)

@@ -1,6 +1,6 @@
 # Privacy Policy for AnDPoP (Draft)
 
-> **Hosted static HTML:** Static GitHub Pages HTML versions of this Privacy Policy and the Web Account Deletion page are ready in [`docs/privacy.html`](../privacy.html) and [`docs/delete-account.html`](../delete-account.html) and wired in `PrivacyLinks.kt` (`https://teddyqyuon.github.io/AndPoP_V_1.6.0/privacy.html` and `.../delete-account.html`). Enable **Settings -> Pages -> Deploy from a branch -> `main` / `/docs`** on GitHub so those HTTPS URLs serve live.
+> **Hosted static HTML:** Static GitHub Pages HTML versions of this Privacy Policy and the Web Account Deletion page are ready in [`docs/privacy.html`](../privacy.html) and [`docs/delete-account.html`](../delete-account.html) and wired in `PrivacyLinks.kt` (`https://teddyqyuon.github.io/AnDPoP/privacy.html` and `.../delete-account.html`). Enable **Settings -> Pages -> Deploy from a branch -> `main` / `/docs`** on GitHub so those HTTPS URLs serve live.
 >
 > **[NEEDS LEGAL REVIEW]** Have a legal advisor review jurisdiction-specific disclosures (GDPR, CCPA/CPRA, etc.) prior to commercial or broad public distribution.
 

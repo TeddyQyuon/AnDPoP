@@ -10,7 +10,7 @@ This document maps AnDPoP's verified code behavior (Play flavor, `PLAY_BUILD = t
 | --- | --- | --- |
 | Does your app collect or share any of the required user data types? | **Yes** | AnDPoP has an optional account feature (`AccountViewModel` / `SupabaseAccountClient`) that collects the user's **Email address** and internal user ID when the user chooses to sign up or log in. Guest users trigger zero network data collection. |
 | Is all of the user data collected by your app encrypted in transit? | **Yes** | `SupabaseAccountClient.kt` connects exclusively via `https://` (`HttpsURLConnection`, redirects disabled) and `res/xml/network_security_config.xml` sets `cleartextTrafficPermitted="false"`. |
-| Do you provide a way for users to request that their data is deleted? | **Yes** (both in-app and via web link) | In-app: **Account → Delete account** calls Supabase RPC `delete_my_andpop_account` and wipes the local profile. Web: `https://teddyqyuon.github.io/AndPoP_V_1.6.0/delete-account.html` (`docs/delete-account.html`). |
+| Do you provide a way for users to request that their data is deleted? | **Yes** (both in-app and via web link) | In-app: **Account → Delete account** calls Supabase RPC `delete_my_andpop_account` and wipes the local profile. Web: `https://teddyqyuon.github.io/AnDPoP/delete-account.html` (`docs/delete-account.html`). |
 
 ---
 
