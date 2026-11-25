@@ -344,11 +344,14 @@
     <string name="andpop_head_velocity">Head velocity</string>
     <string name="andpop_save">Save</string>
     <string name="andpop_rename_counter">%1$d/%2$d</string>
-    <string name="andpop_value_unknown">—</string>
+    <string name="andpop_value_unknown">ï¿½</string>
     <string name="andpop_firmware_version_n">Version %1$d</string>
     <string name="andpop_copy_value">Copy %1$s</string>
     <string name="andpop_sounds_and_swipes">Sounds and swipes</string>
 
     <!-- Connection problems channel -->
     <string name="andpop_channel_connection_problems">Connection problems</string>
+    <string name="andpop_island_taking_over">Taking over audio</string>
+    <string name="andpop_island_kept">Kept on this phone</string>
+    <string name="andpop_loading">Loadingâ€¦</string>
 </resources>

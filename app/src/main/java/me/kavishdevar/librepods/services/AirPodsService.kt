@@ -44,6 +44,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.content.pm.ServiceInfo
 import android.content.res.Resources
 import android.graphics.Color
 import android.media.AudioManager
@@ -70,7 +71,9 @@ import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.core.app.NotificationCompat
+import androidx.core.app.ServiceCompat
 import androidx.core.content.edit
+import androidx.glance.appwidget.updateAll
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -102,6 +105,7 @@ import me.kavishdevar.librepods.data.BatteryStatus
 import me.kavishdevar.librepods.data.CaseBatterySnapshot
 import me.kavishdevar.librepods.data.Capability
 import me.kavishdevar.librepods.data.CustomEq
+import me.kavishdevar.librepods.data.ListeningModeCycle
 import me.kavishdevar.librepods.data.StemAction
 import me.kavishdevar.librepods.data.XposedRemotePrefProvider
 import me.kavishdevar.librepods.data.isHeadTrackingData
@@ -247,10 +251,18 @@ class AirPodsService : Service(), SharedPreferences.OnSharedPreferenceChangeList
     }
 
     companion object {
+        const val ACTION_CYCLE_LISTENING_MODE = "app.andpop.android.CYCLE_LISTENING_MODE"
+        const val ACTION_RECONNECT_AFTER_REVERSE = "app.andpop.android.RECONNECT_AFTER_REVERSE"
+        private const val NOTIFICATION_ID_MAIN = 1
+        private const val CHANNEL_RUNNING = "background_service_status"
+        private const val CHANNEL_STATUS = "airpods_connection_status"
+
         init {
             System.loadLibrary("bluetooth_socket")
         }
     }
+
+    private var lastNotificationKey: String? = null
 
     private val bleStatusListener = object : BLEManager.AirPodsStatusListener {
         @SuppressLint("NewApi")
@@ -891,6 +903,13 @@ class AirPodsService : Service(), SharedPreferences.OnSharedPreferenceChangeList
                         ?.get(0) ?: 0x00.toByte()))
                     sendANCBroadcast()
                     updateNoiseControlWidget()
+                    if (BluetoothConnectionManager.aacpSocket?.isConnected == true) {
+                        updateNotificationContent(
+                            true,
+                            sharedPreferences.getString("name", config.deviceName),
+                            batteryNotification.getBattery(),
+                        )
+                    }
                 }
             }
 
@@ -1697,92 +1716,71 @@ class AirPodsService : Service(), SharedPreferences.OnSharedPreferenceChangeList
         }
     }
 
-    @OptIn(ExperimentalMaterial3Api::class)
-    fun startForegroundNotification() {
-        val disconnectedNotificationChannel = NotificationChannel(
-            "background_service_status",
-            "Background Service Status",
-            NotificationManager.IMPORTANCE_NONE
-        )
-
-        val connectedNotificationChannel = NotificationChannel(
-            "airpods_connection_status",
-            "AirPods Connection Status",
-            NotificationManager.IMPORTANCE_LOW,
-        )
-
-        val socketFailureChannel = NotificationChannel(
-            "socket_connection_failure",
-            getString(R.string.andpop_channel_connection_problems),
-            NotificationManager.IMPORTANCE_HIGH
-        ).apply {
-            description = "Notifications about problems connecting to AirPods protocol"
-            enableLights(true)
-            lightColor = Color.RED
-            enableVibration(true)
+    private fun buildIdleServiceNotification(): Notification {
+        val notificationSettingsIntent = Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).apply {
+            putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+            putExtra(Settings.EXTRA_CHANNEL_ID, CHANNEL_RUNNING)
         }
-
-        val notificationManager = getSystemService(NotificationManager::class.java)
-        notificationManager.createNotificationChannel(disconnectedNotificationChannel)
-        notificationManager.createNotificationChannel(connectedNotificationChannel)
-        notificationManager.createNotificationChannel(socketFailureChannel)
-
-        val notificationSettingsIntent =
-            Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).apply {
-                putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
-                putExtra(Settings.EXTRA_CHANNEL_ID, "background_service_status")
-            }
         val pendingIntentNotifDisable = PendingIntent.getActivity(
             this,
             0,
             notificationSettingsIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
 
-        val notification = NotificationCompat.Builder(this, "background_service_status")
-            .setSmallIcon(R.drawable.airpods).setContentTitle("Background Service Running")
-            .setContentText("AnDPoP is listening for your connected AirPods.")
-            .setContentIntent(pendingIntentNotifDisable).setCategory(Notification.CATEGORY_SERVICE)
-            .setPriority(NotificationCompat.PRIORITY_LOW).setOngoing(true).build()
-
-        try {
-            startForeground(1, notification)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+        return NotificationCompat.Builder(this, CHANNEL_RUNNING)
+            .setSmallIcon(R.drawable.ic_stat_andpop)
+            .setContentTitle(AirPodsNotificationFormatter.runningTitle(this))
+            .setContentIntent(pendingIntentNotifDisable)
+            .setCategory(Notification.CATEGORY_SERVICE)
+            .setPriority(NotificationCompat.PRIORITY_MIN)
+            .setOngoing(true)
+            .setSilent(true)
+            .setOnlyAlertOnce(true)
+            .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_DEFERRED)
+            .build()
     }
 
-    @Suppress("KotlinUnreachableCode")
     @OptIn(ExperimentalMaterial3Api::class)
-    private fun showSocketConnectionFailureNotification(errorMessage: String) {
-        return // something causes too many notifications. turning off for now
-        if (BuildConfig.FLAVOR != "xposed") {
-            Log.w(
-                TAG,
-                "Not showing BluetoothConnectionManager.aacpSocket? error notification to user, the service shouldn't be running if it isn't supported."
-            )
-            return
+    fun startForegroundNotification() {
+        val disconnectedNotificationChannel = NotificationChannel(
+            CHANNEL_RUNNING,
+            getString(R.string.andpop_channel_running),
+            NotificationManager.IMPORTANCE_NONE,
+        ).apply {
+            description = getString(R.string.andpop_channel_running_desc)
+            setShowBadge(false)
         }
+
+        val connectedNotificationChannel = NotificationChannel(
+            CHANNEL_STATUS,
+            getString(R.string.andpop_channel_status),
+            NotificationManager.IMPORTANCE_LOW,
+        ).apply {
+            description = getString(R.string.andpop_channel_status_desc)
+            setShowBadge(false)
+        }
+
         val notificationManager = getSystemService(NotificationManager::class.java)
+        notificationManager.deleteNotificationChannel("socket_connection_failure")
+        notificationManager.createNotificationChannel(disconnectedNotificationChannel)
+        notificationManager.createNotificationChannel(connectedNotificationChannel)
+        notificationManager.cancel(2)
+        notificationManager.cancel(3)
 
-        val notificationIntent = Intent(this, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(
-            this,
-            0,
-            notificationIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+        val notification = buildIdleServiceNotification()
+        lastNotificationKey = "idle"
 
-        val notification = NotificationCompat.Builder(this, "socket_connection_failure")
-            .setSmallIcon(R.drawable.airpods).setContentTitle("AirPods Connection Issue")
-            .setContentText("Unable to connect to AirPods over L2CAP").setStyle(
-                NotificationCompat.BigTextStyle().bigText(
-                    "Your AirPods are connected via Bluetooth, but AnDPoP couldn't connect to AirPods using L2CAP. Error: $errorMessage"
-                )
-            ).setContentIntent(pendingIntent).setCategory(Notification.CATEGORY_ERROR)
-            .setPriority(NotificationCompat.PRIORITY_HIGH).setAutoCancel(true).build()
-
-        notificationManager.notify(3, notification)
+        try {
+            ServiceCompat.startForeground(
+                this,
+                NOTIFICATION_ID_MAIN,
+                notification,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE,
+            )
+        } catch (e: Exception) {
+            Log.w(TAG, "Unable to start foreground service notification", e)
+        }
     }
 
     fun sendANCBroadcast() {
@@ -1860,81 +1858,21 @@ class AirPodsService : Service(), SharedPreferences.OnSharedPreferenceChangeList
 
     @OptIn(ExperimentalMaterial3Api::class)
     fun updateBatteryWidget() {
-        val appWidgetManager = AppWidgetManager.getInstance(this)
-        val componentName = ComponentName(this, BatteryWidget::class.java)
-        val widgetIds = appWidgetManager.getAppWidgetIds(componentName)
-
-        val remoteViews = RemoteViews(packageName, R.layout.battery_widget).also { it ->
-            val openActivityIntent = PendingIntent.getActivity(
-                this,
-                0,
-                Intent(this, MainActivity::class.java),
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            it.setOnClickPendingIntent(R.id.battery_widget, openActivityIntent)
-
-            val leftBattery =
-                batteryNotification.getBattery().find { it.component == BatteryComponent.LEFT }
-            val rightBattery =
-                batteryNotification.getBattery().find { it.component == BatteryComponent.RIGHT }
-            val caseBattery =
-                batteryNotification.getBattery().find { it.component == BatteryComponent.CASE }
-
-            it.setTextViewText(R.id.left_battery_widget, leftBattery?.let {
-                "${it.level}%"
-            } ?: "")
-            it.setProgressBar(
-                R.id.left_battery_progress, 100, leftBattery?.level ?: 0, false
-            )
-            it.setViewVisibility(
-                R.id.left_charging_icon,
-                if (leftBattery?.status == BatteryStatus.CHARGING || leftBattery?.status == BatteryStatus.OPTIMIZED_CHARGING) View.VISIBLE else View.GONE
-            )
-
-            it.setTextViewText(R.id.right_battery_widget, rightBattery?.let {
-                "${it.level}%"
-            } ?: "")
-            it.setProgressBar(
-                R.id.right_battery_progress, 100, rightBattery?.level ?: 0, false
-            )
-            it.setViewVisibility(
-                R.id.right_charging_icon,
-                if (rightBattery?.status == BatteryStatus.CHARGING || rightBattery?.status == BatteryStatus.OPTIMIZED_CHARGING ) View.VISIBLE else View.GONE
-            )
-
-            it.setTextViewText(R.id.case_battery_widget, caseBattery?.let {
-                "${it.level}%"
-            } ?: "")
-            it.setProgressBar(
-                R.id.case_battery_progress, 100, caseBattery?.level ?: 0, false
-            )
-            it.setViewVisibility(
-                R.id.case_charging_icon,
-                if (caseBattery?.status == BatteryStatus.CHARGING || caseBattery?.status == BatteryStatus.OPTIMIZED_CHARGING ) View.VISIBLE else View.GONE
-            )
-
-            it.setViewVisibility(
-                R.id.phone_battery_widget_container,
-                if (widgetMobileBatteryEnabled) View.VISIBLE else View.GONE
-            )
-            if (widgetMobileBatteryEnabled) {
-                val batteryManager = getSystemService(BatteryManager::class.java)
-                val batteryLevel =
-                    batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
-                val charging =
-                    batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_STATUS) == BatteryManager.BATTERY_STATUS_CHARGING
-                it.setTextViewText(
-                    R.id.phone_battery_widget, "$batteryLevel%"
-                )
-                it.setViewVisibility(
-                    R.id.phone_charging_icon, if (charging) View.VISIBLE else View.GONE
-                )
-                it.setProgressBar(
-                    R.id.phone_battery_progress, 100, batteryLevel, false
-                )
-            }
+        val batteryList = batteryNotification.getBattery()
+        val caseReading = caseBatteryState.value.current(SystemClock.elapsedRealtime())
+        me.kavishdevar.librepods.presentation.widgets.WidgetStateStore.saveBattery(
+            context = this,
+            connected = BluetoothConnectionManager.aacpSocket?.isConnected == true || config.bleOnlyMode,
+            deviceName = sharedPreferences.getString("name", config.deviceName) ?: config.deviceName,
+            batteryList = batteryList,
+            caseReading = caseReading,
+            showPhoneBattery = widgetMobileBatteryEnabled,
+        )
+        CoroutineScope(Dispatchers.Default).launch {
+            runCatching {
+                me.kavishdevar.librepods.presentation.widgets.BatteryGlanceWidget().updateAll(this@AirPodsService)
+            }.onFailure { Log.w(TAG, "Failed to update BatteryGlanceWidget: ${it.message}") }
         }
-        appWidgetManager.updateAppWidget(widgetIds, remoteViews)
     }
 
     @SuppressLint("MissingPermission")
@@ -1947,57 +1885,25 @@ class AirPodsService : Service(), SharedPreferences.OnSharedPreferenceChangeList
     }
 
     fun updateNoiseControlWidget() {
-        val appWidgetManager = AppWidgetManager.getInstance(this)
-        val componentName = ComponentName(this, NoiseControlWidget::class.java)
-        val widgetIds = appWidgetManager.getAppWidgetIds(componentName)
-        val remoteViews = RemoteViews(packageName, R.layout.listening_mode_widget).also { it ->
-            val ancStatus = ancNotification.status
-            val allowOffModeValue =
-                aacpManager.controlCommandStatusList.find { it.identifier == AACPManager.Companion.ControlCommandIdentifiers.ALLOW_OFF_OPTION }
-            val allowOffMode =
-                allowOffModeValue?.value?.takeIf { it.isNotEmpty() }?.get(0) == 0x01.toByte() || sharedPreferences.getBoolean("off_listening_mode", true)
-            it.setInt(
-                R.id.widget_off_button,
-                "setBackgroundResource",
-                if (ancStatus == 1) R.drawable.widget_button_checked_shape_start else R.drawable.widget_button_shape_start
-            )
-            it.setInt(
-                R.id.widget_transparency_button,
-                "setBackgroundResource",
-                if (ancStatus == 3) (if (allowOffMode) R.drawable.widget_button_checked_shape_middle else R.drawable.widget_button_checked_shape_start) else (if (allowOffMode) R.drawable.widget_button_shape_middle else R.drawable.widget_button_shape_start)
-            )
-            it.setInt(
-                R.id.widget_adaptive_button,
-                "setBackgroundResource",
-                if (ancStatus == 4) R.drawable.widget_button_checked_shape_middle else R.drawable.widget_button_shape_middle
-            )
-            it.setInt(
-                R.id.widget_anc_button,
-                "setBackgroundResource",
-                if (ancStatus == 2) R.drawable.widget_button_checked_shape_end else R.drawable.widget_button_shape_end
-            )
-            it.setViewVisibility(
-                R.id.widget_off_button, if (allowOffMode) View.VISIBLE else View.GONE
-            )
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                it.setViewLayoutMargin(
-                    R.id.widget_transparency_button,
-                    RemoteViews.MARGIN_START,
-                    if (allowOffMode) 2f else 12f,
-                    TypedValue.COMPLEX_UNIT_DIP
-                )
-            } else {
-                it.setViewPadding(
-                    R.id.widget_transparency_button,
-                    if (allowOffMode) 2.dpToPx() else 12.dpToPx(),
-                    12.dpToPx(),
-                    2.dpToPx(),
-                    12.dpToPx()
-                )
-            }
+        val allowOffModeValue =
+            aacpManager.controlCommandStatusList.find { it.identifier == AACPManager.Companion.ControlCommandIdentifiers.ALLOW_OFF_OPTION }
+        val allowOffMode =
+            allowOffModeValue?.value?.takeIf { it.isNotEmpty() }?.get(0) == 0x01.toByte() ||
+                sharedPreferences.getBoolean("off_listening_mode", true)
+        val caps = airpodsInstance?.model?.capabilities
+        val adaptiveSupported = caps == null || Capability.ADAPTIVE_AUDIO in caps
+        me.kavishdevar.librepods.presentation.widgets.WidgetStateStore.saveNoiseControl(
+            context = this,
+            connected = BluetoothConnectionManager.aacpSocket?.isConnected == true,
+            currentMode = ancNotification.status,
+            offAllowed = allowOffMode,
+            adaptiveSupported = adaptiveSupported,
+        )
+        CoroutineScope(Dispatchers.Default).launch {
+            runCatching {
+                me.kavishdevar.librepods.presentation.widgets.NoiseControlGlanceWidget().updateAll(this@AirPodsService)
+            }.onFailure { Log.w(TAG, "Failed to update NoiseControlGlanceWidget: ${it.message}") }
         }
-
-        appWidgetManager.updateAppWidget(widgetIds, remoteViews)
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
@@ -2005,58 +1911,93 @@ class AirPodsService : Service(), SharedPreferences.OnSharedPreferenceChangeList
         connected: Boolean, airpodsName: String? = null, batteryList: List<Battery>? = null
     ) {
         val notificationManager = getSystemService(NotificationManager::class.java)
+        notificationManager.cancel(2)
+        notificationManager.cancel(3)
 
-        val notificationIntent = Intent(this, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(
-            this,
-            0,
-            notificationIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+        val aacpConnected = BluetoothConnectionManager.aacpSocket?.isConnected == true
+        val activeConnected = connected && (aacpConnected || config.bleOnlyMode || batteryList.orEmpty().any { it.hasValidReading })
 
-        if (BluetoothConnectionManager.aacpSocket == null) {
-            return
-        }
-        if (BluetoothConnectionManager.aacpSocket?.isConnected == true) {
-            val batteryText = batteryList.orEmpty()
-                .filter { it.status != BatteryStatus.DISCONNECTED && it.level in 0..100 }
-                .joinToString("   ") { reading ->
-                    val label = when (reading.component) {
-                        BatteryComponent.LEFT -> "L: "
-                        BatteryComponent.RIGHT -> "R: "
-                        BatteryComponent.CASE -> "Case: "
-                        else -> ""
-                    }
-                    val charging = if (reading.status == BatteryStatus.CHARGING) "⚡ " else ""
-                    "$label$charging${reading.level}%"
-                }
+        if (activeConnected) {
+            val title = AirPodsNotificationFormatter.formatTitle(this, airpodsName ?: config.deviceName)
+            val caseReading = caseBatteryState.value.current(SystemClock.elapsedRealtime())
+            val mode = ancNotification.status.takeIf { aacpConnected }
+            val subtitle = AirPodsNotificationFormatter.formatStatusSubtitle(this, mode)
+            val summary = AirPodsNotificationFormatter.formatBatterySummary(
+                context = this,
+                batteryList = batteryList,
+                caseReading = caseReading,
+                caseCurrent = caseReading != null,
+            )
+            val caps = airpodsInstance?.model?.capabilities
+            val canSwitchMode = aacpConnected && (caps == null || Capability.LISTENING_MODE in caps)
+            val key = "conn|$title|$subtitle|$summary|$canSwitchMode|$disconnectedBecauseReversed"
+            if (key == lastNotificationKey) return
+            lastNotificationKey = key
 
-            val updatedNotificationBuilder =
-                NotificationCompat.Builder(this, "airpods_connection_status")
-                    .setSmallIcon(R.drawable.airpods)
-                    .setContentTitle(airpodsName ?: config.deviceName)
-                    .setContentText(batteryText)
-                    .setContentIntent(pendingIntent).setCategory(Notification.CATEGORY_STATUS)
-                    .setPriority(NotificationCompat.PRIORITY_LOW).setOngoing(true)
+            val openIntent = Intent(this, MainActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            }
+            val openPendingIntent = PendingIntent.getActivity(
+                this,
+                0,
+                openIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+
+            val builder = NotificationCompat.Builder(this, CHANNEL_STATUS)
+                .setSmallIcon(R.drawable.ic_stat_andpop)
+                .setContentTitle(title)
+                .setSubText(subtitle)
+                .setContentText(summary)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(summary))
+                .setContentIntent(openPendingIntent)
+                .setCategory(Notification.CATEGORY_STATUS)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setOngoing(true)
+                .setSilent(true)
+                .setOnlyAlertOnce(true)
 
             if (disconnectedBecauseReversed) {
-                updatedNotificationBuilder.addAction(
-                    R.drawable.ic_bluetooth, "Reconnect", PendingIntent.getService(
-                        this, 0, Intent(this, AirPodsService::class.java).apply {
-                            action = "app.andpop.android.RECONNECT_AFTER_REVERSE"
-                        }, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                    )
+                val reconnectIntent = PendingIntent.getService(
+                    this,
+                    1,
+                    Intent(this, AirPodsService::class.java).apply {
+                        action = ACTION_RECONNECT_AFTER_REVERSE
+                    },
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                )
+                builder.addAction(
+                    R.drawable.ic_stat_andpop,
+                    getString(R.string.andpop_reconnect),
+                    reconnectIntent,
+                )
+            } else if (canSwitchMode) {
+                val cycleIntent = PendingIntent.getService(
+                    this,
+                    2,
+                    Intent(this, AirPodsService::class.java).apply {
+                        action = ACTION_CYCLE_LISTENING_MODE
+                    },
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                )
+                builder.addAction(
+                    ListeningModeCycle.icon(ancNotification.status),
+                    getString(R.string.andpop_notif_switch_mode),
+                    cycleIntent,
                 )
             }
 
-            val updatedNotification = updatedNotificationBuilder.build()
+            builder.addAction(
+                R.drawable.ic_stat_andpop,
+                getString(R.string.andpop_notif_open),
+                openPendingIntent,
+            )
 
-            notificationManager.notify(2, updatedNotification)
-            notificationManager.cancel(1)
-        } else if (!connected) {
-            notificationManager.cancel(2)
-        } else if (!config.bleOnlyMode && BluetoothConnectionManager.aacpSocket?.isConnected != true) {
-            showSocketConnectionFailureNotification("BluetoothConnectionManager.aacpSocket? created, but not connected. Check logs")
+            notificationManager.notify(NOTIFICATION_ID_MAIN, builder.build())
+        } else {
+            if (lastNotificationKey == "idle") return
+            lastNotificationKey = "idle"
+            notificationManager.notify(NOTIFICATION_ID_MAIN, buildIdleServiceNotification())
         }
     }
 
@@ -2394,11 +2335,29 @@ class AirPodsService : Service(), SharedPreferences.OnSharedPreferenceChangeList
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.d(TAG, "Service started with intent action: ${intent?.action}")
 
-        if (intent?.action == "app.andpop.android.RECONNECT_AFTER_REVERSE") {
-            Log.d(TAG, "reconnect after reversed received, taking over")
-            disconnectedBecauseReversed = false
-            otherDeviceTookOver = false
-            takeOver("music", manualTakeOverAfterReversed = true)
+        when (intent?.action) {
+            ACTION_RECONNECT_AFTER_REVERSE -> {
+                Log.d(TAG, "reconnect after reversed received, taking over")
+                disconnectedBecauseReversed = false
+                otherDeviceTookOver = false
+                takeOver("music", manualTakeOverAfterReversed = true)
+            }
+            ACTION_CYCLE_LISTENING_MODE -> {
+                if (BluetoothConnectionManager.aacpSocket?.isConnected == true) {
+                    val allowOffModeValue =
+                        aacpManager.controlCommandStatusList.find { it.identifier == AACPManager.Companion.ControlCommandIdentifiers.ALLOW_OFF_OPTION }
+                    val allowOffMode =
+                        allowOffModeValue?.value?.takeIf { it.isNotEmpty() }?.get(0) == 0x01.toByte() ||
+                            sharedPreferences.getBoolean("off_listening_mode", true)
+                    val caps = airpodsInstance?.model?.capabilities
+                    val adaptiveSupported = caps == null || Capability.ADAPTIVE_AUDIO in caps
+                    val nextMode = ListeningModeCycle.next(ancNotification.status, allowOffMode, adaptiveSupported)
+                    aacpManager.sendControlCommand(
+                        AACPManager.Companion.ControlCommandIdentifiers.LISTENING_MODE.value,
+                        nextMode,
+                    )
+                }
+            }
         }
 
         return START_STICKY
@@ -2592,7 +2551,6 @@ class AirPodsService : Service(), SharedPreferences.OnSharedPreferenceChangeList
             createBluetoothSocket(adapter, device, uuid, 4097)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to create BluetoothSocket: ${e.message}")
-            showSocketConnectionFailureNotification("Failed to create Bluetooth socket: ${e.localizedMessage}")
             return
         }
 
@@ -2669,7 +2627,7 @@ class AirPodsService : Service(), SharedPreferences.OnSharedPreferenceChangeList
                                 "Couldn't connect to socket: ${e.localizedMessage}"
                             )
                         } else {
-                            showSocketConnectionFailureNotification("Couldn't connect to socket: ${e.localizedMessage}")
+                            Log.w(TAG, "Couldn't connect to AACP socket: ${e.localizedMessage}")
                         }
                         return@withTimeout
 //                            throw e // lol how did i not catch this before... gonna comment this line instead of removing to preserve history
@@ -2683,7 +2641,7 @@ class AirPodsService : Service(), SharedPreferences.OnSharedPreferenceChangeList
                         "Couldn't connect to socket: timeout."
                     )
                 } else {
-                    showSocketConnectionFailureNotification("Couldn't connect to socket: Timeout")
+                    Log.w(TAG, "Couldn't connect to AACP socket: timeout")
                 }
                 return
             }
@@ -2779,9 +2737,7 @@ class AirPodsService : Service(), SharedPreferences.OnSharedPreferenceChangeList
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            Log.d(TAG, "Failed to connect to BluetoothConnectionManager.aacpSocket?: ${e.message}")
-            showSocketConnectionFailureNotification("Failed to establish connection: ${e.localizedMessage}")
-//                isConnectedLocally = false
+            Log.d(TAG, "Failed to connect to AACP socket: ${e.message}")
             this@AirPodsService.device = device
             updateNotificationContent(false)
         }

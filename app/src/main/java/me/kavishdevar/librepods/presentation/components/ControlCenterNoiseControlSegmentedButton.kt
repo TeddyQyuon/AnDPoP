@@ -46,35 +46,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import me.kavishdevar.librepods.R
+import me.kavishdevar.librepods.data.ListeningModeCycle
 import me.kavishdevar.librepods.data.NoiseControlMode
-
-private val ContainerColor = Color(0x593C3C3E)
-private val SelectedIndicatorColorGray = Color(0xFF6C6C6E)
-private val SelectedIndicatorColorBlue = Color(0xFF0A84FF)
-private val TextColor = Color.White
-private val IconTintUnselected = Color.White
-private val IconTintSelected = Color.White
-
-internal val AdaptiveRainbowBrush = Brush.sweepGradient(
-    colors = listOf(
-        Color(0xFFB03A2F), Color(0xFFB07A2F), Color(0xFFB0A22F), Color(0xFF6AB02F),
-        Color(0xFF2FAAB0), Color(0xFF2F5EB0), Color(0xFF7D2FB0), Color(0xFFB02F7D),
-        Color(0xFFB03A2F)
-    )
-)
+import me.kavishdevar.librepods.presentation.theme.LocalAndpopPalette
 
 internal val IconAreaSize = 72.dp
-private val IconSize = 42.dp
+private val IconSize = 36.dp
 private val IconRowHeight = IconAreaSize + 12.dp
 private val TextRowHeight = 24.dp
 private val TextSize = 12.sp
@@ -84,19 +70,16 @@ fun ControlCenterNoiseControlSegmentedButton(
     modifier: Modifier = Modifier,
     availableModes: List<NoiseControlMode>,
     selectedMode: NoiseControlMode,
-    onModeSelected: (NoiseControlMode) -> Unit
+    onModeSelected: (NoiseControlMode) -> Unit,
 ) {
+    val palette = LocalAndpopPalette.current
     val selectedIndex = availableModes.indexOf(selectedMode).coerceAtLeast(0)
     val density = LocalDensity.current
     var iconRowWidthPx by remember { mutableFloatStateOf(0f) }
     val itemCount = availableModes.size
 
     val itemSlotWidthPx = remember(iconRowWidthPx, itemCount) {
-        if (itemCount > 0 && iconRowWidthPx > 0) {
-            iconRowWidthPx / itemCount
-        } else {
-            0f
-        }
+        if (itemCount > 0 && iconRowWidthPx > 0) iconRowWidthPx / itemCount else 0f
     }
     val itemSlotWidthDp = remember(itemSlotWidthPx) { with(density) { itemSlotWidthPx.toDp() } }
     val iconAreaSizePx = remember { with(density) { IconAreaSize.toPx() } }
@@ -114,32 +97,25 @@ fun ControlCenterNoiseControlSegmentedButton(
         targetValue = with(density) { targetIndicatorStartPx.toDp() },
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioLowBouncy,
-            stiffness = Spring.StiffnessMedium
+            stiffness = Spring.StiffnessMedium,
         ),
-        label = "IndicatorOffset"
+        label = "IndicatorOffset",
     )
 
-    val indicatorBackground = remember(selectedMode) {
-        when (selectedMode) {
-            NoiseControlMode.ADAPTIVE -> AdaptiveRainbowBrush
-            NoiseControlMode.OFF -> Brush.linearGradient(colors=listOf(SelectedIndicatorColorGray, SelectedIndicatorColorGray))
-            NoiseControlMode.TRANSPARENCY,
-            NoiseControlMode.NOISE_CANCELLATION -> Brush.linearGradient(colors=listOf(SelectedIndicatorColorBlue, SelectedIndicatorColorBlue))
-        }
-    }
+    val indicatorColor = if (selectedMode == NoiseControlMode.OFF) palette.s3 else palette.pc
 
     Column(
         modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(IconRowHeight)
                 .clip(CircleShape)
-                .background(ContainerColor)
+                .background(palette.s2)
                 .onSizeChanged { iconRowWidthPx = it.width.toFloat() },
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
             Box(
                 Modifier
@@ -147,13 +123,13 @@ fun ControlCenterNoiseControlSegmentedButton(
                     .offset(x = indicatorOffset)
                     .size(IconAreaSize)
                     .clip(CircleShape)
-                    .background(indicatorBackground)
+                    .background(Brush.linearGradient(colors = listOf(indicatorColor, indicatorColor))),
             )
 
             Row(
                 modifier = Modifier.fillMaxWidth().align(Alignment.Center),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceAround
+                horizontalArrangement = Arrangement.SpaceAround,
             ) {
                 availableModes.forEach { mode ->
                     val isSelected = selectedMode == mode
@@ -161,7 +137,7 @@ fun ControlCenterNoiseControlSegmentedButton(
                         modifier = Modifier.size(IconAreaSize),
                         mode = mode,
                         isSelected = isSelected,
-                        onClick = { onModeSelected(mode) }
+                        onClick = { onModeSelected(mode) },
                     )
                 }
             }
@@ -174,17 +150,17 @@ fun ControlCenterNoiseControlSegmentedButton(
                 .fillMaxWidth()
                 .height(TextRowHeight),
             horizontalArrangement = Arrangement.SpaceAround,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             availableModes.forEach { mode ->
                 val isSelected = selectedMode == mode
                 Text(
-                    text = getModeLabel(mode),
-                    color = TextColor,
+                    text = stringResource(ListeningModeCycle.label(mode.ordinal + 1)),
+                    color = if (isSelected) palette.on else palette.on2,
                     fontSize = TextSize,
                     fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.width(itemSlotWidthDp.coerceAtLeast(1.dp))
+                    modifier = Modifier.width(itemSlotWidthDp.coerceAtLeast(1.dp)),
                 )
             }
         }
@@ -196,11 +172,16 @@ private fun NoiseControlIconItem(
     modifier: Modifier = Modifier,
     mode: NoiseControlMode,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
-    val iconRes = remember(mode) { getModeIconRes(mode) }
-
-    val tint = IconTintUnselected
+    val palette = LocalAndpopPalette.current
+    val modeId = mode.ordinal + 1
+    val label = stringResource(ListeningModeCycle.label(modeId))
+    val tint = if (isSelected) {
+        if (mode == NoiseControlMode.OFF) palette.on else palette.onPc
+    } else {
+        palette.on2
+    }
 
     Box(
         modifier = modifier
@@ -208,35 +189,15 @@ private fun NoiseControlIconItem(
             .clickable(
                 onClick = onClick,
                 indication = null,
-                interactionSource = remember { MutableInteractionSource() }
+                interactionSource = remember { MutableInteractionSource() },
             ),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         Icon(
-            painter = painterResource(id = iconRes),
-            contentDescription = getModeLabel(mode),
-            tint = if (isSelected && mode == NoiseControlMode.ADAPTIVE) IconTintSelected else tint,
-            modifier = Modifier.size(IconSize)
+            painter = painterResource(id = ListeningModeCycle.icon(modeId)),
+            contentDescription = label,
+            tint = tint,
+            modifier = Modifier.size(IconSize),
         )
     }
 }
-
-
-private fun getModeIconRes(mode: NoiseControlMode): Int {
-    return when (mode) {
-        NoiseControlMode.OFF -> R.drawable.noise_cancellation
-        NoiseControlMode.TRANSPARENCY -> R.drawable.transparency
-        NoiseControlMode.ADAPTIVE -> R.drawable.adaptive
-        NoiseControlMode.NOISE_CANCELLATION -> R.drawable.noise_cancellation
-    }
-}
-
-private fun getModeLabel(mode: NoiseControlMode): String {
-    return when (mode) {
-        NoiseControlMode.OFF -> "Off"
-        NoiseControlMode.TRANSPARENCY -> "Transparency"
-        NoiseControlMode.ADAPTIVE -> "Adaptive"
-        NoiseControlMode.NOISE_CANCELLATION -> "Noise Cancellation"
-    }
-}
-
