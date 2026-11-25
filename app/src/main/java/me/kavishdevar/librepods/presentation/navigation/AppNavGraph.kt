@@ -246,12 +246,14 @@ internal fun AppNavGraph(
 
                     Screen.TransparencyCustomization ->
                         NavEntry(screen) {
-                            if (!ready) LoadingScreen() else TransparencySettingsScreen(airPodsViewModel)
+                            if (BuildConfig.PLAY_BUILD) pop() else if (!ready) LoadingScreen() else TransparencySettingsScreen(airPodsViewModel)
                         }
 
                     Screen.HearingAid ->
                         NavEntry(screen) {
-                            if (!ready) {
+                            if (BuildConfig.PLAY_BUILD) {
+                                pop()
+                            } else if (!ready) {
                                 LoadingScreen()
                             } else {
                                 HearingAidScreen(
@@ -264,7 +266,7 @@ internal fun AppNavGraph(
 
                     Screen.HearingAidAdjustments ->
                         NavEntry(screen) {
-                            if (!ready) LoadingScreen() else HearingAidAdjustmentsScreen(airPodsViewModel)
+                            if (BuildConfig.PLAY_BUILD) pop() else if (!ready) LoadingScreen() else HearingAidAdjustmentsScreen(airPodsViewModel)
                         }
 
                     Screen.AdaptiveStrength ->
@@ -279,7 +281,7 @@ internal fun AppNavGraph(
 
                     Screen.UpdateHearingTest ->
                         NavEntry(screen) {
-                            UpdateHearingTestRoute(airPodsViewModel)
+                            if (BuildConfig.PLAY_BUILD) pop() else UpdateHearingTestRoute(airPodsViewModel)
                         }
 
                     Screen.VersionInfo ->

@@ -382,7 +382,7 @@ class AirPodsService : Service(), SharedPreferences.OnSharedPreferenceChangeList
                 val bluetoothManager = getSystemService(BluetoothManager::class.java)
                 val bluetoothAdapter = bluetoothManager.adapter
                 localMac = bluetoothAdapter.address
-            } else {
+            } else if (!BuildConfig.PLAY_BUILD) {
                 localMac = try {
                     val process = Runtime.getRuntime().exec(
                         arrayOf("su", "-c", "settings get secure bluetooth_address")
@@ -563,7 +563,7 @@ class AirPodsService : Service(), SharedPreferences.OnSharedPreferenceChangeList
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(externalBroadcastReceiver, externalBroadcastFilter, RECEIVER_EXPORTED)
+            registerReceiver(externalBroadcastReceiver, externalBroadcastFilter, RECEIVER_NOT_EXPORTED)
         } else {
             @Suppress("UnspecifiedRegisterReceiverFlag") registerReceiver(
                 externalBroadcastReceiver, externalBroadcastFilter
@@ -715,7 +715,7 @@ class AirPodsService : Service(), SharedPreferences.OnSharedPreferenceChangeList
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(showIslandReceiver, showIslandIntentFilter, RECEIVER_EXPORTED)
+            registerReceiver(showIslandReceiver, showIslandIntentFilter, RECEIVER_NOT_EXPORTED)
         } else {
             @Suppress("UnspecifiedRegisterReceiverFlag") registerReceiver(
                 showIslandReceiver, showIslandIntentFilter
@@ -728,7 +728,7 @@ class AirPodsService : Service(), SharedPreferences.OnSharedPreferenceChangeList
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(connectionReceiver, deviceIntentFilter, RECEIVER_EXPORTED)
+            registerReceiver(connectionReceiver, deviceIntentFilter, RECEIVER_NOT_EXPORTED)
             registerReceiver(bluetoothReceiver, serviceIntentFilter, RECEIVER_EXPORTED)
         } else {
             @Suppress("UnspecifiedRegisterReceiverFlag") registerReceiver(
@@ -2807,7 +2807,9 @@ class AirPodsService : Service(), SharedPreferences.OnSharedPreferenceChangeList
                 override fun onServiceDisconnected(profile: Int) {}
             }, BluetoothProfile.A2DP)
             try {
-                device?.disconnect()
+                if (Build.VERSION.SDK_INT >= 37) {
+                    device?.disconnect()
+                }
             } catch (e: Exception) {
                 Log.w(TAG, "device.disconnect() failed, $e")
             }

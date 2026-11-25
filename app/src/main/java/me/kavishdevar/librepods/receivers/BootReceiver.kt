@@ -20,27 +20,31 @@
 
 package me.kavishdevar.librepods.receivers
 
+import android.Manifest
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.util.Log
 import kotlin.io.encoding.ExperimentalEncodingApi
 import me.kavishdevar.librepods.services.AirPodsService
 
-class BootReceiver: BroadcastReceiver() {
+class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
-        when (intent?.action) {
-            Intent.ACTION_MY_PACKAGE_REPLACED -> try { context?.startForegroundService(
-                Intent(
-                    context,
-                    AirPodsService::class.java
-                )
-            ) } catch (e: Exception) { e.printStackTrace() }
-            Intent.ACTION_BOOT_COMPLETED -> try { context?.startForegroundService(
-                Intent(
-                    context,
-                    AirPodsService::class.java
-                )
-            ) } catch (e: Exception) { e.printStackTrace() }
+        val action = intent?.action ?: return
+        if (context == null) return
+        if (action != Intent.ACTION_MY_PACKAGE_REPLACED && action != Intent.ACTION_BOOT_COMPLETED) return
+
+        val settings = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
+        if (!settings.getBoolean("onboarding_complete", false)) return
+        if (context.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            return
+        }
+
+        try {
+            context.startForegroundService(Intent(context, AirPodsService::class.java))
+        } catch (e: Exception) {
+            Log.w("BootReceiver", "Failed to start AirPodsService on $action: ${e.message}")
         }
     }
 }

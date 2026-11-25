@@ -61,7 +61,7 @@ import me.kavishdevar.librepods.utils.XposedState
 class MainActivity : ComponentActivity() {
     companion object {
         init {
-            if (XposedState.isAvailable && XposedState.bluetoothScopeEnabled) {
+            if (!BuildConfig.PLAY_BUILD && XposedState.isAvailable && XposedState.bluetoothScopeEnabled) {
                 System.loadLibrary("l2c_fcr_hook")
             }
         }

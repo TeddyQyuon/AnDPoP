@@ -80,6 +80,10 @@ android {
             dimension = "env"
             buildConfigField("Boolean", "PLAY_BUILD", "false")
         }
+        create("play") {
+            dimension = "env"
+            buildConfigField("Boolean", "PLAY_BUILD", "true")
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
@@ -102,6 +106,12 @@ android {
     ndkVersion = "29.0.14206865"
 
     flavorDimensions += "env"
+}
+
+androidComponents {
+    onVariants(selector().withFlavor("env" to "play")) { variant ->
+        variant.packaging.jniLibs.excludes.add("**/libl2c_fcr_hook.so")
+    }
 }
 
 dependencies {
@@ -134,8 +144,8 @@ dependencies {
     implementation(libs.backdrop)
 //    implementation(libs.hilt)
 //    implementation(libs.hilt.compiler)
-    compileOnly(libs.libxposed.api)
-    implementation(libs.libxposed.service)
+    "fossCompileOnly"(libs.libxposed.api)
+    "fossImplementation"(libs.libxposed.service)
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.navigation3.runtime)
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
