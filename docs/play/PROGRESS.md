@@ -1,7 +1,7 @@
 # AnDPoP Play Release Progress
 
 **Last updated:** 2026-11-25  
-**Active branch:** `feature/play-phase-6-handoff` (all Phases 0–6 complete; ready for user Play Console steps)  
+**Active branch:** `feature/play-phase-7-hosted-pages` (all Phases 0–7 complete; ready for Play Console submission)  
 **Target comparison remote:** `https://github.com/TeddyQyuon/AndPoP_V_1.6.0.git`
 
 ---
@@ -42,7 +42,10 @@
 - [x] **Phase 6: Final Verification & Handoff** (`feature/play-phase-6-handoff`)
   - [x] Updated implementation status & Play readiness tables in [docs/v2-ui/README.md](../v2-ui/README.md)
   - [x] Produced [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md) (`PASS` / `NEEDS-USER` matrix + ordered steps 1–8 for Play launch, including 12-tester / 14-day closed testing rule verification)
-  - [x] Final lint & git hygiene verification passed; all `feature/play-phase-*` branches and `main` prepared for push to `https://github.com/TeddyQyuon/AndPoP_V_1.6.0.git` (`antigravity`)
+  - [x] Final lint & git hygiene verification passed; all `feature/play-phase-*` branches and `main` pushed to `https://github.com/TeddyQyuon/AndPoP_V_1.6.0.git` (`antigravity`)
+- [x] **Phase 7: Hosted Legal Pages & Live URL Wiring** (`feature/play-phase-7-hosted-pages`)
+  - [x] Added static GitHub Pages portal under `docs/` (`.nojekyll`, `index.html`, `privacy.html`, `delete-account.html` with live Supabase `delete_my_andpop_account` RPC web form)
+  - [x] Wired `https://teddyqyuon.github.io/AndPoP_V_1.6.0/privacy.html` & `.../delete-account.html` into `PrivacyLinks.kt`, `LISTING.md`, `PRIVACY_POLICY.md`, `DATA_SAFETY.md`, `PLAY_CONSOLE.md`, and `PlayReadinessRegressionTest.kt` (`privacyAndDeletionLinksUseHttps`)
 
 ---
 
@@ -59,21 +62,22 @@
 ---
 
 ## Open Questions / User Action Items (Deferred to Release Checklist)
-- Provide hosted HTTPS URLs for Privacy Policy and Web Account Deletion (currently marked with a single `TODO` constant in `PrivacyLinks.kt`).
+- Enable **GitHub Pages** (`Settings -> Pages -> Deploy from a branch: main / /docs`) so the wired `teddyqyuon.github.io/AndPoP_V_1.6.0/` URLs serve live, and add your public support contact email in `LISTING.md`.
 - Generate upload keystore via `keytool` and populate local `local.properties` before uploading to Play Console.
-- Run physical Galaxy S26 Ultra + AirPods Pro 2 / AirPods Max checks (`docs/play/DEVICE_TEST_PLAN.md`).
+- Run physical Galaxy S26 Ultra + AirPods Pro 2 / AirPods Max checks (`docs/play/DEVICE_TEST_PLAN.md`) and record the `<= 60s` `connectedDevice` demo video.
 
 ---
 
-## Last Build & Test Results (Phase 4 Complete)
-- `:app:bundlePlayRelease` — **PASS** (`9,752,358` bytes; `jarsigner`: unsigned pending upload keystore; `0` Xposed/hook entries; `llvm-readelf -l`: all 4 `.so` libs `0x4000`)
-- `:app:bundleFossRelease` — **PASS** (`10,297,073` bytes)
-- `zipalign -c -P 16 -v 4` on `app-play-release-unsigned.apk` (`8,451,436` bytes) & `app-foss-release-unsigned.apk` (`9,111,948` bytes) — **Verification successful**
+## Last Build & Test Results (Phase 7 Complete)
+- `:app:bundlePlayRelease` — **PASS** (`9,752,453` bytes; `jarsigner`: unsigned pending upload keystore; `0` Xposed/hook entries; `llvm-readelf -l`: all 4 `.so` libs `0x4000`)
+- `:app:bundleFossRelease` — **PASS** (`10,297,346` bytes)
+- `zipalign -c -P 16 -v 4` on `app-play-release-unsigned.apk` (`8,451,480` bytes) — **Verification successful**
 - `:app:lintFossDebug` & `:app:lintPlayRelease` — **PASS** (`0 errors`)
-- `:app:connectedFossDebugAndroidTest` & `:app:connectedPlayDebugAndroidTest` — **PASS** (`22/22` tests on `Pixel_8_Pro(AVD) - 17`, 14 screenshot PNGs per flavor)
-- Debug-signed R8 `playRelease` emulator smoke test (100% & 200% font scale) — **PASS** (`0` crashes)
+- `:app:connectedPlayDebugAndroidTest` — **PASS** (`23/23` tests on `Pixel_8_Pro(AVD) - 17`, including `privacyAndDeletionLinksUseHttps`)
+- `:app:connectedFossDebugAndroidTest` (Phase 3) — **PASS** (`22/22` tests on `Pixel_8_Pro(AVD) - 17`, 14 screenshot PNGs generated)
+- Debug-signed R8 `playRelease` emulator smoke test (100% & 200% font scale, Phase 3) — **PASS** (`0` crashes)
 
 ---
 
 ## Exact Next Step
-Follow **"What you must do yourself"** steps 1–8 in [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md): generate your external upload keystore, host `PRIVACY_POLICY.md` + web account deletion URL (updating `PrivacyLinks.kt`), run [DEVICE_TEST_PLAN.md](DEVICE_TEST_PLAN.md) on real hardware with AirPods, run the 14-day closed test, and submit the signed `app-play-release.aab` in Play Console.
+Follow **"What you must do yourself"** steps 1–8 in [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md): enable GitHub Pages (`main / /docs`), generate your external upload keystore + `local.properties`, run [DEVICE_TEST_PLAN.md](DEVICE_TEST_PLAN.md) on real hardware with AirPods, run the 14-day closed test, and submit the signed `app-play-release.aab` in Play Console.

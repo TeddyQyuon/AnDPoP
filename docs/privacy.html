@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Privacy Policy — AnDPoP</title>
+  <meta name="description" content="Privacy Policy for AnDPoP (app.andpop.android)." />
+  <style>
+    :root {
+      --bg: #0A1113;
+      --s1: #111B1D;
+      --s2: #192427;
+      --border: rgba(237, 243, 244, 0.09);
+      --on: #EDF3F4;
+      --on2: #B3C3C6;
+      --pri: #68D6EC;
+      --ok: #7BE0A0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(ellipse 90% 35% at 50% -5%, rgba(31, 92, 105, 0.45), transparent 70%), var(--bg);
+      color: var(--on);
+      line-height: 1.65;
+    }
+    main {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 36px 20px 64px;
+    }
+    nav {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 24px;
+      font-size: 0.95rem;
+    }
+    h1 { margin: 0 0 8px; font-size: 1.9rem; letter-spacing: -0.02em; }
+    h2 { margin: 0 0 10px; font-size: 1.2rem; color: var(--on); }
+    p, li { color: var(--on2); }
+    .meta { font-size: 0.92rem; color: var(--on2); margin-bottom: 24px; }
+    .card {
+      background: var(--s1);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 22px 24px;
+      margin-bottom: 16px;
+    }
+    ul { padding-left: 20px; margin: 8px 0 0; }
+    li { margin-bottom: 8px; }
+    a { color: var(--pri); }
+    code {
+      background: var(--s2);
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-size: 0.9em;
+      color: var(--on);
+    }
+    footer {
+      margin-top: 28px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      font-size: 0.88rem;
+      color: var(--on2);
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <nav aria-label="Breadcrumb">
+      <a href="./">AnDPoP Home</a>
+      <a href="delete-account.html">Delete Account</a>
+    </nav>
+
+    <h1>Privacy Policy for AnDPoP</h1>
+    <div class="meta">
+      <strong>Effective date:</strong> 2026-11-25 &middot;
+      <strong>Application ID:</strong> <code>app.andpop.android</code> &middot;
+      <strong>License:</strong> GPL-3.0-or-later
+    </div>
+
+    <section class="card">
+      <h2>1. Overview</h2>
+      <p>
+        AnDPoP is a companion app for viewing AirPods battery status, switching listening modes, and configuring
+        hardware settings on Android. You can use AnDPoP completely offline as a guest without creating an account.
+      </p>
+      <p>
+        AnDPoP contains <strong>no advertisements</strong>, <strong>no third-party analytics SDKs</strong>,
+        <strong>no automatic crash telemetry uploads</strong>, and <strong>no in-app purchases</strong>.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>2. Information Stored Locally on Your Device</h2>
+      <p>
+        To provide Bluetooth companion functionality, AnDPoP stores the following data strictly on your phone inside
+        app-private storage (<code>shared_prefs/settings.xml</code>, <code>shared_prefs/packet_logs.xml</code>,
+        and <code>filesDir/logs/</code>):
+      </p>
+      <ul>
+        <li><strong>Device &amp; Bluetooth metadata:</strong> Connected AirPods device name, model number, firmware strings, serial numbers, Bluetooth MAC address, and Bluetooth proximity/encryption keys needed for local BLE battery updates.</li>
+        <li><strong>Preferences:</strong> Listening mode preferences, stem press-and-hold actions, Accessibility settings, equalizer tuning, theme and appearance choices, and per-profile snapshots.</li>
+        <li><strong>Optional diagnostic logs:</strong> If you explicitly start a recording in <em>Settings &rarr; Troubleshooting</em>, AnDPoP captures its own process Bluetooth logs locally with Bluetooth addresses truncated to their last two bytes. Logs stay on your phone until you choose to share or delete them.</li>
+      </ul>
+      <p>
+        AnDPoP explicitly excludes <code>settings.xml</code>, <code>packet_logs.xml</code>, and <code>logs/</code>
+        from Android cloud backup and device-to-device transfer (<code>backup_rules.xml</code> and
+        <code>data_extraction_rules.xml</code>).
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>3. Optional Online Account</h2>
+      <p>
+        Signing in is optional. If you choose to create or sign into an AnDPoP account via the configured Supabase
+        authentication service:
+      </p>
+      <ul>
+        <li><strong>Data collected:</strong> Your email address and internal authentication user ID (UUID).</li>
+        <li><strong>Purpose:</strong> Account management (sign-in, email verification, password reset) and keeping separate local profiles/remembered device preferences on your device. Device settings and battery readings remain on your phone and are not synced to the cloud.</li>
+        <li><strong>Encryption at rest:</strong> Session tokens, user ID, and email are encrypted on-device with <strong>Android Keystore (AES/GCM/NoPadding)</strong> inside <code>noBackupFilesDir/andpop-account-v1</code>, which is excluded from cloud backups.</li>
+        <li><strong>Encryption in transit:</strong> All communication with the authentication service uses HTTPS (TLS) exclusively (<code>cleartextTrafficPermitted="false"</code>).</li>
+        <li><strong>Third-party sharing:</strong> AnDPoP does not sell or share your email address or personal data with advertisers, data brokers, or unrelated third parties. Authentication requests are processed by the Supabase project backend (<code>btfbwwnbkarlpcqmkzzb.supabase.co</code>).</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>4. Permissions Explained</h2>
+      <ul>
+        <li><strong>Nearby devices (<code>BLUETOOTH_CONNECT</code>, <code>BLUETOOTH_SCAN</code> with <code>neverForLocation</code>):</strong> Required to communicate with paired AirPods over Bluetooth and read battery/listening-mode state. Never used to infer physical location.</li>
+        <li><strong>Notifications (<code>POST_NOTIFICATIONS</code>):</strong> Optional; displays active AirPods battery and quick mode controls in the notification shade.</li>
+        <li><strong>Phone (<code>READ_PHONE_STATE</code>, <code>ANSWER_PHONE_CALLS</code>):</strong> Optional; used only if enabled to support call audio handover and nod/shake call controls.</li>
+        <li><strong>Display over other apps (<code>SYSTEM_ALERT_WINDOW</code>):</strong> Optional; used only if you enable the connection popup or Dynamic Island overlay.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>5. Account &amp; Data Deletion</h2>
+      <ul>
+        <li><strong>Immediate in-app deletion:</strong> Open <em>AnDPoP &rarr; Account &rarr; Delete account</em> while signed in. Confirming permanently deletes your online account via <code>delete_my_andpop_account</code> and wipes the associated local profile.</li>
+        <li><strong>Immediate web deletion:</strong> Visit the <a href="delete-account.html">AnDPoP Delete Account page</a> to permanently delete your online account directly from a web browser without needing the app installed.</li>
+        <li><strong>Local data deletion:</strong> Clear app storage or uninstall AnDPoP in Android Settings to remove all locally stored settings and logs, or delete individual recordings in <em>Troubleshooting</em>.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>6. Children's Privacy</h2>
+      <p>
+        AnDPoP is not directed to children under 13 and does not knowingly collect personal information from children.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>7. Contact</h2>
+      <p>
+        For privacy questions or support, please open an issue at
+        <a href="https://github.com/TeddyQyuon/AndPoP_V_1.6.0/issues">github.com/TeddyQyuon/AndPoP_V_1.6.0/issues</a>.
+      </p>
+    </section>
+
+    <footer>
+      AnDPoP is an independent open-source project and is not affiliated with Apple Inc. AirPods is a trademark of Apple Inc., registered in the U.S. and other countries.
+    </footer>
+  </main>
+</body>
+</html>

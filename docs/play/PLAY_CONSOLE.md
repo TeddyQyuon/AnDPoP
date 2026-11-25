@@ -55,7 +55,7 @@ Cross-reference [DATA_SAFETY.md](DATA_SAFETY.md) directly when filling the Play 
 
 - **Collects or shares any required user data types?** -> **Yes (optional only)** if an account is created; Bluetooth companion features work 100% offline with zero data sent off-device.
 - **Data type collected:** *Personal info -> Email address* (Optional; Account management only; not shared with third parties; encrypted in transit over HTTPS; user-deletable in-app and via your hosted web deletion page).
-- **Account deletion requirement:** Because AnDPoP supports in-app account creation, provide your hosted HTTPS web deletion link in Play Console ([Google Play User Data policy](https://support.google.com/googleplay/android-developer/answer/10144311)) and mirror that URL in `PrivacyLinks.ACCOUNT_DELETION_URL`.
+- **Account deletion requirement:** Because AnDPoP supports in-app account creation, provide `https://teddyqyuon.github.io/AndPoP_V_1.6.0/delete-account.html` (`docs/delete-account.html`, also set as `PrivacyLinks.ACCOUNT_DELETION_URL`) in Play Console ([Google Play User Data policy](https://support.google.com/googleplay/android-developer/answer/10144311)).
 
 ---
 

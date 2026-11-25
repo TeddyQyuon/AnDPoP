@@ -11,19 +11,27 @@ import me.kavishdevar.librepods.R
 
 /**
  * External policy links required for Google Play release.
- * TODO: Replace placeholder URLs with the final hosted HTTPS URLs before publishing on Play Console.
+ * Hosted via GitHub Pages from docs/ on main (antigravity repository).
  */
 internal object PrivacyLinks {
-    const val PRIVACY_POLICY_URL: String = ""
-    const val ACCOUNT_DELETION_URL: String = ""
+    const val PRIVACY_POLICY_URL: String = "https://teddyqyuon.github.io/AndPoP_V_1.6.0/privacy.html"
+    const val ACCOUNT_DELETION_URL: String = "https://teddyqyuon.github.io/AndPoP_V_1.6.0/delete-account.html"
 
     fun openPrivacyPolicy(context: Context) {
-        if (PRIVACY_POLICY_URL.isBlank()) {
+        openExternalUrl(context, PRIVACY_POLICY_URL)
+    }
+
+    fun openAccountDeletion(context: Context) {
+        openExternalUrl(context, ACCOUNT_DELETION_URL)
+    }
+
+    private fun openExternalUrl(context: Context, url: String) {
+        if (url.isBlank()) {
             Toast.makeText(context, context.getString(R.string.andpop_privacy_policy_pending), Toast.LENGTH_SHORT).show()
             return
         }
         try {
-            context.startActivity(Intent(Intent.ACTION_VIEW, PRIVACY_POLICY_URL.toUri()))
+            context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
         } catch (_: ActivityNotFoundException) {
             Toast.makeText(context, context.getString(R.string.andpop_account_msg_no_browser), Toast.LENGTH_SHORT).show()
         }

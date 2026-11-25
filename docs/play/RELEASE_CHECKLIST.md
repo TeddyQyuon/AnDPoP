@@ -2,7 +2,7 @@
 
 **Target application ID:** `app.andpop.android`  
 **Target SDK / Min SDK:** Android 17 (`compileSdk = 37`, `targetSdk = 37`) / Android 13 (`minSdk = 33`)  
-**Release artifacts verified:** `app/build/outputs/bundle/playRelease/app-play-release.aab` (`9,752,358` bytes) and `app/build/outputs/apk/play/release/app-play-release-unsigned.apk` (`8,451,436` bytes)
+**Release artifacts verified:** `app/build/outputs/bundle/playRelease/app-play-release.aab` (`9,752,453` bytes) and `app/build/outputs/apk/play/release/app-play-release-unsigned.apk` (`8,451,480` bytes)
 
 ---
 
@@ -19,12 +19,13 @@
 | Manifest & Security | Protected permissions removed in `play`, `AirPodsService` `exported="false"`, `RECEIVER_NOT_EXPORTED`, `network_security_config.xml` (no cleartext), vault/settings excluded from backup, R8 strips `Log.v/d/i` | **PASS** | `app/src/play/AndroidManifest.xml`, `network_security_config.xml`, `backup_rules.xml`, `data_extraction_rules.xml`, `app/proguard-rules.pro` |
 | Localization | Leftover LibrePods/Linux strings scrubbed across locales; `andpop_*` strings in resources | **PASS** | `values-*/strings.xml`, `andpop_v2_strings.xml`, `andpop_strings.xml`, translation plan in [AUDIT.md](AUDIT.md) |
 | Lint | `:app:lintFossDebug` & `:app:lintPlayRelease` zero errors | **PASS** | Both tasks exit `0` (`0` errors) |
-| Automated Tests | Existing 16 + 6 new Play readiness tests (`AppearanceRegressionTest`, `DashboardRegressionTest`, `ScreenshotTour`, `PlayReadinessRegressionTest`) pass on both `foss` and `play` | **PASS** | `:app:connectedFossDebugAndroidTest` (`22/22`) & `:app:connectedPlayDebugAndroidTest` (`22/22`) on `Pixel_8_Pro` API 37 |
+| Automated Tests | Existing 16 + 7 new Play readiness tests (`AppearanceRegressionTest`, `DashboardRegressionTest`, `ScreenshotTour`, `PlayReadinessRegressionTest`) pass on `play` (`23/23`) and `foss` (`22/22` baseline) | **PASS** | `:app:connectedPlayDebugAndroidTest` (`23/23`) & `:app:connectedFossDebugAndroidTest` (`22/22`) on `Pixel_8_Pro` API 37 |
 | R8 Release & 200% Font Scale | R8 `playRelease` launches, navigates Welcome -> Privacy at 100% & 200% font scale without crash | **PASS** | Debug-signed R8 `playRelease` emulator smoke test (`0` crashes after adding `RoomDatabase` rule in `app/proguard-rules.pro`) |
 | 16 KB Page Size | All `.so` files in `app-play-release.aab` (`arm64-v8a`, `x86_64`) have `LOAD` align `0x4000`; release APKs pass `zipalign -P 16` | **PASS** | `llvm-readelf -l` (`0x4000` on all 4 `.so`s) and `zipalign -c -P 16 -v 4` (`Verification successful`) |
 | Store Listing & Graphics | Title, descriptions, release notes, policy questionnaire drafts, FGS video script, Health Apps analysis, 512px icon, 1024×500 feature graphic, 6× `1080×2340` screenshots | **PASS** | [LISTING.md](LISTING.md), [PLAY_CONSOLE.md](PLAY_CONSOLE.md), [PRIVACY_POLICY.md](PRIVACY_POLICY.md), [DATA_SAFETY.md](DATA_SAFETY.md), `docs/play/graphics/` |
+| Legal & Deletion Pages Wired | GitHub Pages HTML portal created (`docs/index.html`, `privacy.html`, `delete-account.html`) and HTTPS URLs wired in `PrivacyLinks.kt` | **PASS** | [PrivacyLinks.kt](../../app/src/main/java/me/kavishdevar/librepods/presentation/PrivacyLinks.kt), `docs/privacy.html`, `docs/delete-account.html` |
+| Enable GitHub Pages & Legal Review | Toggle GitHub Pages (`main / /docs`) so `teddyqyuon.github.io/AndPoP_V_1.6.0/` serves live; review policy wording & add public support email | **NEEDS-USER** | GitHub repo **Settings -> Pages -> Deploy from a branch (`main`, `/docs`)**; update contact email in `LISTING.md` / `privacy.html` |
 | Upload Key Signing | Release AAB signed with your private upload key | **NEEDS-USER** | `app-play-release.aab` is currently unsigned (`jarsigner`: `jar is unsigned.`); see Step 2 below |
-| Hosted Legal URLs | Public HTTPS Privacy Policy URL & Web Account Deletion URL wired into `PrivacyLinks.kt` | **NEEDS-USER** | `PrivacyLinks.PRIVACY_POLICY_URL` & `ACCOUNT_DELETION_URL` currently empty `TODO` constants |
 | Real Hardware & Scanner | Physical Samsung Galaxy S26 Ultra + AirPods Pro 2 USB-C + AirPods Max Bluetooth test & Accessibility Scanner audit | **NEEDS-USER** | Checklist prepared in [DEVICE_TEST_PLAN.md](DEVICE_TEST_PLAN.md) |
 | Play Console Closed Test | Closed test with `>= 12` opted-in testers for `>= 14` consecutive days (personal accounts created on/after 13 Nov 2023) | **NEEDS-USER** | Required by [Play Console app testing rules](https://support.google.com/googleplay/android-developer/answer/14151465) |
 
@@ -40,9 +41,9 @@ Complete these steps in order before publishing `AnDPoP` to Google Play:
 2. **Create the upload keystore (outside Git)**
    - Generate `andpop-upload.jks` outside this repository using the `keytool -genkeypair` command in [ANDROID_RELEASE.md](../ANDROID_RELEASE.md#2-create-your-upload-key-outside-git), store a secure backup, and add `RELEASE_STORE_FILE`, `RELEASE_STORE_PASSWORD`, `RELEASE_KEY_ALIAS`, and `RELEASE_KEY_PASSWORD` to your git-ignored root `local.properties`.
 
-3. **Host the privacy policy and account-deletion pages**
-   - Review [PRIVACY_POLICY.md](PRIVACY_POLICY.md) (especially legal/jurisdiction wording) and publish both the Privacy Policy and the companion Web Account Deletion HTML page over HTTPS.
-   - Update `PRIVACY_POLICY_URL` and `ACCOUNT_DELETION_URL` in [PrivacyLinks.kt](../../app/src/main/java/me/kavishdevar/librepods/presentation/PrivacyLinks.kt) and your Store Listing (`LISTING.md`).
+3. **Enable GitHub Pages for the wired privacy policy and account-deletion URLs**
+   - In `TeddyQyuon/AndPoP_V_1.6.0` on GitHub, open **Settings -> Pages -> Source: Deploy from a branch**, select **`main`** and folder **`/docs`**, and save.
+   - Verify `https://teddyqyuon.github.io/AndPoP_V_1.6.0/privacy.html` and `https://teddyqyuon.github.io/AndPoP_V_1.6.0/delete-account.html` load cleanly over HTTPS (both URLs are already wired into [PrivacyLinks.kt](../../app/src/main/java/me/kavishdevar/librepods/presentation/PrivacyLinks.kt) and [LISTING.md](LISTING.md)); ensure [delete-account.sql](../../account-setup/delete-account.sql) is installed on your Supabase project.
 
 4. **Test on a real phone with AirPods**
    - Install a release-signed build on your Galaxy S26 Ultra and work through every item in [DEVICE_TEST_PLAN.md](DEVICE_TEST_PLAN.md) with AirPods Pro 2 (USB-C) and AirPods Max — especially BR/EDR L2CAP socket connectivity on Android 17, battery/charging/case broadcasts, notifications, Quick Settings tile, Glance widgets, and the **Accessibility Scanner** pass.

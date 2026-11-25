@@ -84,8 +84,8 @@ AnDPoP 2.0.0
 | Primary category | `Tools` (alternative: `Music & Audio`) |
 | Tags (up to 5) | `Bluetooth`, `Audio`, `Utilities`, `Headphones`, `Battery` |
 | Free or paid | Free (no ads, no in-app purchases) |
-| Developer contact email | `TODO: support@your-domain.example` |
-| Support website | `TODO: https://your-domain.example/andpop` (or your GitHub repository URL) |
-| Privacy Policy URL | `TODO: https://your-domain.example/andpop/privacy` (host [PRIVACY_POLICY.md](PRIVACY_POLICY.md)) |
-| Account deletion web URL | `TODO: https://your-domain.example/andpop/delete-account` |
+| Developer contact email | `TODO: your-public-support-email@example.com` (required in Play Console) |
+| Support website | `https://teddyqyuon.github.io/AndPoP_V_1.6.0/` (source: `docs/index.html`) |
+| Privacy Policy URL | `https://teddyqyuon.github.io/AndPoP_V_1.6.0/privacy.html` (source: `docs/privacy.html`, enable GitHub Pages `main / /docs`) |
+| Account deletion web URL | `https://teddyqyuon.github.io/AndPoP_V_1.6.0/delete-account.html` (source: `docs/delete-account.html`) |
 | Graphics assets | See `docs/play/graphics/` (`icon-512.png`, `feature-graphic-1024x500.png`, `phone-01..06*.png`) |

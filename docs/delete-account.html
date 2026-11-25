@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Delete Account — AnDPoP</title>
+  <meta name="description" content="Permanently delete your optional AnDPoP account and associated authentication data." />
+  <style>
+    :root {
+      --bg: #0A1113;
+      --s1: #111B1D;
+      --s2: #192427;
+      --border: rgba(237, 243, 244, 0.10);
+      --on: #EDF3F4;
+      --on2: #B3C3C6;
+      --pri: #68D6EC;
+      --err: #FFB4AB;
+      --err-bg: rgba(255, 180, 171, 0.14);
+      --ok: #7BE0A0;
+      --ok-bg: rgba(123, 224, 160, 0.14);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(ellipse 90% 35% at 50% -5%, rgba(31, 92, 105, 0.45), transparent 70%), var(--bg);
+      color: var(--on);
+      line-height: 1.65;
+    }
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 36px 20px 64px;
+    }
+    nav {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 24px;
+      font-size: 0.95rem;
+    }
+    h1 { margin: 0 0 8px; font-size: 1.9rem; letter-spacing: -0.02em; }
+    h2 { margin: 0 0 10px; font-size: 1.15rem; color: var(--on); }
+    p, li { color: var(--on2); }
+    a { color: var(--pri); }
+    .card {
+      background: var(--s1);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 22px 24px;
+      margin-bottom: 16px;
+    }
+    label {
+      display: block;
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--on);
+      margin-bottom: 6px;
+    }
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      min-height: 48px;
+      padding: 10px 14px;
+      margin-bottom: 14px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--s2);
+      color: var(--on);
+      font-size: 1rem;
+    }
+    .check-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin: 8px 0 18px;
+      color: var(--on2);
+      font-size: 0.94rem;
+    }
+    .check-row input {
+      width: 20px;
+      height: 20px;
+      margin-top: 3px;
+      flex: 0 0 auto;
+    }
+    button {
+      min-height: 48px;
+      padding: 0 22px;
+      border: 0;
+      border-radius: 999px;
+      background: var(--err);
+      color: #410002;
+      font-size: 0.98rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+    .status {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      font-size: 0.94rem;
+      display: none;
+    }
+    .status.ok { display: block; background: var(--ok-bg); color: var(--ok); }
+    .status.err { display: block; background: var(--err-bg); color: var(--err); }
+    ol, ul { padding-left: 20px; margin: 8px 0 0; }
+    li { margin-bottom: 8px; }
+    footer {
+      margin-top: 28px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      font-size: 0.88rem;
+      color: var(--on2);
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <nav aria-label="Breadcrumb">
+      <a href="./">AnDPoP Home</a>
+      <a href="privacy.html">Privacy Policy</a>
+    </nav>
+
+    <h1>Delete Your AnDPoP Account</h1>
+    <p>
+      AnDPoP accounts are optional and store only your email address and authentication record in Supabase Auth.
+      AirPods battery readings, listening-mode preferences, and themes stay strictly on your phone and are never
+      uploaded to the cloud.
+    </p>
+
+    <section class="card">
+      <h2>What gets deleted</h2>
+      <ul>
+        <li><strong>Deleted permanently online:</strong> Your email address, password hash, authentication tokens, and internal user ID (UUID) in Supabase Auth. Zero retention period after deletion completes.</li>
+        <li><strong>Local device data:</strong> On-device AirPods preferences and logs are not stored online. Delete them anytime by clearing app data or uninstalling AnDPoP on your phone.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Option 1: Delete Immediately Inside the App</h2>
+      <ol>
+        <li>Open <strong>AnDPoP</strong> on your Android phone.</li>
+        <li>Tap the <strong>Account</strong> icon in the top bar.</li>
+        <li>Tap <strong>Delete account</strong> and confirm. Your online account and local profile are erased immediately.</li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <h2>Option 2: Delete Immediately on the Web</h2>
+      <p>
+        If you uninstalled AnDPoP or no longer have access to your Android device, sign in below to permanently
+        erase your AnDPoP authentication account immediately over HTTPS.
+      </p>
+      <form id="deleteForm" novalidate>
+        <label for="email">Account email address</label>
+        <input id="email" name="email" type="email" autocomplete="email" required placeholder="you@example.com" />
+
+        <label for="password">Account password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="Enter your password" />
+
+        <label class="check-row">
+          <input id="confirmCheck" type="checkbox" required />
+          <span>I understand that deleting my AnDPoP account is permanent and cannot be undone.</span>
+        </label>
+
+        <button id="submitBtn" type="submit">Permanently delete my account</button>
+        <div id="statusBox" class="status" role="status" aria-live="polite"></div>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Option 3: Need Help or Forgot Password?</h2>
+      <p>
+        If you signed up with Google/Apple or cannot remember your password, you can reset your password inside
+        AnDPoP (<em>Account &rarr; Log in &rarr; Forgot password?</em>) or request manual assistance via
+        <a href="https://github.com/TeddyQyuon/AndPoP_V_1.6.0/issues">github.com/TeddyQyuon/AndPoP_V_1.6.0/issues</a>.
+      </p>
+    </section>
+
+    <footer>
+      AnDPoP (<code>app.andpop.android</code>) &middot; Open source under GPL-3.0-or-later &middot; Not affiliated with Apple Inc.
+    </footer>
+  </main>
+
+  <script>
+    (function () {
+      const SUPABASE_URL = "https://btfbwwnbkarlpcqmkzzb.supabase.co";
+      const SUPABASE_KEY = "sb_publishable_s3GqJUDO5e_3PAC_aqytLg_tSdk5tSr";
+      const form = document.getElementById("deleteForm");
+      const emailInput = document.getElementById("email");
+      const passwordInput = document.getElementById("password");
+      const confirmCheck = document.getElementById("confirmCheck");
+      const submitBtn = document.getElementById("submitBtn");
+      const statusBox = document.getElementById("statusBox");
+
+      function showStatus(kind, msg) {
+        statusBox.className = "status " + kind;
+        statusBox.textContent = msg;
+      }
+
+      form.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+        if (!email || !password) {
+          showStatus("err", "Please enter both your email address and password.");
+          return;
+        }
+        if (!confirmCheck.checked) {
+          showStatus("err", "Please check the confirmation box before deleting your account.");
+          return;
+        }
+
+        submitBtn.disabled = true;
+        showStatus("ok", "Verifying credentials over HTTPS...");
+
+        try {
+          const authRes = await fetch(SUPABASE_URL + "/auth/v1/token?grant_type=password", {
+            method: "POST",
+            headers: {
+              "apikey": SUPABASE_KEY,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ email: email, password: password })
+          });
+          const authBody = await authRes.json().catch(function () { return {}; });
+          if (!authRes.ok || !authBody.access_token) {
+            throw new Error(authBody.error_description || authBody.msg || "Sign-in failed. Check your email and password.");
+          }
+
+          showStatus("ok", "Deleting account...");
+          const delRes = await fetch(SUPABASE_URL + "/rest/v1/rpc/delete_my_andpop_account", {
+            method: "POST",
+            headers: {
+              "apikey": SUPABASE_KEY,
+              "Authorization": "Bearer " + authBody.access_token,
+              "Content-Type": "application/json"
+            },
+            body: "{}"
+          });
+          if (!delRes.ok) {
+            const delBody = await delRes.json().catch(function () { return {}; });
+            throw new Error(delBody.message || "Could not complete account deletion. Ensure delete-account.sql is installed on the Supabase project.");
+          }
+
+          form.reset();
+          showStatus("ok", "Your AnDPoP account and authentication record have been permanently deleted.");
+        } catch (err) {
+          showStatus("err", err && err.message ? err.message : "Network error while deleting account.");
+        } finally {
+          passwordInput.value = "";
+          submitBtn.disabled = false;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 # Privacy Policy for AnDPoP (Draft)
 
-> **[TODO: HOSTED URL]** Host this privacy policy (and the web account-deletion form below) on a public HTTPS URL and set `PRIVACY_POLICY_URL` and `ACCOUNT_DELETION_URL` in `app/src/main/java/me/kavishdevar/librepods/presentation/PrivacyLinks.kt` before publishing on Google Play.
+> **Hosted static HTML:** Static GitHub Pages HTML versions of this Privacy Policy and the Web Account Deletion page are ready in [`docs/privacy.html`](../privacy.html) and [`docs/delete-account.html`](../delete-account.html) and wired in `PrivacyLinks.kt` (`https://teddyqyuon.github.io/AndPoP_V_1.6.0/privacy.html` and `.../delete-account.html`). Enable **Settings -> Pages -> Deploy from a branch -> `main` / `/docs`** on GitHub so those HTTPS URLs serve live.
 >
 > **[NEEDS LEGAL REVIEW]** Have a legal advisor review jurisdiction-specific disclosures (GDPR, CCPA/CPRA, etc.) prior to commercial or broad public distribution.
 

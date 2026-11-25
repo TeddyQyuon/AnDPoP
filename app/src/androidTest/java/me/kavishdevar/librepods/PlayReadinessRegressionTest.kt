@@ -23,6 +23,7 @@ import me.kavishdevar.librepods.data.BatteryStatus
 import me.kavishdevar.librepods.data.CaseBatteryReading
 import me.kavishdevar.librepods.data.ListeningModeCycle
 import me.kavishdevar.librepods.data.XposedRemotePrefProvider
+import me.kavishdevar.librepods.presentation.PrivacyLinks
 import me.kavishdevar.librepods.presentation.navigation.AppNavGraph
 import me.kavishdevar.librepods.presentation.navigation.Screen
 import me.kavishdevar.librepods.presentation.screens.AppSettingsScreen
@@ -178,5 +179,11 @@ class PlayReadinessRegressionTest {
         }
         compose.onNodeWithText(label(R.string.andpop_try_demo)).performScrollTo().performClick()
         compose.runOnIdle { assertTrue(demoRequested) }
+    }
+
+    @Test
+    fun privacyAndDeletionLinksUseHttps() {
+        assertTrue(PrivacyLinks.PRIVACY_POLICY_URL.startsWith("https://"))
+        assertTrue(PrivacyLinks.ACCOUNT_DELETION_URL.startsWith("https://"))
     }
 }
