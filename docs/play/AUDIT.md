@@ -150,3 +150,30 @@
   5. `LogCollector.kt:70` runs `dumpsys package me.kavishdevar.librepods` instead of `app.andpop.android`.
   6. `PermissionsPage.kt:242, 280` sets `contentDescription = "bluetooth"` on Phone and Overlay icons.
   7. Apple SF Symbol Private Use Area characters (`\uDBC0\uDEA1`, `\uDBC3\uDC8E`, etc.) render as missing-glyph tofu boxes in `PopupWindow.kt`, `AccessibilitySettingsScreen.kt`, `AdaptiveStrengthScreen.kt`, `HearingAidAdjustmentsScreen.kt`, `TransparencySettingsScreen.kt`, and `BatteryView.kt`.
+
+---
+
+## 10. Addendum (second review, 2026-11-25)
+
+A second pass checked the first audit against the code and current Android and Play documentation.
+
+### 10.1 Corrections to sections 3–5
+
+| Item | Correction |
+| --- | --- |
+| Widgets `exported="false"` (section 4) | Not a bug. The system's app-widget host delivers `APPWIDGET_UPDATE` from the system UID, which can reach non-exported receivers; Android Studio's widget template uses `exported="false"`. Keep as is. |
+| `BOOT_COMPLETED` start of the `connectedDevice` service | Allowed. Android 15 blocks only `dataSync`, `camera`, `mediaPlayback`, `phoneCall`, `mediaProjection` and `microphone` services from `BOOT_COMPLETED` receivers ([Android 15 behavior changes](https://developer.android.com/about/versions/15/behavior-changes-15#fgs-boot-completed)). The real risk is that a `connectedDevice` service needs a Bluetooth runtime permission when it starts ([foreground service types](https://developer.android.com/develop/background-work/services/fgs/service-types)). `BootReceiver` starts the service before onboarding grants Nearby devices; it must check `onboarding_complete` and `BLUETOOTH_CONNECT` first. |
+| `MODIFY_AUDIO_SETTINGS` | Normal permission, used by `MediaController` for Conversation Awareness volume changes. Keep in both flavors. |
+| `READ_PHONE_STATE`, `ANSWER_PHONE_CALLS` | Both are runtime permissions outside Play's restricted SMS and Call Log groups. Keep, requested in context on the permissions page with their reason (head gestures for calls). |
+
+### 10.2 Items the first audit did not cover
+
+| Area | Finding | Play risk | Action |
+| --- | --- | --- | --- |
+| Hidden-API exemption | `cpp/bluetooth_socket.cpp` calls `VMRuntime.setHiddenApiExemptions` (strings XOR-obfuscated) so the app can open a classic L2CAP socket to the AirPods. This is what makes AACP work without root. | Needs your judgment. Play's [Device and Network Abuse](https://support.google.com/googleplay/android-developer/answer/13315670) policy prohibits unauthorized interference with the device or APIs; Google's pages do not say whether this pattern is allowed. Obfuscated strings may look like evasion to a reviewer. | Keep: removing it removes the core feature. Describe it plainly in the review notes (`PLAY_CONSOLE.md`). Recorded as "needs-user" in the release checklist. |
+| Proximity keys | `IRK` and `ENC_KEY` are stored Base64 in `shared_prefs/settings.xml` and were included in backups. | Data safety: device identifiers stored on device. | Exclude `settings.xml` from cloud backup and device transfer (Phase 2). |
+| Sensitive logging | About 58 of 436 `Log` calls print Bluetooth addresses or raw packets. | Release builds should not log personal data. | R8 strips `Log.v/d/i` in release (Phase 2); the new log recorder shortens addresses to their last two bytes. |
+| Exported service | `AirPodsService` is `exported="true"`, guarded only by `BLUETOOTH_CONNECT`, so any app holding that permission could bind to it or start it. | Security. | Set `exported="false"` in both flavors; only the app binds to it. |
+| Root log capture | `LogCollector` ran `su -c logcat` and `killall com.android.bluetooth`. | Root features are not allowed in the Play build. | Replaced by a non-root recorder that captures only AnDPoP's own process log. |
+| Billing leftovers | `observeBilling()` in two view models disabled Conversation Awareness and head gestures whenever the billing provider reported "not premium"; a `PLAY_BUILD` branch in `loadSharedPreferences()` could expire "premium". | Would have broken features in a Play build. | Removed with the billing code (Phase 1). |
+| Accessibility screen side effect | Opening Accessibility sent a phone/media EQ packet with default values every time, although the controls for it are commented out. | Could reset an EQ setting on the AirPods. | Removed with the screen rewrite. |
