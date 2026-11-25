@@ -1,7 +1,7 @@
 # AnDPoP Play Release Progress
 
 **Last updated:** 2026-11-25  
-**Active branch:** `feature/play-phase-0-audit`  
+**Active branch:** `feature/play-phase-1-ui` (ready for `feature/play-phase-2-policy`)  
 **Target comparison remote:** `https://github.com/TeddyQyuon/AndPoP_V_1.6.0.git`
 
 ---
@@ -10,28 +10,28 @@
 
 - [x] **Phase 0: Baseline & Audit** (`feature/play-phase-0-audit`)
   - Environment, `:app:assembleFossDebug`, `:app:assembleFossRelease`, `:app:lintFossDebug`, and 16 KB `zipalign`/`llvm-readelf` verified.
-  - Full inventory written to [AUDIT.md](AUDIT.md).
-- [ ] **Phase 1: Finish 2.0 UI** (`feature/play-phase-1-ui`)
-  - [ ] 1.1 Bundled Roboto Flex font (`res/font/roboto_flex.ttf`), missing `AndpopIcons`, adaptive icon radial gradient, shared `AndpopUi` segmented/slider/radio/checkbox primitives
-  - [ ] 1.2 Account as normal `Screen.Account` + single Welcome with `"I already have an account"` (Decision 1)
-  - [ ] 1.3 Per-permission Allow buttons & TalkBack fixes in `PermissionsPage.kt` + `NotSupportedPage.kt`
-  - [ ] 1.4 Regrouped `All device settings` + Disconnect confirmation (Decision 2)
-  - [ ] 1.5 `DeveloperOptionsScreen.kt` (7-tap App version unlock; Account service form, compatibility bypass, demo mode, Apple vendor hook, velocity plot) (Decision 4)
-  - [ ] 1.6 Detail screens: `RenameScreen`, `PressAndHoldSettingsScreen`, `VersionInfoScreen`, `AccessibilitySettingsScreen`, `EqualizerScreen` (Decision 9), `HeadTrackingScreen`, `TroubleshootingScreen` + non-root `LogCollector`, and remaining detail screens
-  - [ ] 1.7 Dashboard loading skeleton while service binds
-  - [ ] 1.8 System surfaces: single informative notification + silent service notification (Decision 6), Glance widgets (Decision 7), Compose `PopupWindow` & `IslandWindow`, updated `AirPodsQSService` & `QuickSettingsDialogActivity`
-  - [ ] 1.9 Large-screen two-pane layout (`>= 840 dp`)
-  - [ ] 1.10 Update implementation status table in `docs/v2-ui/README.md`
+  - Full inventory and second-review addendum written to [AUDIT.md](AUDIT.md).
+- [x] **Phase 1: Finish 2.0 UI** (`feature/play-phase-1-ui`)
+  - [x] 1.1 Bundled Roboto Flex font (`res/font/roboto_flex.ttf`), missing `AndpopIcons`, adaptive icon radial gradient, shared `AndpopUi` segmented/slider/radio/checkbox primitives
+  - [x] 1.2 Account as normal `Screen.Account` + single Welcome with `"I already have an account"` (Decision 1)
+  - [x] 1.3 Per-permission Allow buttons & TalkBack fixes in `PermissionsPage.kt` + `NotSupportedPage.kt`
+  - [x] 1.4 Regrouped `All device settings` + Disconnect confirmation (Decision 2)
+  - [x] 1.5 `DeveloperOptionsScreen.kt` (7-tap App version unlock; Account service form, compatibility bypass, demo mode, Apple vendor hook, velocity plot) (Decision 4)
+  - [x] 1.6 Detail screens: `RenameScreen`, `PressAndHoldSettingsScreen`, `VersionInfoScreen`, `AccessibilitySettingsScreen`, `EqualizerScreen` (Decision 9), `HeadTrackingScreen`, `TroubleshootingScreen` + non-root `LogRecorder`, `HearingAidScreen`, `HearingAidAdjustmentsScreen`, `TransparencySettingsScreen`, `UpdateHearingTestScreen`, `OpenSourceLicensesScreen`, and PUA glyph cleanup
+  - [x] 1.7 Dashboard loading skeleton while service binds + `"Try demo mode"` entry
+  - [x] 1.8 System surfaces: single informative connected notification + silent deferred FGS notification (Decision 6), Jetpack Glance 1.1.1 widgets (Decision 7), Compose `PopupWindow` & `IslandWindow` overlays, shared `ListeningModeCycle` QS tile & themed QS dialog
+  - [x] 1.9 Large-screen two-pane layout (`>= 840 dp`)
+  - [x] 1.10 Updated implementation status table in `docs/v2-ui/README.md`
 - [ ] **Phase 2: Play Build & Policy Compliance** (`feature/play-phase-2-policy`)
-  - [ ] `play` flavor (`PLAY_BUILD = true`), Xposed/billing removal, reviewer `"Try demo mode"` entry
-  - [ ] Play manifest (`tools:node="remove"` for privileged permissions), exported hardening, `network_security_config.xml`
-  - [ ] Privacy links (`PRIVACY_POLICY_URL` / `ACCOUNT_DELETION_URL` TODOs), `PRIVACY_POLICY.md`, `DATA_SAFETY.md`
-  - [ ] Localization cleanup (`values-it` `app_name`, Linux/LibrePods scrub, string resource extraction)
+  - [ ] `play` flavor (`PLAY_BUILD = true`), clean `src/foss` vs `src/play` Xposed split, reviewer `"Try demo mode"` entry
+  - [ ] Play manifest (`tools:node="remove"` for privileged permissions), exported hardening, API 37 `disconnect()` guard, `network_security_config.xml`
+  - [ ] `PRIVACY_POLICY.md`, `DATA_SAFETY.md`
+  - [ ] Localization cleanup (`values-it` `app_name`, Linux/LibrePods scrub across 12 locales, `MissingTranslation` suppressions)
   - [ ] Backup rules exclusions (`settings.xml`, `packet_logs.xml`, `logs/`) & ProGuard/R8 release hardening
 - [ ] **Phase 3: Quality** (`feature/play-phase-3-quality`)
   - [ ] Zero lint errors on `:app:lintFossDebug` & `:app:lintPlayRelease`
-  - [ ] 15 existing + new Play readiness instrumented tests passing on `Pixel_8_Pro` emulator for both `foss` and `play`
-  - [ ] R8 release APK smoke test + `DEVICE_TEST_PLAN.md`
+  - [ ] Existing 15 + new Play readiness instrumented tests passing on `Pixel_8_Pro` emulator for both `foss` and `play`
+  - [ ] R8 release APK smoke test + 200% font scale check + `DEVICE_TEST_PLAN.md`
 - [ ] **Phase 4: Signing & Release Bundle** (`feature/play-phase-4-signing`)
   - [ ] Updated `docs/ANDROID_RELEASE.md` (keytool, `local.properties`, Play App Signing, versionCode strategy)
   - [ ] Verified `:app:bundlePlayRelease` & `:app:bundleFossRelease` + 16 KB check
@@ -60,15 +60,10 @@
 
 ---
 
-## Last Build & Test Results (Phase 0 Baseline)
-- `:app:assembleFossDebug` — **PASS** (`48,786,895` bytes)
-- `:app:assembleFossRelease` — **PASS** (`8,246,122` bytes)
-- `:app:lintFossDebug` — **125 errors, 250 warnings** (111 `MissingTranslation`, 13 `UseAppTint`, 1 `NewApi`)
-- `zipalign -c -P 16 -v 4` — **PASS (`Verification successful`)**
-- `llvm-readelf -l` (all 6 `.so` targets in `arm64-v8a` & `x86_64`) — **PASS (`Align = 0x4000`)**
-- `:app:connectedFossDebugAndroidTest` — **Skipped in Phase 0** (no emulator booted yet; `Pixel_8_Pro` AVD will be booted in Phase 3)
+## Last Build & Test Results (Phase 1 Complete)
+- `:app:assembleFossDebug` — **PASS** (`BUILD SUCCESSFUL in 1m 54s`, with bundled `roboto_flex.ttf`, Jetpack Glance `1.1.1`, Compose overlays, and notification/QS system surfaces)
 
 ---
 
 ## Exact Next Step
-Create branch `feature/play-phase-1-ui` from `feature/play-phase-0-audit` and start **Phase 1.1** (JVM heap tuning in `gradle.properties`, `16384` link flags in `CMakeLists.txt`, bundled `roboto_flex.ttf`, `AndpopIcons`, adaptive icon gradient, and `AndpopUi` shared primitives).
+Branch `feature/play-phase-2-policy` from `feature/play-phase-1-ui` and execute **Phase 2** (`play` flavor + `src/foss`/`src/play` Xposed split, manifest/API-37/BootReceiver hardening, backup exclusions, R8 rules, localization scrub, `PRIVACY_POLICY.md`, and `DATA_SAFETY.md`).

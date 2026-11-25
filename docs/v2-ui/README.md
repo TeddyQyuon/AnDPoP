@@ -7,13 +7,13 @@
 | Area | In 2.0.0 | Still to do |
 | --- | --- | --- |
 | Color system | Seven themes from one tonal scale, one choice for light and dark, migration from `andpop_dark_tint` (decision 10). Tonal surfaces replace the glass panels. | |
-| Dashboard | Top bar with mark, account and settings buttons. Hero card with battery cells, refresh and Battery details. Sliding listening-mode control. Sound, AirPods controls, press-and-hold tiles, About. Disconnected state with Reconnect, pairing guide for first use. Restyled battery sheet. | Loading skeleton |
-| Settings | Live appearance previews, color swatches, grouped rows with icons, overlay-permission banner, volume slider, connection chips (decision 3), privacy summary, credits, app version, collapsible phone information, trademark notice. | Developer options (decision 4) |
-| Detail screens | Shared list, switch, header and top-bar styling, so every LibrePods screen uses the 2.0 colors, type and shapes. | Regrouped All device settings (decision 2), equalizer sliders (decision 9), segmented speed pickers |
-| First run | Welcome and privacy pages redesigned. | One welcome with account as a normal screen (decision 1), per-permission Allow buttons |
-| System surfaces | New launcher icon with themed layer and splash screen (decision 5). Popup and widget colors follow Glacier. Notification channel renamed. | Single notification (decision 6), Glance widgets (decision 7), popup and island layouts |
-| Type | Roboto Flex at standard width in four weights. | Bundled font file (decision 8) |
-| Play readiness | | `play` flavor, manifest permission review, remaining hard-coded strings |
+| Dashboard | Top bar with mark, account and settings buttons. Hero card with battery cells, refresh and Battery details. Sliding listening-mode control. Sound, AirPods controls, press-and-hold tiles, About. Disconnected state with Reconnect, pairing guide with "Try demo mode", loading skeleton while service binds, two-pane detail layout at ≥ 840 dp. Restyled battery sheet. | |
+| Settings | Live appearance previews, color swatches, grouped rows with icons, overlay-permission banner, volume slider, connection chips (decision 3), privacy summary, credits, app version (7-tap unlock), Developer options (decision 4), collapsible phone information, trademark notice. | |
+| Detail screens | Shared `AndpopDetailPage`/`AndpopGroup`/`AndpopSliderRow`/`AndpopSegmentedRow` styling, regrouped All device settings with disconnect confirmation (decision 2), Low/Mid/High equalizer sliders with curve preview (decision 9), segmented speed pickers, copyable firmware values, 3-step non-root log recorder, unified detail/hearing screens. | |
+| First run | Single welcome with "I already have an account", Account as a `Screen.Account` destination with predictive back (decision 1), privacy summary, per-permission Allow buttons & TalkBack fixes. | |
+| System surfaces | New radial-gradient launcher icon with themed layer and splash screen (decision 5). Single connected battery/mode notification + silent deferred background service notification (decision 6). Jetpack Glance battery & noise-control widgets (decision 7). Compose connection sheet popup & Dynamic Island overlays. Shared `ListeningModeCycle` QS tile and themed QS dialog. | |
+| Type | Bundled Roboto Flex variable font + OFL license (decision 8). | |
+| Play readiness | | `play` flavor, manifest permission review, remaining hard-coded strings (Phase 2) |
 
 Screenshots of the built app, rendered by `ScreenshotTour` on the CI emulator (320 dp wide, so the battery cells use their stacked layout):
 
