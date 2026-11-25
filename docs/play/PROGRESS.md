@@ -1,7 +1,7 @@
 # AnDPoP Play Release Progress
 
 **Last updated:** 2026-11-25  
-**Active branch:** `feature/play-phase-3-quality` (ready for `feature/play-phase-4-signing`)  
+**Active branch:** `feature/play-phase-4-signing` (ready for `feature/play-phase-5-store`)  
 **Target comparison remote:** `https://github.com/TeddyQyuon/AndPoP_V_1.6.0.git`
 
 ---
@@ -32,9 +32,9 @@
   - [x] Zero lint errors on `:app:lintFossDebug` & `:app:lintPlayRelease` (fixed `LocalResources` in `AppSettingsScreen.kt`, explicit `setPackage` in `AirPodsService.kt`, and `tools:ignore` for `tools:node="remove"` entries in `app/src/play/AndroidManifest.xml`)
   - [x] Existing 16 + 6 new Play readiness tests (`22/22` passed on `Pixel_8_Pro` API 37 for both `foss` and `play` with `espresso-core:3.7.0` / `runner:1.7.0` scoped to `androidTest`)
   - [x] R8 `playRelease` smoke test passed (caught and fixed `RoomDatabase` `WorkDatabase_Impl.<init>()` stripping via `app/proguard-rules.pro`; verified `100%` and `200%` font scale renders with 0 crashes) + created [DEVICE_TEST_PLAN.md](DEVICE_TEST_PLAN.md)
-- [ ] **Phase 4: Signing & Release Bundle** (`feature/play-phase-4-signing`)
-  - [ ] Updated `docs/ANDROID_RELEASE.md` (keytool, `local.properties`, Play App Signing, versionCode strategy)
-  - [ ] Verified `:app:bundlePlayRelease` & `:app:bundleFossRelease` + 16 KB check
+- [x] **Phase 4: Signing & Release Bundle** (`feature/play-phase-4-signing`)
+  - [x] Updated [ANDROID_RELEASE.md](../ANDROID_RELEASE.md) (`keytool` upload key outside repo, `local.properties` properties, Play App Signing, `:app:bundlePlayRelease` & `:app:bundleFossRelease`, `jarsigner`/`apksigner`, monotonic `versionCode`)
+  - [x] Built `:app:bundlePlayRelease` (`9,752,358` bytes, unsigned pending user upload key) & `:app:bundleFossRelease` (`10,297,073` bytes); verified `0` Xposed entries, `0x4000` (16 KB) `LOAD` alignment via `llvm-readelf -l` on all 4 `.so` libraries in `app-play-release.aab`, and `zipalign -c -P 16 -v 4` `Verification successful` on both release APKs
 - [ ] **Phase 5: Store Listing & Graphics** (`feature/play-phase-5-store`)
   - [ ] `docs/play/LISTING.md`, `docs/play/PLAY_CONSOLE.md`, `docs/play/graphics/` (512px icon, 1024x500 feature graphic, emulator phone screenshots)
 - [ ] **Phase 6: Final Verification & Handoff** (`feature/play-phase-6-handoff`)
@@ -61,13 +61,15 @@
 
 ---
 
-## Last Build & Test Results (Phase 3 Complete)
+## Last Build & Test Results (Phase 4 Complete)
+- `:app:bundlePlayRelease` — **PASS** (`9,752,358` bytes; `jarsigner`: unsigned pending upload keystore; `0` Xposed/hook entries; `llvm-readelf -l`: all 4 `.so` libs `0x4000`)
+- `:app:bundleFossRelease` — **PASS** (`10,297,073` bytes)
+- `zipalign -c -P 16 -v 4` on `app-play-release-unsigned.apk` (`8,451,436` bytes) & `app-foss-release-unsigned.apk` (`9,111,948` bytes) — **Verification successful**
 - `:app:lintFossDebug` & `:app:lintPlayRelease` — **PASS** (`0 errors`)
-- `:app:connectedFossDebugAndroidTest` — **PASS** (`22/22` tests on `Pixel_8_Pro(AVD) - 17`, 14 screenshot PNGs generated)
-- `:app:connectedPlayDebugAndroidTest` — **PASS** (`22/22` tests on `Pixel_8_Pro(AVD) - 17`, 14 screenshot PNGs generated)
-- `:app:assemblePlayRelease`, `:app:assembleFossRelease` — **PASS**; debug-signed R8 `playRelease` emulator smoke test (100% & 200% font scale) — **PASS** (`0` crashes)
+- `:app:connectedFossDebugAndroidTest` & `:app:connectedPlayDebugAndroidTest` — **PASS** (`22/22` tests on `Pixel_8_Pro(AVD) - 17`, 14 screenshot PNGs per flavor)
+- Debug-signed R8 `playRelease` emulator smoke test (100% & 200% font scale) — **PASS** (`0` crashes)
 
 ---
 
 ## Exact Next Step
-Branch `feature/play-phase-4-signing` from `feature/play-phase-3-quality`, update `docs/ANDROID_RELEASE.md`, build `:app:bundlePlayRelease` & `:app:bundleFossRelease`, and verify 16 KB page-size alignment and stripped Xposed/hook binaries.
+Branch `feature/play-phase-5-store` from `feature/play-phase-4-signing`, refresh `docs/v2-ui/app/` screenshots, author `docs/play/LISTING.md` and `docs/play/PLAY_CONSOLE.md`, and generate `docs/play/graphics/` assets (`icon-512.png`, `feature-graphic-1024x500.png`, 6 `1080x2340` phone screenshots).
