@@ -4,86 +4,88 @@ import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 
 @Serializable
-sealed interface Screen: NavKey {
+sealed interface Screen : NavKey {
     val showTopBar: Boolean
         get() = true
 
     @Serializable
-    data object Onboarding: Screen {
+    data object Onboarding : Screen {
         override val showTopBar: Boolean = false
     }
 
     @Serializable
-    data object Dashboard: Screen {
+    data object Dashboard : Screen {
         override val showTopBar: Boolean = false
     }
 
     @Serializable
-    data object AirPodsSettings: Screen
+    data class Account(val loginFirst: Boolean = false) : Screen {
+        override val showTopBar: Boolean = false
+    }
 
     @Serializable
-    data object Rename: Screen
+    data object AirPodsSettings : Screen
 
     @Serializable
-    data object AppSettings: Screen
+    data object Rename : Screen
 
     @Serializable
-    data object Troubleshooting: Screen
+    data object AppSettings : Screen
 
     @Serializable
-    data object HeadTracking: Screen
+    data object DeveloperOptions : Screen
 
     @Serializable
-    data object Accessibility: Screen
+    data object Troubleshooting : Screen
 
     @Serializable
-    data object TransparencyCustomization: Screen
+    data object HeadTracking : Screen
 
     @Serializable
-    data object HearingAid: Screen
+    data object Accessibility : Screen
 
     @Serializable
-    data object HearingAidAdjustments: Screen
+    data object TransparencyCustomization : Screen
 
     @Serializable
-    data object AdaptiveStrength: Screen
-
-//    @Serializable
-//    data object CameraControl: Screen
+    data object HearingAid : Screen
 
     @Serializable
-    data object OpenSourceLicenses: Screen
+    data object HearingAidAdjustments : Screen
 
     @Serializable
-    data object UpdateHearingTest: Screen
+    data object AdaptiveStrength : Screen
 
     @Serializable
-    data object VersionInfo: Screen
+    data object OpenSourceLicenses : Screen
 
     @Serializable
-    data object HearingProtection: Screen
+    data object UpdateHearingTest : Screen
 
     @Serializable
-    data object Purchase: Screen
+    data object VersionInfo : Screen
 
     @Serializable
-    data object Equalizer: Screen
+    data object HearingProtection : Screen
+
+    @Serializable
+    data object Equalizer : Screen
 
     @Serializable
     data class LongPress(
         val bud: String
-    ): Screen
+    ) : Screen
 
     @Serializable
     data class CallControl(
         val action: String
-    ): Screen
+    ) : Screen
 
     @Serializable
-    data object MicrophoneSettings: Screen
+    data object MicrophoneSettings : Screen
 
     @Serializable
-    data object ReleaseNotes: Screen {
+    data object ReleaseNotes : Screen {
         override val showTopBar: Boolean = false
     }
 }

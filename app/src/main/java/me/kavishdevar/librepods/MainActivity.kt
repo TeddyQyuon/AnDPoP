@@ -20,10 +20,10 @@ package me.kavishdevar.librepods
 
 import android.content.ActivityNotFoundException
 import android.content.ComponentName
-import android.content.SharedPreferences
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.os.IBinder
 import androidx.activity.ComponentActivity
@@ -41,21 +41,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.core.content.edit
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import me.kavishdevar.librepods.account.AccountScreen
 import me.kavishdevar.librepods.account.AccountViewModel
-import me.kavishdevar.librepods.account.RememberedAirPods
 import me.kavishdevar.librepods.data.ControlCommandRepository
 import me.kavishdevar.librepods.presentation.navigation.NavigationRoot
 import me.kavishdevar.librepods.presentation.theme.ANDPOP_PALETTE_KEY
+import me.kavishdevar.librepods.presentation.theme.AndpopAppearance
 import me.kavishdevar.librepods.presentation.theme.AndpopTint
 import me.kavishdevar.librepods.presentation.theme.LEGACY_DARK_TINT_KEY
-import me.kavishdevar.librepods.presentation.theme.LocalSetAndpopTint
-import me.kavishdevar.librepods.presentation.theme.AndpopAppearance
 import me.kavishdevar.librepods.presentation.theme.LibrePodsTheme
 import me.kavishdevar.librepods.presentation.theme.LocalAndpopAppearance
 import me.kavishdevar.librepods.presentation.theme.LocalSetAndpopAppearance
+import me.kavishdevar.librepods.presentation.theme.LocalSetAndpopTint
 import me.kavishdevar.librepods.presentation.viewmodel.AirPodsViewModel
 import me.kavishdevar.librepods.services.AirPodsService
 import me.kavishdevar.librepods.utils.XposedState
@@ -81,8 +78,6 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val airPodsViewModel: AirPodsViewModel = viewModel()
-            val accountState by account.state.collectAsStateWithLifecycle()
-            val deviceState by airPodsViewModel.uiState.collectAsStateWithLifecycle()
             LaunchedEffect(account) {
                 account.browser.collect { uri ->
                     try {
@@ -127,8 +122,6 @@ class MainActivity : ComponentActivity() {
                 return AndpopAppearance.entries.firstOrNull { it.name == saved } ?: AndpopAppearance.Dark
             }
             var appearance by remember { mutableStateOf(loadAppearance()) }
-            // One color theme for both appearances. Builds before 2.0 stored a dark and a light
-            // theme; the dark choice carries over.
             fun loadTint() = AndpopTint.saved(
                 settings.getString(ANDPOP_PALETTE_KEY, null) ?: settings.getString(LEGACY_DARK_TINT_KEY, null),
             )
@@ -165,22 +158,16 @@ class MainActivity : ComponentActivity() {
                 },
             ) {
                 LibrePodsTheme(darkTheme = dark, m3eEnabled = true, tint = tint) {
-                    if (accountState.open) {
-                        val connected = deviceState.takeIf { it.isLocallyConnected }?.let {
-                            RememberedAirPods(it.deviceName.ifBlank { "AirPods" }, it.modelName)
-                        }
-                        AccountScreen(accountState, account, connected)
-                    } else {
-                        NavigationRoot(
-                            showOnboarding = !onboardingComplete,
-                            onboardingComplete = {
-                                settings.edit { putBoolean("onboarding_complete", true) }
-                                onboardingComplete = true
-                            },
-                            airPodsViewModel = airPodsViewModel,
-                            onAccount = account::show,
-                        )
-                    }
+                    NavigationRoot(
+                        showOnboarding = !onboardingComplete,
+                        onboardingComplete = {
+                            settings.edit { putBoolean("onboarding_complete", true) }
+                            onboardingComplete = true
+                            account.ensureGuestEntered()
+                        },
+                        airPodsViewModel = airPodsViewModel,
+                        accountViewModel = account,
+                    )
                 }
             }
         }

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -15,27 +16,33 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import me.kavishdevar.librepods.R
+import me.kavishdevar.librepods.presentation.PrivacyLinks
 import me.kavishdevar.librepods.presentation.components.AndpopGroup
 import me.kavishdevar.librepods.presentation.components.AndpopRow
 import me.kavishdevar.librepods.presentation.theme.AndpopIcons
 import me.kavishdevar.librepods.presentation.theme.AndpopType
 import me.kavishdevar.librepods.presentation.theme.LocalAndpopPalette
 
-/** Short, accurate privacy summary shown during onboarding and from Settings › Privacy. */
+/** Short, accurate privacy summary shown during onboarding. */
 @Composable
 fun PrivacyPolicyPage(
-    onForward: () -> Unit
+    onForward: () -> Unit,
 ) {
     val palette = LocalAndpopPalette.current
+    val context = LocalContext.current
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -43,7 +50,7 @@ fun PrivacyPolicyPage(
             .padding(horizontal = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(8.dp))
         Box(
             Modifier.size(96.dp).clip(CircleShape)
                 .background(Brush.radialGradient(listOf(palette.pc, palette.pc.copy(alpha = 0.3f)))),
@@ -54,7 +61,7 @@ fun PrivacyPolicyPage(
         OnboardingDots(1)
         Text(
             stringResource(R.string.andpop_privacy_title),
-            Modifier.fillMaxWidth().padding(bottom = 20.dp),
+            Modifier.fillMaxWidth().padding(bottom = 18.dp).semantics { heading() },
             style = AndpopType.pageTitle,
             color = palette.on,
             textAlign = TextAlign.Center,
@@ -79,9 +86,17 @@ fun PrivacyPolicyPage(
                 )
             }
         }
+        TextButton(
+            onClick = { PrivacyLinks.openPrivacyPolicy(context) },
+            modifier = Modifier.padding(top = 8.dp).heightIn(min = 48.dp),
+        ) {
+            Text(stringResource(R.string.andpop_privacy_policy_link), color = palette.pri, style = AndpopType.label)
+            Spacer(Modifier.size(6.dp))
+            Icon(AndpopIcons.OpenExternal, null, Modifier.size(16.dp), tint = palette.pri)
+        }
         Text(
             stringResource(R.string.andpop_privacy_permissions_note),
-            Modifier.fillMaxWidth().padding(top = 14.dp, bottom = 20.dp),
+            Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 16.dp),
             style = AndpopType.caption,
             color = palette.on3,
             textAlign = TextAlign.Center,

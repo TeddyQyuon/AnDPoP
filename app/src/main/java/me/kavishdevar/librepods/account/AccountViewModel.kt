@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import me.kavishdevar.librepods.R
 
 private val defaultAuthProject = AuthProject(
     url = "https://btfbwwnbkarlpcqmkzzb.supabase.co",
@@ -51,16 +52,18 @@ internal class AccountViewModel(application: Application) : AndroidViewModel(app
     private var operation: Job? = null
     private var returnFromProject = AccountPage.Profile
 
+    private fun str(resId: Int): String = getApplication<Application>().getString(resId)
+
     init {
         val entered = profiles.hasEntered || preferences.getBoolean("onboarding_complete", false)
-        mutableState.update { it.copy(open = !entered, entered = entered) }
+        mutableState.update { it.copy(open = false, entered = entered) }
         perform {
             val restored = try {
                 withContext(Dispatchers.IO) { vault.read() }
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
-                message("The saved session could not be read. Sign in again to restore your profile.")
+                message(str(R.string.andpop_account_msg_corrupt))
                 AccountMemory()
             }
             // Keep existing custom projects and their stored sessions.
@@ -80,12 +83,12 @@ internal class AccountViewModel(application: Application) : AndroidViewModel(app
                             failure.code == "refresh_token_already_used"
                         ) {
                             save(memory.copy(session = null))
-                            message("Your session expired. Sign in again when you’re ready.")
+                            message(str(R.string.andpop_account_msg_expired))
                         } else {
-                            message("Your settings are available offline. Account services could not be reached.")
+                            message(str(R.string.andpop_account_msg_offline))
                         }
                     } catch (_: IOException) {
-                        message("Your settings are available offline. Account services could not be reached.")
+                        message(str(R.string.andpop_account_msg_offline))
                     }
                 }
             }
@@ -95,9 +98,29 @@ internal class AccountViewModel(application: Application) : AndroidViewModel(app
         }
     }
 
-    fun show() {
-        mutableState.update { it.copy(open = true, page = if (memory.recovering) AccountPage.Reset else AccountPage.Profile) }
+    fun show(initialPage: AccountPage? = null) {
+        val target = when {
+            memory.recovering -> AccountPage.Reset
+            initialPage != null -> initialPage
+            else -> AccountPage.Profile
+        }
+        mutableState.update { it.copy(open = true, page = target, message = null) }
         publish()
+    }
+
+    fun consumeOpenRequest() {
+        mutableState.update { it.copy(open = false) }
+    }
+
+    fun ensureGuestEntered() {
+        if (!profiles.hasEntered) {
+            perform {
+                if (memory.session == null) {
+                    useProfile(GUEST_PROFILE)
+                }
+                finishEntering()
+            }
+        }
     }
 
     fun close() {
@@ -140,7 +163,7 @@ internal class AccountViewModel(application: Application) : AndroidViewModel(app
     fun connectProject(url: String, key: String) {
         val project = AuthProject.parse(url, key)
         if (project == null) {
-            message("Enter a Supabase project URL and its public publishable or anon key.")
+            message(str(R.string.andpop_account_msg_invalid_project))
             return
         }
         if (memory.session != null) return
@@ -168,7 +191,7 @@ internal class AccountViewModel(application: Application) : AndroidViewModel(app
         val session = client.signUp(email, password, flow)
         if (session == null) {
             mutableState.update { it.copy(page = AccountPage.Login) }
-            message("Check your email for a confirmation link. Open the link on this phone.")
+            message(str(R.string.andpop_account_msg_confirm_email))
         } else {
             accept(project, session)
         }
@@ -178,7 +201,7 @@ internal class AccountViewModel(application: Application) : AndroidViewModel(app
         val flow = PendingAuth.create(FlowPurpose.Recovery, now())
         save(memory.copy(flow = flow))
         client.sendRecovery(email, flow)
-        message("If this email has an account, a reset link will arrive shortly. Open it on this phone.")
+        message(str(R.string.andpop_account_msg_reset_sent))
     }
 
     fun signInWithProvider(purpose: FlowPurpose) = withProject { _, client ->
@@ -188,7 +211,7 @@ internal class AccountViewModel(application: Application) : AndroidViewModel(app
         browserChannel.send(client.providerUrl(flow))
     }
 
-    fun browserUnavailable() = message("A browser is needed to complete sign-in.")
+    fun browserUnavailable() = message(str(R.string.andpop_account_msg_no_browser))
 
     fun callback(uri: String) {
         viewModelScope.launch {
@@ -201,7 +224,7 @@ internal class AccountViewModel(application: Application) : AndroidViewModel(app
                 mutableState.update { it.copy(open = true) }
                 if (result is AuthReturn.Rejected) {
                     save(memory.copy(flow = null))
-                    message("The sign-in link was cancelled, expired, or refused. Try again.")
+                    message(str(R.string.andpop_account_msg_cancelled))
                     return@perform
                 }
                 val session = client.exchange((result as AuthReturn.Code).value, flow)
@@ -223,7 +246,7 @@ internal class AccountViewModel(application: Application) : AndroidViewModel(app
             save(memory.copy(session = null, recovering = false))
             publish()
             mutableState.update { it.copy(page = AccountPage.Forgot) }
-            message("This reset session expired. Request a new link.")
+            message(str(R.string.andpop_account_msg_reset_expired))
             return@withProject
         }
         client.updatePassword(session, value)
@@ -231,7 +254,7 @@ internal class AccountViewModel(application: Application) : AndroidViewModel(app
         useProfile(GUEST_PROFILE)
         publish()
         mutableState.update { it.copy(page = AccountPage.Login) }
-        message("Password updated. Log in with your new password.")
+        message(str(R.string.andpop_account_msg_pw_updated))
     }
 
     fun signOut() = perform {
@@ -247,7 +270,7 @@ internal class AccountViewModel(application: Application) : AndroidViewModel(app
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
-                message("Signed out on this phone. The server could not be reached to revoke the old session.")
+                message(str(R.string.andpop_account_msg_signout_offline))
             }
         }
     }
@@ -261,7 +284,7 @@ internal class AccountViewModel(application: Application) : AndroidViewModel(app
         save(AccountMemory(project = project))
         publish()
         mutableState.update { it.copy(page = AccountPage.Profile) }
-        message("Account deleted. Guest settings are available on this phone.")
+        message(str(R.string.andpop_account_msg_deleted))
     }
 
     fun remember(device: RememberedAirPods?) = perform {
@@ -280,9 +303,9 @@ internal class AccountViewModel(application: Application) : AndroidViewModel(app
             } catch (failure: AuthFailure) {
                 message(errorText(failure))
             } catch (_: IOException) {
-                message("Couldn’t complete the request. Check your connection and try again.")
+                message(str(R.string.andpop_account_msg_io))
             } catch (_: Exception) {
-                message("Couldn’t complete the request. Try again.")
+                message(str(R.string.andpop_account_msg_generic))
             } finally {
                 mutableState.update { it.copy(busy = false) }
             }
@@ -350,16 +373,16 @@ internal class AccountViewModel(application: Application) : AndroidViewModel(app
     private fun now() = System.currentTimeMillis()
 
     private fun errorText(error: AuthFailure) = when {
-        error.status == 429 -> "Too many requests. Wait a moment and try again."
-        error.code == "email_not_confirmed" -> "Confirm your email before signing in."
-        error.code == "weak_password" -> "This project requires a stronger password."
-        error.code == "invalid_credentials" -> "The email or password is incorrect."
-        error.code == "user_already_exists" -> "This email may already be registered. Try signing in."
+        error.status == 429 -> str(R.string.andpop_account_err_rate)
+        error.code == "email_not_confirmed" -> str(R.string.andpop_account_err_confirm)
+        error.code == "weak_password" -> str(R.string.andpop_account_err_weak_pw)
+        error.code == "invalid_credentials" -> str(R.string.andpop_account_err_creds)
+        error.code == "user_already_exists" -> str(R.string.andpop_account_err_exists)
         error.code == "flow_state_not_found" || error.code == "flow_state_expired" ->
-            "This link has expired. Request a new one."
+            str(R.string.andpop_account_err_link_expired)
         error.code == "PGRST202" || error.status == 404 && state.value.signedIn ->
-            "Account deletion is unavailable. Set up the deletion function for this project."
-        error.status == 401 -> "The project key or account session was refused."
-        else -> "The account service could not complete this request. Check its configuration or try again."
+            str(R.string.andpop_account_err_delete_unavail)
+        error.status == 401 -> str(R.string.andpop_account_err_refused)
+        else -> str(R.string.andpop_account_err_service)
     }
 }

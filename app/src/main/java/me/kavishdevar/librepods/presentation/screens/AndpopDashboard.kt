@@ -5,7 +5,13 @@ package me.kavishdevar.librepods.presentation.screens
 import android.content.Intent
 import android.os.SystemClock
 import android.provider.Settings as AndroidSettings
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -24,6 +30,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
@@ -48,6 +55,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
@@ -58,6 +66,7 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -77,6 +86,7 @@ import me.kavishdevar.librepods.data.BatteryStatus
 import me.kavishdevar.librepods.data.Capability
 import me.kavishdevar.librepods.data.CaseBatteryReading
 import me.kavishdevar.librepods.data.NoiseControlMode
+import me.kavishdevar.librepods.presentation.components.InfoBanner
 import me.kavishdevar.librepods.presentation.components.PillTone
 import me.kavishdevar.librepods.presentation.components.StatusPill
 import me.kavishdevar.librepods.presentation.theme.AndpopIcons
@@ -98,10 +108,12 @@ internal fun AndpopDashboard(
     onAppSettings: () -> Unit,
     onAccount: () -> Unit,
     onTroubleshooting: () -> Unit,
+    accountInitials: String? = null,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val connected = viewModel.isReady && state.isLocallyConnected
+    val loading = !viewModel.isReady && !state.isDemoMode
+    val connected = (viewModel.isReady || state.isDemoMode) && state.isLocallyConnected
     val snapshot = remember(state.caseBattery, connected) {
         if (connected) state.caseBattery else state.caseBattery.copy(direct = null)
     }
@@ -127,6 +139,8 @@ internal fun AndpopDashboard(
         caseReading = current ?: snapshot.lastKnown,
         caseCurrent = current != null,
         refreshing = refreshing,
+        loading = loading,
+        accountInitials = accountInitials,
         onRefresh = {
             refreshing = true
             viewModel.refreshBattery()
@@ -143,8 +157,9 @@ internal fun AndpopDashboard(
         onAppSettings = onAppSettings,
         onAccount = onAccount,
         onTroubleshooting = onTroubleshooting,
-        // The service must be bound before a saved device can be reconnected.
         onReconnect = if (viewModel.isReady && state.connectionSuccessful) viewModel::reconnectFromSavedMac else null,
+        onTryDemo = { viewModel.setDemoMode(true) },
+        onExitDemo = { viewModel.setDemoMode(false) },
     )
 }
 
@@ -165,6 +180,10 @@ internal fun DashboardContent(
     onTroubleshooting: () -> Unit,
     onAccount: () -> Unit = {},
     onReconnect: (() -> Unit)? = null,
+    loading: Boolean = false,
+    accountInitials: String? = null,
+    onTryDemo: (() -> Unit)? = null,
+    onExitDemo: (() -> Unit)? = null,
 ) {
     val palette = LocalAndpopPalette.current
     val model = state.instance?.model
@@ -206,12 +225,25 @@ internal fun DashboardContent(
             Modifier.widthIn(max = 560.dp).fillMaxSize().verticalScroll(rememberScrollState())
                 .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 32.dp),
         ) {
-            DashboardTopBar(onAccount, onAppSettings)
+            DashboardTopBar(onAccount, onAppSettings, accountInitials)
+
+            if (state.isDemoMode && onExitDemo != null) {
+                InfoBanner(
+                    text = stringResource(R.string.andpop_demo_banner),
+                    modifier = Modifier.padding(bottom = 12.dp),
+                    icon = AndpopIcons.Sparkle,
+                ) {
+                    TextButton(onClick = onExitDemo) {
+                        Text(stringResource(R.string.andpop_exit_demo), color = palette.pri, style = AndpopType.label)
+                    }
+                }
+            }
 
             when {
+                loading -> DashboardLoadingSkeleton()
                 connected || battery.isNotEmpty() || state.connectionSuccessful -> {
                     HeroCard(
-                        title = if (connected) state.deviceName.ifBlank { model?.displayName ?: "AirPods" }
+                        title = if (connected) state.deviceName.ifBlank { model?.displayName ?: stringResource(R.string.andpop_airpods_fallback) }
                             else state.deviceName.ifBlank { stringResource(R.string.andpop_pair_title) },
                         model = model,
                         status = when {
@@ -246,13 +278,14 @@ internal fun DashboardContent(
                     } else {
                         DisconnectedActions(
                             reconnecting = reconnecting,
+                            showLastReadingNote = battery.isNotEmpty(),
                             onReconnect = onReconnect?.let { reconnect -> { reconnecting = true; reconnect() } },
                             onOpenBluetooth = onOpenBluetooth,
                             onTroubleshooting = onTroubleshooting,
                         )
                     }
                 }
-                else -> PairingGuide(onOpenBluetooth, onTroubleshooting)
+                else -> PairingGuide(onOpenBluetooth, onTroubleshooting, onTryDemo)
             }
         }
     }
@@ -268,8 +301,36 @@ internal fun DashboardContent(
 }
 
 @Composable
-private fun DashboardTopBar(onAccount: () -> Unit, onAppSettings: () -> Unit) {
+private fun DashboardLoadingSkeleton() {
     val palette = LocalAndpopPalette.current
+    val pulse = rememberInfiniteTransition(label = "Dashboard skeleton")
+    val alpha by pulse.animateFloat(
+        initialValue = 0.45f,
+        targetValue = 0.9f,
+        animationSpec = infiniteRepeatable(tween(900, easing = LinearEasing), RepeatMode.Reverse),
+        label = "Skeleton alpha",
+    )
+    Column(Modifier.fillMaxWidth().alpha(alpha)) {
+        Box(Modifier.fillMaxWidth().height(252.dp).clip(RoundedCornerShape(28.dp)).background(palette.s2))
+        Spacer(Modifier.height(24.dp))
+        Box(Modifier.width(120.dp).height(18.dp).padding(start = 8.dp).clip(RoundedCornerShape(9.dp)).background(palette.s2))
+        Spacer(Modifier.height(12.dp))
+        Box(Modifier.fillMaxWidth().height(118.dp).clip(RoundedCornerShape(24.dp)).background(palette.s2))
+        Spacer(Modifier.height(24.dp))
+        Box(Modifier.width(90.dp).height(18.dp).padding(start = 8.dp).clip(RoundedCornerShape(9.dp)).background(palette.s2))
+        Spacer(Modifier.height(12.dp))
+        Box(Modifier.fillMaxWidth().height(80.dp).clip(RoundedCornerShape(24.dp)).background(palette.s2))
+    }
+}
+
+@Composable
+private fun DashboardTopBar(
+    onAccount: () -> Unit,
+    onAppSettings: () -> Unit,
+    accountInitials: String? = null,
+) {
+    val palette = LocalAndpopPalette.current
+    val accountLabel = stringResource(R.string.andpop_account)
     Row(
         Modifier.fillMaxWidth().padding(start = 4.dp, top = 4.dp, bottom = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -282,9 +343,18 @@ private fun DashboardTopBar(onAccount: () -> Unit, onAppSettings: () -> Unit) {
             color = palette.on,
             style = AndpopType.titleSmall,
         )
-        IconButton(onClick = onAccount) {
-            Box(Modifier.size(40.dp).clip(CircleShape).background(palette.s2), contentAlignment = Alignment.Center) {
-                Icon(AndpopIcons.Person, stringResource(R.string.andpop_account), Modifier.size(22.dp), tint = palette.on)
+        IconButton(
+            onClick = onAccount,
+            modifier = Modifier.semantics { contentDescription = accountLabel },
+        ) {
+            if (!accountInitials.isNullOrBlank()) {
+                Box(Modifier.size(40.dp).clip(CircleShape).background(palette.pc), contentAlignment = Alignment.Center) {
+                    Text(accountInitials, color = palette.onPc, style = AndpopType.label)
+                }
+            } else {
+                Box(Modifier.size(40.dp).clip(CircleShape).background(palette.s2), contentAlignment = Alignment.Center) {
+                    Icon(AndpopIcons.Person, accountLabel, Modifier.size(22.dp), tint = palette.on)
+                }
             }
         }
         IconButton(onClick = onAppSettings) {
@@ -337,6 +407,7 @@ private fun HeroCard(
 @Composable
 private fun DisconnectedActions(
     reconnecting: Boolean,
+    showLastReadingNote: Boolean,
     onReconnect: (() -> Unit)?,
     onOpenBluetooth: () -> Unit,
     onTroubleshooting: () -> Unit,
@@ -368,14 +439,27 @@ private fun DisconnectedActions(
         ) {
             Text(stringResource(R.string.andpop_bluetooth_settings), style = AndpopType.button)
         }
-        TextButton(onClick = onTroubleshooting, modifier = Modifier.fillMaxWidth()) {
+        TextButton(onClick = onTroubleshooting, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
             Text(stringResource(R.string.troubleshooting), color = palette.pri, style = AndpopType.button)
+        }
+        if (showLastReadingNote) {
+            Text(
+                stringResource(R.string.andpop_last_reading_note),
+                Modifier.fillMaxWidth().padding(top = 4.dp),
+                color = palette.on3,
+                style = AndpopType.caption,
+                textAlign = TextAlign.Center,
+            )
         }
     }
 }
 
 @Composable
-private fun PairingGuide(onOpenBluetooth: () -> Unit, onTroubleshooting: () -> Unit) {
+private fun PairingGuide(
+    onOpenBluetooth: () -> Unit,
+    onTroubleshooting: () -> Unit,
+    onTryDemo: (() -> Unit)? = null,
+) {
     val palette = LocalAndpopPalette.current
     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
@@ -418,7 +502,12 @@ private fun PairingGuide(onOpenBluetooth: () -> Unit, onTroubleshooting: () -> U
             Spacer(Modifier.size(8.dp))
             Text(stringResource(R.string.andpop_open_bluetooth_settings), style = AndpopType.button)
         }
-        TextButton(onClick = onTroubleshooting, modifier = Modifier.padding(top = 4.dp).fillMaxWidth()) {
+        if (onTryDemo != null) {
+            TextButton(onClick = onTryDemo, modifier = Modifier.padding(top = 4.dp).fillMaxWidth().heightIn(min = 48.dp)) {
+                Text(stringResource(R.string.andpop_try_demo), color = palette.pri, style = AndpopType.button)
+            }
+        }
+        TextButton(onClick = onTroubleshooting, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
             Text(stringResource(R.string.troubleshooting), color = palette.pri, style = AndpopType.button)
         }
     }
